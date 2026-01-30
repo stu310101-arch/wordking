@@ -67,7 +67,7 @@
         @keyframes highlight {
             0% { border-color: #f59e0b; box-shadow: 0 0 15px #f59e0b; transform: scale(1.05); }
             50% { border-color: #f59e0b; box-shadow: 0 0 25px #f59e0b; transform: scale(1.1); }
-            100% { border-color: #e5e7eb; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); transform: scale(1); }
+            100% { border-color: #e5eeb; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); transform: scale(1); }
         }
         .highlight-card .word-card-front {
             animation: highlight 1.5s ease-in-out;
@@ -107,10 +107,11 @@
             opacity: 0.6;
         }
     </style>
+
 </head>
 <body class="bg-gray-50 min-h-screen font-sans pb-24">
 
-<!-- 預設字庫：請把你最新版的單字資料放到這裡 -->
+<!-- 預設字庫：你可以改成從 JSON 載入，這裡先留空 -->
 <script>
     const defaultWordDatabase = [
     {"english": "penetrate", "meaning": "穿透；滲透 (v.)", "tags": ["晟景Lv5U6"]},
@@ -274,7 +275,6 @@
     {"english": "ass", "meaning": "屁股；傻蛋 (n.)", "tags": ["晟景Lv5U8"]},
     {"english": "astonish", "meaning": "使...震驚 (v.)", "tags": ["晟景Lv5U8"]}
 ];
-
     window.defaultWordDatabase = defaultWordDatabase;
 </script>
 
@@ -475,7 +475,7 @@
                 <div class="mb-6 mt-4 p-4 bg-indigo-50 rounded-2xl border-2 border-indigo-100 min-h-[100px] flex items-center justify-center">
                     <h3 id="choice-question" class="text-3xl font-extrabold text-indigo-900 break-words leading-snug">Question</h3>
                 </div>
-                <div id="choice-options" class="flex flex-col gap-3 w-full flex-1 justify中心"></div>
+                <div id="choice-options" class="flex flex-col gap-3 w-full flex-1 justify-center"></div>
                 <div id="choice-feedback" class="mt-4 font-bold text-xl min-h-[2rem]"></div>
             </div>
         </div>
@@ -499,7 +499,7 @@
 
             <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 mt-4">
                 <label class="block text-sm font-bold text-indigo-900 mb-2">將勾選單字加入到：</label>
-                <select id="save-target-folder" class="w-full p-3 rounded-lg border border-indigo-200 mb-3 bg-white outline-none font-bold text-gray-700 cursor-pointer hover:border-indigo-400 transition"></select>
+                <select id="save-target-folder" class="w-full p-3 rounded-lg border border-indigo-200 mb-3 bg白 outline-none font-bold text-gray-700 cursor-pointer hover:border-indigo-400 transition"></select>
                 <button onclick="saveWrongWords()" class="w-full py-3 bg-indigo-600 text-white rounded-lg font-bold text-lg shadow-md hover:bg-indigo-700 active:scale-95 transition">
                     確認加入
                 </button>
@@ -513,8 +513,8 @@
 </main>
 
 <!-- 新增/編輯單字 Modal -->
-<div id="add-modal" class="fixed inset-0 bg黑色 bg-opacity-60 hidden flex items-center justify中心 p-4 z-[100]">
-    <div class="bg白色 rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+<div id="add-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center p-4 z-[100]">
+    <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
         <h3 id="modal-title" class="text-xl font-bold mb-4 text-center">新增單字</h3>
         <div class="space-y-4">
             <div>
@@ -547,58 +547,58 @@
             </div>
             <div class="grid grid-cols-2 gap-3 pt-2">
                 <button onclick="closeAddModal()" class="py-3 text-gray-500 font-bold bg-gray-100 rounded-xl active:bg-gray-200 transition">取消</button>
-                <button onclick="saveNewWord()" class="py-3 bg-indigo-600 text白色 rounded-xl font-bold shadow-md active:bg-indigo-700 transition">儲存</button>
+                <button onclick="saveNewWord()" class="py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-md active:bg-indigo-700 transition">儲存</button>
             </div>
         </div>
     </div>
 </div>
 
 <!-- 資料夾管理 - 選擇操作 Modal -->
-<div id="folder-action-modal" class="fixed inset-0 bg黑色 bg-opacity-60 hidden flex items-center justify中心 p-4 z-[110]">
-    <div class="bg白色 rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center">
+<div id="folder-action-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center p-4 z-[110]">
+    <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center">
         <h3 class="text-xl font-bold mb-4">管理資料夾: <span id="action-folder-name" class="text-indigo-600"></span></h3>
         <div class="flex flex-col gap-3">
-            <button onclick="prepareRenameFolder()" class="w-full py-3 bg-blue-500 text白色 rounded-xl font-bold active:scale-95 transition">重命名</button>
-            <button onclick="prepareDeleteFolder(false)" class="w-full py-3 bg-orange-500 text白色 rounded-xl font-bold active:scale-95 transition">刪除資料夾 (保留單字)</button>
-            <button onclick="prepareDeleteFolder(true)" class="w-full py-3 bg-red-600 text白色 rounded-xl font-bold active:scale-95 transition">刪除資料夾與單字</button>
+            <button onclick="prepareRenameFolder()" class="w-full py-3 bg-blue-500 text-white rounded-xl font-bold active:scale-95 transition">重命名</button>
+            <button onclick="prepareDeleteFolder(false)" class="w-full py-3 bg-orange-500 text-white rounded-xl font-bold active:scale-95 transition">刪除資料夾 (保留單字)</button>
+            <button onclick="prepareDeleteFolder(true)" class="w-full py-3 bg-red-600 text-white rounded-xl font-bold active:scale-95 transition">刪除資料夾與單字</button>
             <button onclick="closeActionModal()" class="w-full py-3 bg-gray-200 text-gray-600 rounded-xl font-bold active:scale-95 transition">取消</button>
         </div>
     </div>
 </div>
 
 <!-- 資料夾管理 - 重命名 Modal -->
-<div id="rename-modal" class="fixed inset-0 bg黑色 bg-opacity-60 hidden flex items-center justify中心 p-4 z-[120]">
-    <div class="bg白色 rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+<div id="rename-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center p-4 z-[120]">
+    <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
         <h3 class="text-xl font-bold mb-4 text-center">重命名資料夾</h3>
         <input type="text" id="input-rename-folder" class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 outline-none text-lg mb-4">
         <div class="grid grid-cols-2 gap-3">
             <button onclick="document.getElementById('rename-modal').classList.add('hidden')" class="py-3 text-gray-500 font-bold bg-gray-100 rounded-xl active:bg-gray-200 transition">取消</button>
-            <button onclick="executeRename()" class="py-3 bg-blue-600 text白色 rounded-xl font-bold shadow-md active:bg-blue-700 transition">確認</button>
+            <button onclick="executeRename()" class="py-3 bg-blue-600 text-white rounded-xl font-bold shadow-md active:bg-blue-700 transition">確認</button>
         </div>
     </div>
 </div>
 
 <!-- 資料夾管理 - 刪除確認 Modal -->
-<div id="confirm-modal" class="fixed inset-0 bg黑色 bg-opacity-60 hidden flex items-center justify中心 p-4 z-[130]">
-    <div class="bg白色 rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center">
+<div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center p-4 z-[130]">
+    <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center">
         <div class="text-5xl mb-4">⚠️</div>
         <h3 id="confirm-title" class="text-xl font-bold mb-2">確定刪除？</h3>
         <p id="confirm-desc" class="text-gray-500 mb-6">此動作無法復原。</p>
         <div class="grid grid-cols-2 gap-3">
             <button onclick="document.getElementById('confirm-modal').classList.add('hidden')" class="py-3 text-gray-500 font-bold bg-gray-100 rounded-xl active:bg-gray-200 transition">取消</button>
-            <button onclick="executeDelete()" class="py-3 bg-red-600 text白色 rounded-xl font-bold shadow-md active:bg-red-700 transition">確認刪除</button>
+            <button onclick="executeDelete()" class="py-3 bg-red-600 text白 rounded-xl font-bold shadow-md active:bg-red-700 transition">確認刪除</button>
         </div>
     </div>
 </div>
 
 <!-- 新增資料夾 Modal -->
-<div id="new-folder-modal" class="fixed inset-0 bg黑色 bg-opacity-60 hidden flex items-center justify中心 p-4 z-[120]">
-    <div class="bg白色 rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+<div id="new-folder-modal" class="fixed inset-0 bg黑 bg-opacity-60 hidden flex items-center justify-center p-4 z-[120]">
+    <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
         <h3 class="text-xl font-bold mb-4 text-center">新增資料夾</h3>
         <input type="text" id="input-new-folder-name" class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 outline-none text-lg mb-4" placeholder="輸入名稱">
         <div class="grid grid-cols-2 gap-3">
             <button onclick="document.getElementById('new-folder-modal').classList.add('hidden')" class="py-3 text-gray-500 font-bold bg-gray-100 rounded-xl active:bg-gray-200 transition">取消</button>
-            <button onclick="confirmNewFolder()" class="py-3 bg-green-600 text白色 rounded-xl font-bold shadow-md active:bg-green-700 transition">建立</button>
+            <button onclick="confirmNewFolder()" class="py-3 bg-green-600 text-white rounded-xl font-bold shadow-md active:bg-green-700 transition">建立</button>
         </div>
     </div>
 </div>
@@ -661,7 +661,7 @@
         }
     }
 
-    // 合併兩個 meaning 字串（用 / 分段，去重，舊的在前）
+    // 合併 meaning：不同段落都保留，完全一樣的段落只出現一次
     function mergeMeaningStrings(oldMeaning, newMeaning) {
         const splitParts = str =>
             (str || '')
@@ -691,7 +691,7 @@
         return merged.join(' / ');
     }
 
-    // 對整個單字陣列做去重＋合併：同一個英文的 meaning / tags 都融合
+    // 對整個 words 陣列做「同英文合併」：meaning / tags 都融合
     function mergeDuplicateWords(words) {
         const map = new Map();
 
@@ -723,8 +723,40 @@
         return Array.from(map.values());
     }
 
+    // 產生「資料夾/標籤」複選清單
+    function renderTagCheckboxes(selectedTags = []) {
+        const container = document.getElementById('tag-checkbox-container');
+        if (!container) return;
+
+        const allTags = state.unitTags || [];
+        container.innerHTML = '';
+
+        if (allTags.length === 0) {
+            container.innerHTML = '<div class="text-xs text-gray-400">目前沒有資料夾，請先建立。</div>';
+            return;
+        }
+
+        allTags.forEach(tag => {
+            const safeId = 'tag-chk-' + tag.replace(/\s+/g, '_');
+            const wrapper = document.createElement('label');
+            wrapper.className = 'inline-flex items-center space-x-2 mr-3 mb-1';
+
+            const checked = selectedTags.includes(tag) ? 'checked' : '';
+            wrapper.innerHTML = `
+                <input type="checkbox"
+                       class="tag-checkbox w-4 h-4 text-indigo-600 rounded"
+                       value="${tag}"
+                       id="${safeId}"
+                       ${checked}>
+                <span class="text-sm text-gray-700">${tag}</span>
+            `;
+
+            container.appendChild(wrapper);
+        });
+    }
+
     function saveDataLocally() {
-        // 先把可能重複的英文單字合併起來
+        // 儲存前先把重複英文的單字合併起來
         state.words = mergeDuplicateWords(state.words || []);
 
         const dataToSave = { words: state.words, folders: state.folders };
@@ -773,7 +805,7 @@
         if (!query) return;
         const foundWord = state.words.find(w => w.english.toLowerCase() === query || w.meaning.includes(query));
         if (foundWord) {
-            const targetTag = foundWord.tags.find(t => !state.categories.includes(t)) || foundWord.tags[0];
+            const targetTag = foundWord.tags && foundWord.tags.find(t => !state.categories.includes(t)) || (foundWord.tags && foundWord.tags[0]);
             if (targetTag) {
                 showView('word-list');
                 renderWordList(targetTag);
@@ -1022,8 +1054,8 @@
 
     function createCatBtn(name, cls, editable, oriName) {
         const div = document.createElement('div');
-        div.className = `${cls} folder-card relative min-h-[80px] rounded-2xl flex items中心 justify中心 shadow-sm cursor-pointer active:scale-95 transition-all text-lg text-center px-2 break-all leading-tight`;
-        div.innerHTML = `<span>${name}</span>` + (state.isEditing && editable ? '<span class="absolute top-1 right-1 text-xs bg白色 text-red-500 rounded-full w-5 h-5 flex items中心 justify中心">✎</span>' : '');
+        div.className = `${cls} folder-card relative min-h-[80px] rounded-2xl flex items-center justify-center shadow-sm cursor-pointer active:scale-95 transition-all text-lg text-center px-2 break-all leading-tight`;
+        div.innerHTML = `<span>${name}</span>` + (state.isEditing && editable ? '<span class="absolute top-1 right-1 text-xs bg-white text-red-500 rounded-full w-5 h-5 flex items-center justify-center">✎</span>' : '');
         div.onclick = () => handleFolderClick(oriName || name.split(' ')[0]);
         return div;
     }
@@ -1048,12 +1080,12 @@
 
             card.innerHTML = `
                 <div class="word-card-inner">
-                    <div class="word-card-front bg白色 border-2 border-indigo-50 p-6 relative flex flex-col justify中心 items中心 rounded-2xl">
-                        <button class="absolute top-3 left-3 text-gray-400 hover:text-indigo-600 bg白色 rounded-full p-1 shadow-sm z-20" onclick="event.stopPropagation(); openAddModal(${w.idx})">✎</button>
+                    <div class="word-card-front bg-white border-2 border-indigo-50 p-6 relative flex flex-col justify-center items-center rounded-2xl">
+                        <button class="absolute top-3 left-3 text-gray-400 hover:text-indigo-600 bg-white rounded-full p-1 shadow-sm z-20" onclick="event.stopPropagation(); openAddModal(${w.idx})">✎</button>
                         ${badge}
                         <span class="text-3xl font-black text-indigo-900 break-all text-center">${w.english}</span>
                     </div>
-                    <div class="word-card-back p-6 overflow-y-auto bg-indigo-50 border-2 border-indigo-200 flex flex-col justify中心 rounded-2xl">${parts}</div>
+                    <div class="word-card-back p-6 overflow-y-auto bg-indigo-50 border-2 border-indigo-200 flex flex-col justify-center rounded-2xl">${parts}</div>
                 </div>`;
             card.onclick = () => card.classList.toggle('is-flipped');
             container.appendChild(card);
@@ -1095,7 +1127,7 @@
 
         pool.forEach((word) => {
             const div = document.createElement('div');
-            div.className = "flex items中心 p-2 border-b border-gray-100 last:border-0 hover:bg白色 transition";
+            div.className = "flex items-center p-2 border-b border-gray-100 last:border-0 hover:bg-white transition";
             div.innerHTML = `
                 <input type="checkbox" class="practice-checkbox w-5 h-5 text-indigo-600 rounded mr-3" checked data-english="${word.english}">
                 <div class="flex-1 min-w-0">
@@ -1153,7 +1185,7 @@
 
         const defArea = document.getElementById('spelling-definition-area');
         defArea.innerHTML = parseMeaning(word.meaning).map(p => `
-            <div class="flex flex-col items中心 mb-3">
+            <div class="flex flex-col items-center mb-3">
                 <div class="text-2xl font-extrabold text-gray-800 text-center">${p.text}</div>
                 <div class="mt-1 px-4 py-1 bg-indigo-50 text-indigo-500 rounded-full text-sm font-bold border border-indigo-100">${p.pos||"(?)"}</div>
             </div>`).join('');
@@ -1210,7 +1242,7 @@
 
         options.forEach(opt => {
             const btn = document.createElement('button');
-            btn.className = "choice-btn w-full bg白色 border-2 border-indigo-100 text-gray-700 font-bold py-4 rounded-xl text-lg shadow-sm hover:border-indigo-300";
+            btn.className = "choice-btn w-full bg白 border-2 border-indigo-100 text-gray-700 font-bold py-4 rounded-xl text-lg shadow-sm hover:border-indigo-300";
             btn.innerText = isEnToCh ? formatMeaning(opt.meaning) : opt.english;
 
             btn.onclick = () => {
@@ -1240,9 +1272,9 @@
         });
     }
 
-    // 題目/選項顯示「中文 + 詞性」，完全一樣的中文片段只保留一次（靠 mergeMeaningStrings）
+    // 題目/選項顯示「中文 + 詞性」
     function formatMeaning(raw) {
-        const firstBlock = (raw || '').split('/')[0].trim();
+        const firstBlock = raw.split('/')[0].trim();
         const idx = firstBlock.lastIndexOf('(');
 
         let text = firstBlock;
@@ -1307,12 +1339,12 @@
                 state.game.reviewSelection.push(w);
                 const isAlreadyWrong = w.tags && w.tags.includes("錯題區");
                 return `
-                <li class="bg白色 p-3 rounded-xl border border-gray-100 shadow-sm flex items中心 gap-3">
+                <li class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm flex items-center gap-3">
                     <input type="checkbox" id="review-chk-${idx}" class="w-6 h-6 text-indigo-600 rounded flex-none" checked onchange="toggleReviewItem(${idx})">
                     <div class="flex flex-col flex-1 min-w-0">
-                        <div class="flex items中心 gap-2 flex-wrap">
+                        <div class="flex items-center gap-2 flex-wrap">
                             <span class="text-indigo-600 font-black text-lg break-all">${w.english}</span>
-                            ${isAlreadyWrong ? '<span class="text-xs bg-red-100 text-red-500 px-1 rounded flex-none">已在錯題區</span>' : ''}
+                            ${isAlreadyWrong ? '<span class="text-xs bg-red-100 text-red-500 px-1 rounded-flex-none">已在錯題區</span>' : ''}
                         </div>
                         <span class="text-gray-500 text-sm truncate">${w.meaning}</span>
                     </div>
