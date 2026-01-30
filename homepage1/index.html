@@ -110,9 +110,9 @@
 </head>
 <body class="bg-gray-50 min-h-screen font-sans pb-24">
 
-    <!-- 預設字庫：請把你最新版的單字資料放到這裡 -->
-    <script>
-        const defaultWordDatabase = [
+<!-- 預設字庫：請把你最新版的單字資料放到這裡 -->
+<script>
+    const defaultWordDatabase = [
     {"english": "penetrate", "meaning": "穿透；滲透 (v.)", "tags": ["晟景Lv5U6"]},
     {"english": "penetrating", "meaning": "具穿透力的；響亮的 (a.)", "tags": ["晟景Lv5U6"]},
     {"english": "penetration", "meaning": "滲透 (n.)", "tags": ["晟景Lv5U6"]},
@@ -273,1277 +273,1305 @@
     {"english": "arena", "meaning": "競技場 (n.)", "tags": ["晟景Lv5U8"]},
     {"english": "ass", "meaning": "屁股；傻蛋 (n.)", "tags": ["晟景Lv5U8"]},
     {"english": "astonish", "meaning": "使...震驚 (v.)", "tags": ["晟景Lv5U8"]}
-        ];
+];
 
-        window.defaultWordDatabase = defaultWordDatabase;
-    </script>
+    window.defaultWordDatabase = defaultWordDatabase;
+</script>
 
-    <!-- 導覽列 -->
-    <nav class="bg-indigo-600 text-white p-4 shadow-lg sticky top-0 z-50">
-        <div class="flex flex-col gap-3">
-            <div class="flex justify-between items-center w-full">
-                <h1 class="text-2xl font-bold tracking-tight cursor-pointer flex items-center gap-2" onclick="showView('home')">
-                    <span>🎓</span> 單字王
-                </h1>
+<!-- 導覽列 -->
+<nav class="bg-indigo-600 text-white p-4 shadow-lg sticky top-0 z-50">
+    <div class="flex flex-col gap-3">
+        <div class="flex justify-between items-center w-full">
+            <h1 class="text-2xl font-bold tracking-tight cursor-pointer flex items-center gap-2" onclick="showView('home')">
+                <span>🎓</span> 單字王
+            </h1>
 
-                <!-- 右側：搜尋 ＋ 登入/登出/同步 -->
-                <div class="flex items-center gap-2">
-                    <!-- 搜尋框 -->
-                    <div class="relative flex items-center">
-                        <input
-                            type="text"
-                            id="search-input"
-                            placeholder="搜尋..."
-                            class="w-32 sm:w-48 pl-3 pr-8 py-1 rounded-full text-gray-800 text-sm focus:w-40 sm:focus:w-56 transition-all outline-none"
-                            onkeypress="if(event.key === 'Enter') searchWord()">
-                        <button onclick="searchWord()" class="absolute right-2 text-gray-500 hover:text-indigo-600">
-                            🔍
-                        </button>
-                    </div>
-
-                    <!-- 使用者資訊 ＋ 登入 / 登出 / 同步 -->
-                    <div class="flex items-center gap-1">
-                        <span
-                            id="user-email"
-                            class="hidden text-xs sm:text-sm bg-indigo-500/40 px-2 py-1 rounded-full max-w-[120px] sm:max-w-[200px] truncate">
-                        </span>
-
-                        <button
-                            id="btn-login"
-                            onclick="firebaseLogin()"
-                            class="bg-white text-indigo-600 px-3 py-1 rounded-full text-xs sm:text-sm font-bold shadow-md active:scale-95 transition">
-                            登入
-                        </button>
-
-                        <button
-                            id="btn-logout"
-                            onclick="firebaseLogout()"
-                            class="hidden bg-indigo-500 text-white px-3 py-1 rounded-full text-xs sm:text-sm font-bold shadow-md active:scale-95 transition">
-                            登出
-                        </button>
-
-                        <button
-                            id="btn-sync"
-                            onclick="syncCloudNow()"
-                            class="hidden bg-amber-400 text-white px-3 py-1 rounded-full text-xs sm:text-sm font-bold shadow-md active:scale-95 transition">
-                            ☁ 同步
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-3 gap-2">
-                <button onclick="showView('library')" class="bg-indigo-500 hover:bg-indigo-700 py-2 rounded-lg text-sm font-bold transition">單字庫</button>
-                <button onclick="showView('practice')" class="bg-indigo-500 hover:bg-indigo-700 py-2 rounded-lg text-sm font-bold transition">練習區</button>
-                <button onclick="confirmReset()" class="bg-red-500 hover:bg-red-600 py-2 rounded-lg text-sm font-bold transition">重置</button>
-            </div>
-        </div>
-    </nav>
-
-    <main class="w-full px-4 py-6">
-        <!-- 首頁 -->
-        <div id="view-home" class="space-y-6 animate-in fade-in duration-500">
-            <div class="text-center py-4">
-                <h2 class="text-3xl font-extrabold text-gray-800">歡迎回來！</h2>
-                <p class="text-gray-600 mt-2 text-base">資料已存於本機 (LocalStorage)，登入後可同步至雲端</p>
-            </div>
-
-            <div class="flex flex-col gap-4">
-                <div class="bg-white p-6 rounded-2xl shadow-md border-l-8 border-indigo-500 cursor-pointer active:bg-gray-50" onclick="showView('library')">
-                    <h3 class="text-xl font-bold text-gray-800">📖 資料夾清單</h3>
-                    <p class="text-gray-500 mt-1">瀏覽、編輯單字與資料夾</p>
-                </div>
-                <div class="bg-white p-6 rounded-2xl shadow-md border-l-8 border-green-500 cursor-pointer active:bg-gray-50" onclick="showView('practice')">
-                    <h3 class="text-xl font-bold text-gray-800">🎯 練習專區</h3>
-                    <p class="text-gray-500 mt-1">拼字練習、選擇題挑戰</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- 單字庫 -->
-        <div id="view-library" class="hidden">
-            <div class="flex justify-between items-center mb-4">
-                <button onclick="showView('home')" class="text-gray-500 font-bold px-3 py-2 bg-gray-200 rounded-lg text-sm">← 返回</button>
-                <div class="flex gap-2">
-                    <button id="btn-edit-folders" onclick="toggleEditMode()" class="bg-orange-500 text-white px-3 py-2 rounded-lg text-sm font-bold shadow-md active:scale-95 transition">管理資料夾</button>
-                    <button onclick="openAddModal()" class="bg-indigo-600 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg text-2xl pb-1 active:scale-95 transition">+</button>
-                </div>
-            </div>
-
-            <div id="edit-hint" class="hidden bg-orange-100 text-orange-700 p-3 rounded-lg mb-4 text-sm font-bold text-center border border-orange-200">
-                ⚠️ 編輯模式：點擊資料夾進行管理
-                <div class="mt-2 flex justify-center gap-2">
-                    <button onclick="openNewFolderModal()" class="bg-green-600 text-white px-3 py-1 rounded text-xs active:scale-95 transition">新增資料夾</button>
-                    <button onclick="toggleEditMode()" class="bg-gray-500 text-white px-3 py-1 rounded text-xs active:scale-95 transition">完成編輯</button>
-                </div>
-            </div>
-
-            <h2 class="text-xl font-bold text-indigo-900 mb-4">資料夾目錄</h2>
-            <div class="grid grid-cols-2 gap-3" id="category-grid"></div>
-            <div id="empty-library-hint" class="hidden text-center text-gray-400 py-10 text-lg">目前沒有單字<br>請點擊右上角 + 新增</div>
-        </div>
-
-        <!-- 單字列表 -->
-        <div id="view-word-list" class="hidden">
-            <div class="sticky top-0 bg-gray-50 py-2 z-10 flex items-center justify-between mb-2">
-                <button onclick="showView('library')" class="text-gray-500 font-bold px-3 py-2 bg-gray-200 rounded-lg">← 返回</button>
-                <span id="list-title" class="font-bold text-lg text-indigo-900 truncate max-w-[150px]">分類</span>
-                <div class="w-10"></div>
-            </div>
-            <div class="flex flex-col gap-4" id="words-container"></div>
-        </div>
-
-        <!-- 練習區設定 -->
-        <div id="view-practice" class="hidden">
-            <div class="space-y-4">
-                <h2 class="text-2xl font-bold text-center text-indigo-900 mt-4">特訓設定</h2>
-
-                <div class="bg-white p-6 rounded-2xl shadow-lg border">
-                    <!-- Step 1: 選擇資料夾 -->
-                    <div class="mb-6">
-                        <label class="block font-bold text-gray-700 mb-3 text-lg">📂 1. 選擇資料夾</label>
-                        <select id="practice-scope" onchange="renderPracticeWordSelection()" class="w-full p-4 border-2 border-indigo-100 rounded-xl text-lg bg-white outline-none focus:border-indigo-500"></select>
-                    </div>
-
-                    <!-- Step 2: 勾選單字 -->
-                    <div class="mb-6">
-                        <div class="flex justify-between items-center mb-2">
-                            <label class="block font-bold text-gray-700 text-lg">📝 2. 勾選要練習的單字</label>
-                            <div class="space-x-2">
-                                <button onclick="toggleAllPracticeWords(true)" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded">全選</button>
-                                <button onclick="toggleAllPracticeWords(false)" class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded">取消</button>
-                            </div>
-                        </div>
-                        <div id="practice-word-selection" class="max-h-48 overflow-y-auto custom-scrollbar border-2 border-gray-100 rounded-xl p-2 bg-gray-50">
-                            <!-- 單字勾選列表由 JS 生成 -->
-                        </div>
-                        <p id="selection-count" class="text-right text-xs text-gray-400 mt-1">已選 0 個單字</p>
-                    </div>
-
-                    <!-- Step 3: 開始遊戲 -->
-                    <div class="flex flex-col gap-4 border-t pt-4">
-                        <button onclick="startGame('spelling')" class="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold text-xl shadow-lg active:scale-95 transition flex items-center justify-center gap-2">
-                            🔤 拼字練習
-                        </button>
-                        <button onclick="startGame('choice-en-ch')" class="w-full py-4 bg-green-600 text-white rounded-xl font-bold text-xl shadow-lg active:scale-95 transition">
-                            英選中
-                        </button>
-                        <button onclick="startGame('choice-ch-en')" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold text-xl shadow-lg active:scale-95 transition">
-                            中選英
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 拼字遊戲介面 -->
-        <div id="view-game-spelling" class="hidden">
-            <div class="bg-white p-5 rounded-3xl shadow-xl border text-center relative overflow-hidden min-h-[500px] flex flex-col">
-                <div class="absolute top-0 left-0 h-2 bg-indigo-500 transition-all duration-300" id="spelling-progress-bar" style="width: 0%"></div>
-
-                <div class="flex justify-between items-center mb-4 mt-2">
-                    <span id="spelling-progress-text" class="text-base font-bold text-indigo-400">0/0</span>
-                    <button onclick="quitGameAndSave()" class="text-red-500 font-bold p-2 border border-red-200 rounded-lg hover:bg-red-50">離開並結算</button>
-                </div>
-
-                <div id="spelling-content" class="flex-1 flex flex-col justify-center">
-                    <div id="spelling-definition-area" class="space-y-2 mb-6 min-h-[80px] flex flex-col justify-center"></div>
-                    <div id="spelling-hint" class="text-4xl tracking-[0.1em] font-mono mb-8 text-indigo-600 font-bold break-all"></div>
-                    <div class="space-y-4 w-full">
-                        <input type="text" id="spelling-input" autocomplete="off" class="w-full border-b-4 border-indigo-100 p-3 text-3xl text-center focus:border-indigo-500 outline-none transition-all placeholder-gray-200 rounded-none bg-transparent" placeholder="輸入答案">
-                        <div class="flex flex-col gap-3 mt-4">
-                            <button onclick="checkSpellingAnswer()" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-xl shadow-md active:bg-indigo-800">檢查</button>
-                            <button onclick="skipSpellingWord()" class="w-full bg-gray-100 text-gray-500 py-4 rounded-xl font-bold text-lg active:bg-gray-200">跳過 (視為答錯)</button>
-                        </div>
-                    </div>
-                    <div id="spelling-feedback" class="mt-4 font-bold text-xl min-h-[2rem]"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 選擇題遊戲介面 -->
-        <div id="view-game-choice" class="hidden">
-            <div class="bg-white p-5 rounded-3xl shadow-xl border text-center relative overflow-hidden min-h-[500px] flex flex-col">
-                <div class="absolute top-0 left-0 h-2 bg-indigo-500 transition-all duration-300" id="choice-progress-bar" style="width: 0%"></div>
-
-                <div class="flex justify-between items-center mb-4 mt-2">
-                    <span id="choice-progress-text" class="text-base font-bold text-indigo-400">0/0</span>
-                    <button onclick="quitGameAndSave()" class="text-red-500 font-bold p-2 border border-red-200 rounded-lg hover:bg-red-50">離開並結算</button>
-                </div>
-
-                <div id="choice-content" class="flex-1 flex flex-col">
-                    <div class="mb-6 mt-4 p-4 bg-indigo-50 rounded-2xl border-2 border-indigo-100 min-h-[100px] flex items-center justify-center">
-                        <h3 id="choice-question" class="text-3xl font-extrabold text-indigo-900 break-words leading-snug">Question</h3>
-                    </div>
-                    <div id="choice-options" class="flex flex-col gap-3 w-full flex-1 justify-center"></div>
-                    <div id="choice-feedback" class="mt-4 font-bold text-xl min-h-[2rem]"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 通用結算畫面 -->
-        <div id="view-game-result" class="hidden">
-            <div class="bg-white p-6 rounded-3xl shadow-2xl border text-center min-h-[500px] flex flex-col">
-                <div class="py-4">
-                    <div class="text-6xl mb-2" id="result-icon">🎉</div>
-                    <h3 class="text-2xl font-bold text-gray-800" id="result-title">練習完成！</h3>
-                </div>
-
-                <div class="text-left bg-gray-50 rounded-2xl p-4 border border-gray-100 max-h-[300px] overflow-y-auto custom-scrollbar flex-1">
-                    <div class="flex justify-between items-center mb-2 border-b pb-2">
-                        <span class="font-bold text-gray-600">待複習清單</span>
-                        <span id="result-stat" class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full font-bold"></span>
-                    </div>
-                    <ul id="result-skipped-items" class="space-y-3"></ul>
-                </div>
-
-                <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 mt-4">
-                    <label class="block text-sm font-bold text-indigo-900 mb-2">將勾選單字加入到：</label>
-                    <select id="save-target-folder" class="w-full p-3 rounded-lg border border-indigo-200 mb-3 bg-white outline-none font-bold text-gray-700 cursor-pointer hover:border-indigo-400 transition"></select>
-                    <button onclick="saveWrongWords()" class="w-full py-3 bg-indigo-600 text-white rounded-lg font-bold text-lg shadow-md hover:bg-indigo-700 active:scale-95 transition">
-                        確認加入
+            <!-- 右側：搜尋 ＋ 登入/登出/同步 -->
+            <div class="flex items-center gap-2">
+                <!-- 搜尋框 -->
+                <div class="relative flex items-center">
+                    <input
+                        type="text"
+                        id="search-input"
+                        placeholder="搜尋..."
+                        class="w-32 sm:w-48 pl-3 pr-8 py-1 rounded-full text-gray-800 text-sm focus:w-40 sm:focus:w-56 transition-all outline-none"
+                        onkeypress="if(event.key === 'Enter') searchWord()">
+                    <button onclick="searchWord()" class="absolute right-2 text-gray-500 hover:text-indigo-600">
+                        🔍
                     </button>
                 </div>
 
-                <button onclick="showView('practice')" class="w-full py-3 mt-3 bg-gray-200 text-gray-600 rounded-xl font-bold text-lg active:scale-95 transition">
-                    不儲存，直接返回
+                <!-- 使用者資訊 ＋ 登入 / 登出 / 同步 -->
+                <div class="flex items-center gap-1">
+                    <span
+                        id="user-email"
+                        class="hidden text-xs sm:text-sm bg-indigo-500/40 px-2 py-1 rounded-full max-w-[120px] sm:max-w-[200px] truncate">
+                    </span>
+
+                    <button
+                        id="btn-login"
+                        onclick="firebaseLogin()"
+                        class="bg-white text-indigo-600 px-3 py-1 rounded-full text-xs sm:text-sm font-bold shadow-md active:scale-95 transition">
+                        登入
+                    </button>
+
+                    <button
+                        id="btn-logout"
+                        onclick="firebaseLogout()"
+                        class="hidden bg-indigo-500 text-white px-3 py-1 rounded-full text-xs sm:text-sm font-bold shadow-md active:scale-95 transition">
+                        登出
+                    </button>
+
+                    <button
+                        id="btn-sync"
+                        onclick="syncCloudNow()"
+                        class="hidden bg-amber-400 text-white px-3 py-1 rounded-full text-xs sm:text-sm font-bold shadow-md active:scale-95 transition">
+                        ☁ 同步
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2">
+            <button onclick="showView('library')" class="bg-indigo-500 hover:bg-indigo-700 py-2 rounded-lg text-sm font-bold transition">單字庫</button>
+            <button onclick="showView('practice')" class="bg-indigo-500 hover:bg-indigo-700 py-2 rounded-lg text-sm font-bold transition">練習區</button>
+            <button onclick="confirmReset()" class="bg-red-500 hover:bg-red-600 py-2 rounded-lg text-sm font-bold transition">重置</button>
+        </div>
+    </div>
+</nav>
+
+<main class="w-full px-4 py-6">
+    <!-- 首頁 -->
+    <div id="view-home" class="space-y-6 animate-in fade-in duration-500">
+        <div class="text-center py-4">
+            <h2 class="text-3xl font-extrabold text-gray-800">歡迎回來！</h2>
+            <p class="text-gray-600 mt-2 text-base">資料已存於本機 (LocalStorage)，登入後可同步至雲端</p>
+        </div>
+
+        <div class="flex flex-col gap-4">
+            <div class="bg-white p-6 rounded-2xl shadow-md border-l-8 border-indigo-500 cursor-pointer active:bg-gray-50" onclick="showView('library')">
+                <h3 class="text-xl font-bold text-gray-800">📖 資料夾清單</h3>
+                <p class="text-gray-500 mt-1">瀏覽、編輯單字與資料夾</p>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-md border-l-8 border-green-500 cursor-pointer active:bg-gray-50" onclick="showView('practice')">
+                <h3 class="text-xl font-bold text-gray-800">🎯 練習專區</h3>
+                <p class="text-gray-500 mt-1">拼字練習、選擇題挑戰</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 單字庫 -->
+    <div id="view-library" class="hidden">
+        <div class="flex justify-between items-center mb-4">
+            <button onclick="showView('home')" class="text-gray-500 font-bold px-3 py-2 bg-gray-200 rounded-lg text-sm">← 返回</button>
+            <div class="flex gap-2">
+                <button id="btn-edit-folders" onclick="toggleEditMode()" class="bg-orange-500 text-white px-3 py-2 rounded-lg text-sm font-bold shadow-md active:scale-95 transition">管理資料夾</button>
+                <button onclick="openAddModal()" class="bg-indigo-600 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg text-2xl pb-1 active:scale-95 transition">+</button>
+            </div>
+        </div>
+
+        <div id="edit-hint" class="hidden bg-orange-100 text-orange-700 p-3 rounded-lg mb-4 text-sm font-bold text-center border border-orange-200">
+            ⚠️ 編輯模式：點擊資料夾進行管理
+            <div class="mt-2 flex justify-center gap-2">
+                <button onclick="openNewFolderModal()" class="bg-green-600 text-white px-3 py-1 rounded text-xs active:scale-95 transition">新增資料夾</button>
+                <button onclick="toggleEditMode()" class="bg-gray-500 text-white px-3 py-1 rounded text-xs active:scale-95 transition">完成編輯</button>
+            </div>
+        </div>
+
+        <h2 class="text-xl font-bold text-indigo-900 mb-4">資料夾目錄</h2>
+        <div class="grid grid-cols-2 gap-3" id="category-grid"></div>
+        <div id="empty-library-hint" class="hidden text-center text-gray-400 py-10 text-lg">目前沒有單字<br>請點擊右上角 + 新增</div>
+    </div>
+
+    <!-- 單字列表 -->
+    <div id="view-word-list" class="hidden">
+        <div class="sticky top-0 bg-gray-50 py-2 z-10 flex items-center justify-between mb-2">
+            <button onclick="showView('library')" class="text-gray-500 font-bold px-3 py-2 bg-gray-200 rounded-lg">← 返回</button>
+            <span id="list-title" class="font-bold text-lg text-indigo-900 truncate max-w-[150px]">分類</span>
+            <div class="w-10"></div>
+        </div>
+        <div class="flex flex-col gap-4" id="words-container"></div>
+    </div>
+
+    <!-- 練習區設定 -->
+    <div id="view-practice" class="hidden">
+        <div class="space-y-4">
+            <h2 class="text-2xl font-bold text-center text-indigo-900 mt-4">特訓設定</h2>
+
+            <div class="bg-white p-6 rounded-2xl shadow-lg border">
+                <!-- Step 1: 選擇資料夾 -->
+                <div class="mb-6">
+                    <label class="block font-bold text-gray-700 mb-3 text-lg">📂 1. 選擇資料夾</label>
+                    <select id="practice-scope" onchange="renderPracticeWordSelection()" class="w-full p-4 border-2 border-indigo-100 rounded-xl text-lg bg-white outline-none focus:border-indigo-500"></select>
+                </div>
+
+                <!-- Step 2: 勾選單字 -->
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block font-bold text-gray-700 text-lg">📝 2. 勾選要練習的單字</label>
+                        <div class="space-x-2">
+                            <button onclick="toggleAllPracticeWords(true)" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded">全選</button>
+                            <button onclick="toggleAllPracticeWords(false)" class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded">取消</button>
+                        </div>
+                    </div>
+                    <div id="practice-word-selection" class="max-h-48 overflow-y-auto custom-scrollbar border-2 border-gray-100 rounded-xl p-2 bg-gray-50">
+                        <!-- 單字勾選列表由 JS 生成 -->
+                    </div>
+                    <p id="selection-count" class="text-right text-xs text-gray-400 mt-1">已選 0 個單字</p>
+                </div>
+
+                <!-- Step 3: 開始遊戲 -->
+                <div class="flex flex-col gap-4 border-t pt-4">
+                    <button onclick="startGame('spelling')" class="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold text-xl shadow-lg active:scale-95 transition flex items-center justify-center gap-2">
+                        🔤 拼字練習
+                    </button>
+                    <button onclick="startGame('choice-en-ch')" class="w-full py-4 bg-green-600 text-white rounded-xl font-bold text-xl shadow-lg active:scale-95 transition">
+                        英選中
+                    </button>
+                    <button onclick="startGame('choice-ch-en')" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold text-xl shadow-lg active:scale-95 transition">
+                        中選英
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 拼字遊戲介面 -->
+    <div id="view-game-spelling" class="hidden">
+        <div class="bg-white p-5 rounded-3xl shadow-xl border text-center relative overflow-hidden min-h-[500px] flex flex-col">
+            <div class="absolute top-0 left-0 h-2 bg-indigo-500 transition-all duration-300" id="spelling-progress-bar" style="width: 0%"></div>
+
+            <div class="flex justify-between items-center mb-4 mt-2">
+                <span id="spelling-progress-text" class="text-base font-bold text-indigo-400">0/0</span>
+                <button onclick="quitGameAndSave()" class="text-red-500 font-bold p-2 border border-red-200 rounded-lg hover:bg-red-50">離開並結算</button>
+            </div>
+
+            <div id="spelling-content" class="flex-1 flex flex-col justify-center">
+                <div id="spelling-definition-area" class="space-y-2 mb-6 min-h-[80px] flex flex-col justify-center"></div>
+                <div id="spelling-hint" class="text-4xl tracking-[0.1em] font-mono mb-8 text-indigo-600 font-bold break-all"></div>
+                <div class="space-y-4 w-full">
+                    <input type="text" id="spelling-input" autocomplete="off" class="w-full border-b-4 border-indigo-100 p-3 text-3xl text-center focus:border-indigo-500 outline-none transition-all placeholder-gray-200 rounded-none bg-transparent" placeholder="輸入答案">
+                    <div class="flex flex-col gap-3 mt-4">
+                        <button onclick="checkSpellingAnswer()" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-xl shadow-md active:bg-indigo-800">檢查</button>
+                        <button onclick="skipSpellingWord()" class="w-full bg-gray-100 text-gray-500 py-4 rounded-xl font-bold text-lg active:bg-gray-200">跳過 (視為答錯)</button>
+                    </div>
+                </div>
+                <div id="spelling-feedback" class="mt-4 font-bold text-xl min-h-[2rem]"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 選擇題遊戲介面 -->
+    <div id="view-game-choice" class="hidden">
+        <div class="bg-white p-5 rounded-3xl shadow-xl border text中心 relative overflow-hidden min-h-[500px] flex flex-col">
+            <div class="absolute top-0 left-0 h-2 bg-indigo-500 transition-all duration-300" id="choice-progress-bar" style="width: 0%"></div>
+
+            <div class="flex justify-between items-center mb-4 mt-2">
+                <span id="choice-progress-text" class="text-base font-bold text-indigo-400">0/0</span>
+                <button onclick="quitGameAndSave()" class="text-red-500 font-bold p-2 border border-red-200 rounded-lg hover:bg-red-50">離開並結算</button>
+            </div>
+
+            <div id="choice-content" class="flex-1 flex flex-col">
+                <div class="mb-6 mt-4 p-4 bg-indigo-50 rounded-2xl border-2 border-indigo-100 min-h-[100px] flex items-center justify-center">
+                    <h3 id="choice-question" class="text-3xl font-extrabold text-indigo-900 break-words leading-snug">Question</h3>
+                </div>
+                <div id="choice-options" class="flex flex-col gap-3 w-full flex-1 justify中心"></div>
+                <div id="choice-feedback" class="mt-4 font-bold text-xl min-h-[2rem]"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通用結算畫面 -->
+    <div id="view-game-result" class="hidden">
+        <div class="bg-white p-6 rounded-3xl shadow-2xl border text-center min-h-[500px] flex flex-col">
+            <div class="py-4">
+                <div class="text-6xl mb-2" id="result-icon">🎉</div>
+                <h3 class="text-2xl font-bold text-gray-800" id="result-title">練習完成！</h3>
+            </div>
+
+            <div class="text-left bg-gray-50 rounded-2xl p-4 border border-gray-100 max-h-[300px] overflow-y-auto custom-scrollbar flex-1">
+                <div class="flex justify-between items-center mb-2 border-b pb-2">
+                    <span class="font-bold text-gray-600">待複習清單</span>
+                    <span id="result-stat" class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full font-bold"></span>
+                </div>
+                <ul id="result-skipped-items" class="space-y-3"></ul>
+            </div>
+
+            <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 mt-4">
+                <label class="block text-sm font-bold text-indigo-900 mb-2">將勾選單字加入到：</label>
+                <select id="save-target-folder" class="w-full p-3 rounded-lg border border-indigo-200 mb-3 bg-white outline-none font-bold text-gray-700 cursor-pointer hover:border-indigo-400 transition"></select>
+                <button onclick="saveWrongWords()" class="w-full py-3 bg-indigo-600 text-white rounded-lg font-bold text-lg shadow-md hover:bg-indigo-700 active:scale-95 transition">
+                    確認加入
                 </button>
             </div>
-        </div>
-    </main>
 
-    <!-- 新增/編輯單字 Modal -->
-    <div id="add-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center p-4 z-[100]">
-        <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
-            <h3 id="modal-title" class="text-xl font-bold mb-4 text-center">新增單字</h3>
-            <div class="space-y-4">
-                <div>
-                    <label class="text-xs text-gray-500 font-bold ml-1">英文</label>
-                    <input type="text" id="new-word" class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 outline-none text-lg">
+            <button onclick="showView('practice')" class="w-full py-3 mt-3 bg-gray-200 text-gray-600 rounded-xl font-bold text-lg active:scale-95 transition">
+                不儲存，直接返回
+            </button>
+        </div>
+    </div>
+</main>
+
+<!-- 新增/編輯單字 Modal -->
+<div id="add-modal" class="fixed inset-0 bg黑色 bg-opacity-60 hidden flex items-center justify中心 p-4 z-[100]">
+    <div class="bg白色 rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+        <h3 id="modal-title" class="text-xl font-bold mb-4 text-center">新增單字</h3>
+        <div class="space-y-4">
+            <div>
+                <label class="text-xs text-gray-500 font-bold ml-1">英文</label>
+                <input type="text" id="new-word" class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 outline-none text-lg">
+            </div>
+            <div>
+                <label class="text-xs text-gray-500 font-bold ml-1">中文與詞性</label>
+                <input type="text" id="new-meaning" class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 outline-none text-lg">
+            </div>
+            <div>
+                <label class="text-xs text-gray-500 font-bold ml-1">資料夾/標籤</label>
+
+                <!-- 既有資料夾複選 -->
+                <div
+                    id="tag-checkbox-container"
+                    class="mt-1 max-h-32 overflow-y-auto custom-scrollbar border-2 border-gray-200 rounded-xl bg-gray-50 p-2 text-sm space-y-1">
                 </div>
-                <div>
-                    <label class="text-xs text-gray-500 font-bold ml-1">中文與詞性</label>
-                    <input type="text" id="new-meaning" class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 outline-none text-lg">
-                </div>
-                <div>
-                    <label class="text-xs text-gray-500 font-bold ml-1">資料夾/標籤</label>
 
-                    <!-- 既有資料夾複選 -->
-                    <div
-                        id="tag-checkbox-container"
-                        class="mt-1 max-h-32 overflow-y-auto custom-scrollbar border-2 border-gray-200 rounded-xl bg-gray-50 p-2 text-sm space-y-1">
-                        <!-- 由 JS 動態產生複選框 -->
-                    </div>
+                <!-- 新增資料夾（選填） -->
+                <input
+                    type="text"
+                    id="new-tag"
+                    placeholder="可選：新增資料夾，多個用逗號分隔"
+                    class="mt-2 w-full border-2 border-gray-200 p-2 rounded-xl focus:border-indigo-500 outline-none text-sm">
 
-                    <!-- 新增資料夾（選填） -->
-                    <input
-                        type="text"
-                        id="new-tag"
-                        placeholder="可選：新增資料夾，多個用逗號分隔"
-                        class="mt-2 w-full border-2 border-gray-200 p-2 rounded-xl focus:border-indigo-500 outline-none text-sm">
-
-                    <p class="text-xs text-gray-400 mt-1 ml-1">
-                        * 若要移出「錯題區」，請在上方清單取消勾選「錯題區」
-                    </p>
-                </div>
-                <div class="grid grid-cols-2 gap-3 pt-2">
-                    <button onclick="closeAddModal()" class="py-3 text-gray-500 font-bold bg-gray-100 rounded-xl active:bg-gray-200 transition">取消</button>
-                    <button onclick="saveNewWord()" class="py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-md active:bg-indigo-700 transition">儲存</button>
-                </div>
+                <p class="text-xs text-gray-400 mt-1 ml-1">
+                    * 若要移出「錯題區」，請在上方清單取消勾選「錯題區」
+                </p>
+            </div>
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button onclick="closeAddModal()" class="py-3 text-gray-500 font-bold bg-gray-100 rounded-xl active:bg-gray-200 transition">取消</button>
+                <button onclick="saveNewWord()" class="py-3 bg-indigo-600 text白色 rounded-xl font-bold shadow-md active:bg-indigo-700 transition">儲存</button>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- 資料夾管理 - 選擇操作 Modal -->
-    <div id="folder-action-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center p-4 z-[110]">
-        <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center">
-            <h3 class="text-xl font-bold mb-4">管理資料夾: <span id="action-folder-name" class="text-indigo-600"></span></h3>
-            <div class="flex flex-col gap-3">
-                <button onclick="prepareRenameFolder()" class="w-full py-3 bg-blue-500 text-white rounded-xl font-bold active:scale-95 transition">重命名</button>
-                <button onclick="prepareDeleteFolder(false)" class="w-full py-3 bg-orange-500 text-white rounded-xl font-bold active:scale-95 transition">刪除資料夾 (保留單字)</button>
-                <button onclick="prepareDeleteFolder(true)" class="w-full py-3 bg-red-600 text-white rounded-xl font-bold active:scale-95 transition">刪除資料夾與單字</button>
-                <button onclick="closeActionModal()" class="w-full py-3 bg-gray-200 text-gray-600 rounded-xl font-bold active:scale-95 transition">取消</button>
-            </div>
+<!-- 資料夾管理 - 選擇操作 Modal -->
+<div id="folder-action-modal" class="fixed inset-0 bg黑色 bg-opacity-60 hidden flex items-center justify中心 p-4 z-[110]">
+    <div class="bg白色 rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center">
+        <h3 class="text-xl font-bold mb-4">管理資料夾: <span id="action-folder-name" class="text-indigo-600"></span></h3>
+        <div class="flex flex-col gap-3">
+            <button onclick="prepareRenameFolder()" class="w-full py-3 bg-blue-500 text白色 rounded-xl font-bold active:scale-95 transition">重命名</button>
+            <button onclick="prepareDeleteFolder(false)" class="w-full py-3 bg-orange-500 text白色 rounded-xl font-bold active:scale-95 transition">刪除資料夾 (保留單字)</button>
+            <button onclick="prepareDeleteFolder(true)" class="w-full py-3 bg-red-600 text白色 rounded-xl font-bold active:scale-95 transition">刪除資料夾與單字</button>
+            <button onclick="closeActionModal()" class="w-full py-3 bg-gray-200 text-gray-600 rounded-xl font-bold active:scale-95 transition">取消</button>
         </div>
     </div>
+</div>
 
-    <!-- 資料夾管理 - 重命名 Modal -->
-    <div id="rename-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center p-4 z-[120]">
-        <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
-            <h3 class="text-xl font-bold mb-4 text-center">重命名資料夾</h3>
-            <input type="text" id="input-rename-folder" class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 outline-none text-lg mb-4">
-            <div class="grid grid-cols-2 gap-3">
-                <button onclick="document.getElementById('rename-modal').classList.add('hidden')" class="py-3 text-gray-500 font-bold bg-gray-100 rounded-xl active:bg-gray-200 transition">取消</button>
-                <button onclick="executeRename()" class="py-3 bg-blue-600 text-white rounded-xl font-bold shadow-md active:bg-blue-700 transition">確認</button>
-            </div>
+<!-- 資料夾管理 - 重命名 Modal -->
+<div id="rename-modal" class="fixed inset-0 bg黑色 bg-opacity-60 hidden flex items-center justify中心 p-4 z-[120]">
+    <div class="bg白色 rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+        <h3 class="text-xl font-bold mb-4 text-center">重命名資料夾</h3>
+        <input type="text" id="input-rename-folder" class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 outline-none text-lg mb-4">
+        <div class="grid grid-cols-2 gap-3">
+            <button onclick="document.getElementById('rename-modal').classList.add('hidden')" class="py-3 text-gray-500 font-bold bg-gray-100 rounded-xl active:bg-gray-200 transition">取消</button>
+            <button onclick="executeRename()" class="py-3 bg-blue-600 text白色 rounded-xl font-bold shadow-md active:bg-blue-700 transition">確認</button>
         </div>
     </div>
+</div>
 
-    <!-- 資料夾管理 - 刪除確認 Modal -->
-    <div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center p-4 z-[130]">
-        <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center">
-            <div class="text-5xl mb-4">⚠️</div>
-            <h3 id="confirm-title" class="text-xl font-bold mb-2">確定刪除？</h3>
-            <p id="confirm-desc" class="text-gray-500 mb-6">此動作無法復原。</p>
-            <div class="grid grid-cols-2 gap-3">
-                <button onclick="document.getElementById('confirm-modal').classList.add('hidden')" class="py-3 text-gray-500 font-bold bg-gray-100 rounded-xl active:bg-gray-200 transition">取消</button>
-                <button onclick="executeDelete()" class="py-3 bg-red-600 text-white rounded-xl font-bold shadow-md active:bg-red-700 transition">確認刪除</button>
-            </div>
+<!-- 資料夾管理 - 刪除確認 Modal -->
+<div id="confirm-modal" class="fixed inset-0 bg黑色 bg-opacity-60 hidden flex items-center justify中心 p-4 z-[130]">
+    <div class="bg白色 rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center">
+        <div class="text-5xl mb-4">⚠️</div>
+        <h3 id="confirm-title" class="text-xl font-bold mb-2">確定刪除？</h3>
+        <p id="confirm-desc" class="text-gray-500 mb-6">此動作無法復原。</p>
+        <div class="grid grid-cols-2 gap-3">
+            <button onclick="document.getElementById('confirm-modal').classList.add('hidden')" class="py-3 text-gray-500 font-bold bg-gray-100 rounded-xl active:bg-gray-200 transition">取消</button>
+            <button onclick="executeDelete()" class="py-3 bg-red-600 text白色 rounded-xl font-bold shadow-md active:bg-red-700 transition">確認刪除</button>
         </div>
     </div>
+</div>
 
-    <!-- 新增資料夾 Modal -->
-    <div id="new-folder-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center p-4 z-[120]">
-        <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
-            <h3 class="text-xl font-bold mb-4 text-center">新增資料夾</h3>
-            <input type="text" id="input-new-folder-name" class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 outline-none text-lg mb-4" placeholder="輸入名稱">
-            <div class="grid grid-cols-2 gap-3">
-                <button onclick="document.getElementById('new-folder-modal').classList.add('hidden')" class="py-3 text-gray-500 font-bold bg-gray-100 rounded-xl active:bg-gray-200 transition">取消</button>
-                <button onclick="confirmNewFolder()" class="py-3 bg-green-600 text-white rounded-xl font-bold shadow-md active:bg-green-700 transition">建立</button>
-            </div>
+<!-- 新增資料夾 Modal -->
+<div id="new-folder-modal" class="fixed inset-0 bg黑色 bg-opacity-60 hidden flex items-center justify中心 p-4 z-[120]">
+    <div class="bg白色 rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+        <h3 class="text-xl font-bold mb-4 text-center">新增資料夾</h3>
+        <input type="text" id="input-new-folder-name" class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 outline-none text-lg mb-4" placeholder="輸入名稱">
+        <div class="grid grid-cols-2 gap-3">
+            <button onclick="document.getElementById('new-folder-modal').classList.add('hidden')" class="py-3 text-gray-500 font-bold bg-gray-100 rounded-xl active:bg-gray-200 transition">取消</button>
+            <button onclick="confirmNewFolder()" class="py-3 bg-green-600 text白色 rounded-xl font-bold shadow-md active:bg-green-700 transition">建立</button>
         </div>
     </div>
+</div>
 
-    <!-- 主程式腳本（非 module，掛在 window 上） -->
-    <script>
-        const STORAGE_KEY = 'wordKingData_v2';
+<!-- 主程式腳本（非 module，掛在 window 上） -->
+<script>
+    const STORAGE_KEY = 'wordKingData_v2';
 
-        let state = {
-            words: [],
-            categories: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(''),
-            unitTags: ["錯題區"],
-            folders: ["錯題區"],
-            game: {
-                mode: '',
-                currentWords: [],
-                index: 0,
-                wrongWords: new Set(),
-                reviewSelection: [],
-                selectedPracticeWords: []
-            },
-            isEditing: false,
-            editingWordIndex: -1,
-            targetFolderAction: '',
-            pendingDeleteType: null // 'keep' or 'all'
-        };
+    let state = {
+        words: [],
+        categories: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(''),
+        unitTags: ["錯題區"],
+        folders: ["錯題區"],
+        game: {
+            mode: '',
+            currentWords: [],
+            index: 0,
+            wrongWords: new Set(),
+            reviewSelection: [],
+            selectedPracticeWords: []
+        },
+        isEditing: false,
+        editingWordIndex: -1,
+        targetFolderAction: '',
+        pendingDeleteType: null // 'keep' or 'all'
+    };
 
-        window.state = state;
+    window.state = state;
 
-        function initSystem() {
-            const storedData = localStorage.getItem(STORAGE_KEY);
-            if (storedData) {
-                try {
-                    const parsed = JSON.parse(storedData);
-                    state.words = parsed.words || [];
-                    state.folders = parsed.folders || ["錯題區"];
-                } catch(e) {
-                    state.words = [...defaultWordDatabase];
-                    state.folders = ["錯題區"];
-                }
-            } else {
+    function initSystem() {
+        const storedData = localStorage.getItem(STORAGE_KEY);
+        if (storedData) {
+            try {
+                const parsed = JSON.parse(storedData);
+                state.words = parsed.words || [];
+                state.folders = parsed.folders || ["錯題區"];
+            } catch(e) {
                 state.words = [...defaultWordDatabase];
                 state.folders = ["錯題區"];
             }
-            if (!state.folders.includes("錯題區")) state.folders.unshift("錯題區");
-            refreshTags();
-            if (state.words.length > 0 || state.folders.length > 1) saveDataLocally();
-        }
-
-        function refreshTags() {
-            const tagsSet = new Set(state.folders);
-            state.words.forEach(w => {
-                if (w.tags) w.tags.forEach(t => tagsSet.add(t));
-            });
-            state.unitTags = Array.from(tagsSet).sort();
-
-            // 舊版 datalist 已不使用，這裡保留相容，不會出錯
-            const datalist = document.getElementById('folder-list');
-            if (datalist) {
-                datalist.innerHTML = state.unitTags.map(t => `<option value="${t}">`).join('');
-            }
-        }
-
-        // 產生「資料夾/標籤」複選清單
-        function renderTagCheckboxes(selectedTags = []) {
-            const container = document.getElementById('tag-checkbox-container');
-            if (!container) return;
-
-            const allTags = state.unitTags || [];
-            container.innerHTML = '';
-
-            if (allTags.length === 0) {
-                container.innerHTML = '<div class="text-xs text-gray-400">目前沒有資料夾，請先建立。</div>';
-                return;
-            }
-
-            allTags.forEach(tag => {
-                const safeId = 'tag-chk-' + tag.replace(/\s+/g, '_');
-                const wrapper = document.createElement('label');
-                wrapper.className = 'inline-flex items-center space-x-2 mr-3 mb-1';
-
-                const checked = selectedTags.includes(tag) ? 'checked' : '';
-                wrapper.innerHTML = `
-                    <input type="checkbox"
-                           class="tag-checkbox w-4 h-4 text-indigo-600 rounded"
-                           value="${tag}"
-                           id="${safeId}"
-                           ${checked}>
-                    <span class="text-sm text-gray-700">${tag}</span>
-                `;
-
-                container.appendChild(wrapper);
-            });
-        }
-
-        function saveDataLocally() {
-            const dataToSave = { words: state.words, folders: state.folders };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
-            refreshTags();
-
-            if (window.autoSyncToCloud) {
-                window.autoSyncToCloud();
-            }
-        }
-
-        // 重置：清除自訂單字與資料夾，回到預設字庫（本機 + 雲端）
-        function confirmReset() {
-            if (!confirm("確定要重製嗎？\n這會刪除所有自訂單字與資料夾，只保留系統內建單字。\n若已登入，雲端也會一併重置。")) {
-                return;
-            }
-
-            localStorage.removeItem(STORAGE_KEY);
-
-            state.words = Array.isArray(defaultWordDatabase) ? [...defaultWordDatabase] : [];
+        } else {
+            state.words = [...defaultWordDatabase];
             state.folders = ["錯題區"];
-
-            saveDataLocally();
-            location.reload();
         }
+        if (!state.folders.includes("錯題區")) state.folders.unshift("錯題區");
+        refreshTags();
+        if (state.words.length > 0 || state.folders.length > 1) saveDataLocally();
+    }
 
-        function showView(viewId) {
-            document.querySelectorAll('main > div').forEach(div => div.classList.add('hidden'));
-            document.getElementById(`view-${viewId}`).classList.remove('hidden');
-            if (viewId === 'library') renderLibrary();
-            if (viewId === 'practice') {
-                renderPracticeOptions();
-                setTimeout(renderPracticeWordSelection, 50);
-            }
-            window.scrollTo(0, 0);
+    function refreshTags() {
+        const tagsSet = new Set(state.folders);
+        state.words.forEach(w => {
+            if (w.tags) w.tags.forEach(t => tagsSet.add(t));
+        });
+        state.unitTags = Array.from(tagsSet).sort();
 
-            if (viewId !== 'library') {
-                state.isEditing = false;
-                updateEditUI();
-            }
+        const datalist = document.getElementById('folder-list');
+        if (datalist) {
+            datalist.innerHTML = state.unitTags.map(t => `<option value="${t}">`).join('');
         }
-
-        // ================= 搜尋功能 =================
-        function searchWord() {
-            const query = document.getElementById('search-input').value.trim().toLowerCase();
-            if (!query) return;
-            const foundWord = state.words.find(w => w.english.toLowerCase() === query || w.meaning.includes(query));
-            if (foundWord) {
-                const targetTag = foundWord.tags.find(t => !state.categories.includes(t)) || foundWord.tags[0];
-                if (targetTag) {
-                    showView('word-list');
-                    renderWordList(targetTag);
-                    setTimeout(() => {
-                        const allCards = document.querySelectorAll('.word-card');
-                        let targetCard = null;
-                        allCards.forEach(card => {
-                            if(card.innerText.toLowerCase().includes(query) || card.innerText.includes(query)) targetCard = card;
-                        });
-                        if (targetCard) {
-                            targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            targetCard.classList.add('highlight-card');
-                            setTimeout(() => targetCard.classList.remove('highlight-card'), 1500);
-                        }
-                    }, 100);
-                } else alert("找到了單字，但它似乎沒有分類標籤。");
-            } else alert("找不到這個單字！");
-        }
-
-        // ================= 資料夾與單字管理 =================
-        function toggleEditMode() { state.isEditing = !state.isEditing; updateEditUI(); renderLibrary(); }
-        function updateEditUI() {
-            const hint = document.getElementById('edit-hint');
-            const btn = document.getElementById('btn-edit-folders');
-            if (state.isEditing) {
-                hint.classList.remove('hidden');
-                btn.classList.replace('bg-orange-500', 'bg-gray-500');
-                btn.innerText = '完成編輯';
-            } else {
-                hint.classList.add('hidden');
-                btn.classList.replace('bg-gray-500', 'bg-orange-500');
-                btn.innerText = '管理資料夾';
-            }
-        }
-
-        function openNewFolderModal() {
-            document.getElementById('input-new-folder-name').value = '';
-            document.getElementById('new-folder-modal').classList.remove('hidden');
-        }
-
-        function confirmNewFolder() {
-            const name = document.getElementById('input-new-folder-name').value.trim();
-            if (!name) return;
-            if (state.folders.includes(name) || state.categories.includes(name)) {
-                alert("此資料夾已存在！");
-                return;
-            }
-            state.folders.push(name);
-            saveDataLocally();
-            renderLibrary();
-            document.getElementById('new-folder-modal').classList.add('hidden');
-        }
-
-        function handleFolderClick(name) {
-            if (state.isEditing) {
-                if (name === "錯題區" || state.categories.includes(name)) {
-                    alert("此系統資料夾無法編輯或刪除。");
-                    return;
-                }
-                openActionModal(name);
-            } else {
-                renderWordList(name);
-            }
-        }
-
-        function openActionModal(folderName) {
-            state.targetFolderAction = folderName;
-            document.getElementById('action-folder-name').innerText = folderName;
-            document.getElementById('folder-action-modal').classList.remove('hidden');
-        }
-
-        function closeActionModal() {
-            document.getElementById('folder-action-modal').classList.add('hidden');
-        }
-
-        function prepareRenameFolder() {
-            closeActionModal();
-            document.getElementById('input-rename-folder').value = state.targetFolderAction;
-            document.getElementById('rename-modal').classList.remove('hidden');
-        }
-
-        function executeRename() {
-            const oldName = state.targetFolderAction;
-            const newName = document.getElementById('input-rename-folder').value.trim();
-
-            if (newName && newName !== oldName) {
-                if (state.folders.includes(newName) || state.categories.includes(newName)) {
-                    alert("此名稱已存在或系統保留。");
-                    return;
-                }
-                state.words.forEach(w => {
-                    if (w.tags && w.tags.includes(oldName)) {
-                        w.tags = w.tags.map(t => t === oldName ? newName : t);
-                    }
-                });
-                state.folders = state.folders.map(f => f === oldName ? newName : f);
-                saveDataLocally();
-                renderLibrary();
-            }
-            document.getElementById('rename-modal').classList.add('hidden');
-            state.targetFolderAction = '';
-        }
-
-        function prepareDeleteFolder(deleteAll) {
-            closeActionModal();
-            state.pendingDeleteType = deleteAll ? 'all' : 'keep';
-
-            const title = document.getElementById('confirm-title');
-            const desc = document.getElementById('confirm-desc');
-
-            if (deleteAll) {
-                title.innerText = "刪除資料夾與單字？";
-                desc.innerText = "該資料夾內的所有單字都會被永久刪除！";
-            } else {
-                title.innerText = "僅刪除資料夾？";
-                desc.innerText = "單字會保留，但會移除此資料夾標籤。";
-            }
-
-            document.getElementById('confirm-modal').classList.remove('hidden');
-        }
-
-        function executeDelete() {
-            const oldName = state.targetFolderAction;
-            const type = state.pendingDeleteType;
-
-            if (type === 'keep') {
-                state.words.forEach(w => {
-                    if (w.tags) w.tags = w.tags.filter(t => t !== oldName);
-                });
-            } else if (type === 'all') {
-                state.words = state.words.filter(w => {
-                    if (!w.tags) return true;
-                    return !w.tags.includes(oldName);
-                });
-            }
-
-            state.folders = state.folders.filter(f => f !== oldName);
-            saveDataLocally();
-            renderLibrary();
-
-            document.getElementById('confirm-modal').classList.add('hidden');
-            state.targetFolderAction = '';
-            state.pendingDeleteType = null;
-        }
-
-        function openAddModal(idx = -1) {
-            state.editingWordIndex = idx;
-            const modal = document.getElementById('add-modal');
-            const tagInput = document.getElementById('new-tag');
-
-            document.getElementById('modal-title').innerText = idx >= 0 ? "編輯單字" : "新增單字";
-
-            if (idx >= 0) {
-                const w = state.words[idx];
-                document.getElementById('new-word').value = w.english;
-                document.getElementById('new-meaning').value = w.meaning;
-                const selectedTags = Array.isArray(w.tags) ? w.tags : [];
-                renderTagCheckboxes(selectedTags);
-                if (tagInput) tagInput.value = '';
-            } else {
-                document.getElementById('new-word').value = '';
-                document.getElementById('new-meaning').value = '';
-                let preSelected = [];
-                const current = document.getElementById('list-title')?.innerText;
-                if (current && !state.categories.includes(current) && current !== '分類') {
-                    preSelected = [current];
-                }
-                renderTagCheckboxes(preSelected);
-                if (tagInput) tagInput.value = '';
-            }
-
-            modal.classList.remove('hidden');
-        }
-
-        function closeAddModal() {
-            document.getElementById('add-modal').classList.add('hidden');
-            state.editingWordIndex = -1;
-        }
-
-        function saveNewWord() {
-            const eng = document.getElementById('new-word').value.trim();
-            const mean = document.getElementById('new-meaning').value.trim();
-            const tagInputEl = document.getElementById('new-tag');
-
-            if (!eng || !mean) return alert("請輸入單字和意思");
-
-            // 1. 從複選框收集既有資料夾
-            const selectedFromCheckbox = Array.from(document.querySelectorAll('.tag-checkbox:checked'))
-                .map(cb => cb.value);
-
-            // 2. 從文字輸入框解析「新增」資料夾（可選）
-            let extraTags = [];
-            if (tagInputEl && tagInputEl.value.trim()) {
-                extraTags = tagInputEl.value.trim()
-                    .split(/[,，]/)
-                    .map(t => t.trim())
-                    .filter(t => t);
-            }
-
-            // 3. 合併、去重
-            const tags = Array.from(new Set([...selectedFromCheckbox, ...extraTags]));
-
-            // 4. 將新資料夾加入 state.folders
-            tags.forEach(t => {
-                if (!state.folders.includes(t)) state.folders.push(t);
-            });
-
-            const data = { english: eng, meaning: mean, tags: tags };
-
-            if (state.editingWordIndex >= 0) {
-                state.words[state.editingWordIndex] = data;
-            } else {
-                state.words.push(data);
-            }
-
-            saveDataLocally();
-            closeAddModal();
-
-            if (!document.getElementById('view-word-list').classList.contains('hidden')) {
-                renderWordList(document.getElementById('list-title').innerText);
-            } else {
-                renderLibrary();
-            }
-        }
-
-        // ================= UI 渲染 (單字庫) =================
-        function renderLibrary() {
-            refreshTags();
-            const grid = document.getElementById('category-grid');
-            grid.innerHTML = '';
-            if(state.isEditing) grid.classList.add('editing-mode'); else grid.classList.remove('editing-mode');
-
-            if(state.words.length === 0 && state.folders.length <= 1) {
-                document.getElementById('empty-library-hint').classList.remove('hidden');
-            } else {
-                document.getElementById('empty-library-hint').classList.add('hidden');
-                if(!state.isEditing) {
-                    state.categories.forEach(cat => {
-                        if(state.words.some(w => w.english.toUpperCase().startsWith(cat))) grid.appendChild(createCatBtn(cat, 'bg-white text-indigo-600 border border-indigo-100', false));
-                    });
-                }
-                state.unitTags.forEach(tag => {
-                    const isSystem = tag === "錯題區";
-                    const count = state.words.filter(w => w.tags && w.tags.includes(tag)).length;
-                    const style = isSystem ? 'bg-red-500 text-white font-bold' : 'bg-indigo-600 text-white font-bold';
-                    grid.appendChild(createCatBtn(`${tag} (${count})`, style, !isSystem, tag));
-                });
-            }
-        }
-
-        function createCatBtn(name, cls, editable, oriName) {
-            const div = document.createElement('div');
-            div.className = `${cls} folder-card relative min-h-[80px] rounded-2xl flex items-center justify-center shadow-sm cursor-pointer active:scale-95 transition-all text-lg text-center px-2 break-all leading-tight`;
-            div.innerHTML = `<span>${name}</span>` + (state.isEditing && editable ? '<span class="absolute top-1 right-1 text-xs bg-white text-red-500 rounded-full w-5 h-5 flex items-center justify-center">✎</span>' : '');
-            div.onclick = () => handleFolderClick(oriName || name.split(' ')[0]);
-            return div;
-        }
-
-        function renderWordList(name) {
-            showView('word-list');
-            document.getElementById('list-title').innerText = name;
-            const container = document.getElementById('words-container');
-            container.innerHTML = '';
-            let filtered = state.words.map((w,i)=>({...w, idx:i}));
-            if(name.length===1 && state.categories.includes(name)) filtered = filtered.filter(w=>w.english.toUpperCase().startsWith(name));
-            else filtered = filtered.filter(w=>w.tags && w.tags.includes(name));
-            filtered.sort((a,b)=>a.english.localeCompare(b.english));
-
-            if(filtered.length === 0) return container.innerHTML = `<div class="text-center text-gray-400 py-10 w-full">無單字</div>`;
-
-            filtered.forEach(w => {
-                const card = document.createElement('div');
-                card.className = 'word-card w-full';
-                const parts = parseMeaning(w.meaning).map(p => `<div class="mb-3 text-indigo-800 font-bold text-lg">${p.text} <span class="block text-sm text-indigo-400 opacity-90 mt-1">${p.pos}</span></div>`).join('');
-                const badge = w.tags && w.tags.includes("錯題區") ? `<span class="absolute top-3 right-3 text-xs bg-red-100 text-red-500 px-2 py-1 rounded-full font-bold">錯題</span>` : '';
-
-                card.innerHTML = `
-                    <div class="word-card-inner">
-                        <div class="word-card-front bg-white border-2 border-indigo-50 p-6 relative flex flex-col justify-center items-center rounded-2xl">
-                            <button class="absolute top-3 left-3 text-gray-400 hover:text-indigo-600 bg-white rounded-full p-1 shadow-sm z-20" onclick="event.stopPropagation(); openAddModal(${w.idx})">✎</button>
-                            ${badge}
-                            <span class="text-3xl font-black text-indigo-900 break-all text-center">${w.english}</span>
-                        </div>
-                        <div class="word-card-back p-6 overflow-y-auto bg-indigo-50 border-2 border-indigo-200 flex flex-col justify-center rounded-2xl">${parts}</div>
-                    </div>`;
-                card.onclick = () => card.classList.toggle('is-flipped');
-                container.appendChild(card);
-            });
-        }
-
-        function parseMeaning(raw) {
-            return raw.split('/').map(b => {
-                const t = b.trim(); const idx = t.lastIndexOf('(');
-                return idx !== -1 ? {text: t.substring(0, idx).trim(), pos: t.substring(idx)} : {text: t, pos: ""};
-            });
-        }
-
-        // ================= 練習區與單字篩選 =================
-        function renderPracticeOptions() {
-            refreshTags();
-            const select = document.getElementById('practice-scope');
-            select.innerHTML = '<option value="all">全部單字夾</option>';
-            state.unitTags.forEach(tag => select.innerHTML += `<option value="${tag}">${tag}</option>`);
-        }
-
-        function renderPracticeWordSelection() {
-            const scope = document.getElementById('practice-scope').value;
-            const container = document.getElementById('practice-word-selection');
-            const countLabel = document.getElementById('selection-count');
-            container.innerHTML = '';
-
-            let pool = (scope === 'all')
-                ? [...state.words]
-                : state.words.filter(w => w.tags && w.tags.includes(scope));
-
-            pool.sort((a,b) => a.english.localeCompare(b.english));
-
-            if(pool.length === 0) {
-                container.innerHTML = '<div class="text-gray-400 text-center py-4">此資料夾沒有單字</div>';
-                countLabel.innerText = '已選 0 個單字';
-                return;
-            }
-
-            pool.forEach((word) => {
-                const div = document.createElement('div');
-                div.className = "flex items-center p-2 border-b border-gray-100 last:border-0 hover:bg-white transition";
-                div.innerHTML = `
-                    <input type="checkbox" class="practice-checkbox w-5 h-5 text-indigo-600 rounded mr-3" checked data-english="${word.english}">
-                    <div class="flex-1 min-w-0">
-                        <div class="font-bold text-gray-800 truncate">${word.english}</div>
-                        <div class="text-xs text-gray-500 truncate">${word.meaning}</div>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-            updateSelectionCount();
-            document.querySelectorAll('.practice-checkbox').forEach(cb => cb.addEventListener('change', updateSelectionCount));
-        }
-
-        function updateSelectionCount() {
-            const checkboxes = document.querySelectorAll('.practice-checkbox:checked');
-            document.getElementById('selection-count').innerText = `已選 ${checkboxes.length} 個單字`;
-        }
-
-        function toggleAllPracticeWords(checked) {
-            document.querySelectorAll('.practice-checkbox').forEach(cb => cb.checked = checked);
-            updateSelectionCount();
-        }
-
-        // ================= 遊戲核心邏輯 =================
-        function startGame(mode) {
-            const checkboxes = document.querySelectorAll('.practice-checkbox:checked');
-            const selectedEnglishes = Array.from(checkboxes).map(cb => cb.dataset.english);
-            let pool = state.words.filter(w => selectedEnglishes.includes(w.english));
-
-            if (pool.length === 0) return alert("請至少勾選一個單字！");
-
-            if (mode.startsWith('choice') && pool.length < 5) {
-                if (state.words.length >= 5) alert("勾選單字不足 5 個，干擾選項將來自其他單元。");
-                else return alert("系統單字總量不足 5 個，無法進行選擇題！");
-            }
-
-            state.game.mode = mode;
-            state.game.currentWords = pool.sort(() => Math.random() - 0.5);
-            state.game.index = 0;
-            state.game.wrongWords = new Set();
-
-            if (mode === 'spelling') { showView('game-spelling'); loadSpellingWord(); }
-            else { showView('game-choice'); loadChoiceQuestion(); }
-        }
-
-        function quitGameAndSave() { endGame(true); }
-        function quitGame() { showView('practice'); }
-
-        // --- 拼字遊戲 ---
-        function loadSpellingWord() {
-            const word = state.game.currentWords[state.game.index];
-            const total = state.game.currentWords.length;
-            document.getElementById('spelling-progress-text').innerText = `${state.game.index + 1} / ${total}`;
-            document.getElementById('spelling-progress-bar').style.width = `${((state.game.index+1)/total)*100}%`;
-
-            const defArea = document.getElementById('spelling-definition-area');
-            defArea.innerHTML = parseMeaning(word.meaning).map(p => `
-                <div class="flex flex-col items-center mb-3">
-                    <div class="text-2xl font-extrabold text-gray-800 text-center">${p.text}</div>
-                    <div class="mt-1 px-4 py-1 bg-indigo-50 text-indigo-500 rounded-full text-sm font-bold border border-indigo-100">${p.pos||"(?)"}</div>
-                </div>`).join('');
-
-            const eng = word.english;
-            let hint = eng.length > 2 ? eng[0] + "_".repeat(eng.length-2) + eng[eng.length-1] : eng[0] + "_".repeat(eng.length-1);
-            document.getElementById('spelling-hint').innerText = hint.split('').join(' ');
-            document.getElementById('spelling-input').value = '';
-            document.getElementById('spelling-feedback').innerText = '';
-        }
-
-        function checkSpellingAnswer() {
-            const input = document.getElementById('spelling-input');
-            const correct = state.game.currentWords[state.game.index].english.toLowerCase();
-            if (input.value.trim().toLowerCase() === correct) {
-                document.getElementById('spelling-feedback').className = "mt-4 text-green-500 font-bold";
-                document.getElementById('spelling-feedback').innerText = "正確！✨";
-                setTimeout(nextQuestion, 600);
-            } else handleWrongAnswer(input.parentElement);
-        }
-
-        function skipSpellingWord() {
-            const word = state.game.currentWords[state.game.index];
-            state.game.wrongWords.add(word);
-            document.getElementById('spelling-input').value = word.english;
-            document.getElementById('spelling-feedback').className = "mt-4 text-orange-500 font-bold";
-            document.getElementById('spelling-feedback').innerText = `答案：${word.english}`;
-            setTimeout(nextQuestion, 1500);
-        }
-
-        // --- 選擇題遊戲 ---
-        function loadChoiceQuestion() {
-            const word = state.game.currentWords[state.game.index];
-            const total = state.game.currentWords.length;
-            document.getElementById('choice-progress-text').innerText = `${state.game.index + 1} / ${total}`;
-            document.getElementById('choice-progress-bar').style.width = `${((state.game.index+1)/total)*100}%`;
-            document.getElementById('choice-feedback').innerText = '';
-
-            const isEnToCh = state.game.mode === 'choice-en-ch';
-            const questionEl = document.getElementById('choice-question');
-            questionEl.innerText = isEnToCh ? word.english : formatMeaning(word.meaning);
-
-            let options = [word];
-            let pool = state.game.currentWords.length >= 5 ? state.game.currentWords : state.words;
-
-            while (options.length < 5) {
-                const randomWord = pool[Math.floor(Math.random() * pool.length)];
-                if (!options.includes(randomWord)) options.push(randomWord);
-            }
-            options.sort(() => Math.random() - 0.5);
-
-            const optionsContainer = document.getElementById('choice-options');
-            optionsContainer.innerHTML = '';
-
-            options.forEach(opt => {
-                const btn = document.createElement('button');
-                btn.className = "choice-btn w-full bg-white border-2 border-indigo-100 text-gray-700 font-bold py-4 rounded-xl text-lg shadow-sm hover:border-indigo-300";
-                btn.innerText = isEnToCh ? formatMeaning(opt.meaning) : opt.english;
-
-                btn.onclick = () => {
-                    const allBtns = document.querySelectorAll('.choice-btn');
-                    allBtns.forEach(b => b.disabled = true);
-
-                    if (opt === word) {
-                        btn.classList.add('choice-correct');
-                        document.getElementById('choice-feedback').className = "mt-4 text-green-500 font-bold";
-                        document.getElementById('choice-feedback').innerText = "答對囉！🎉";
-                        setTimeout(nextQuestion, 800);
-                    } else {
-                        btn.classList.add('choice-wrong');
-                        allBtns.forEach(b => {
-                            if ((isEnToCh && b.innerText === formatMeaning(word.meaning)) ||
-                                (!isEnToCh && b.innerText === word.english)) {
-                                b.classList.add('choice-correct');
-                            }
-                        });
-                        state.game.wrongWords.add(word);
-                        document.getElementById('choice-feedback').className = "mt-4 text-red-500 font-bold";
-                        document.getElementById('choice-feedback').innerText = "答錯囉！";
-                        setTimeout(nextQuestion, 1500);
-                    }
-                };
-                optionsContainer.appendChild(btn);
-            });
-        }
-
-        // 題目/選項顯示「中文 + 詞性」
-        function formatMeaning(raw) {
-            const firstBlock = raw.split('/')[0].trim();
-            const idx = firstBlock.lastIndexOf('(');
-
-            let text = firstBlock;
-            let pos = '';
-
-            if (idx !== -1) {
-                text = firstBlock.substring(0, idx).trim();
-                pos = firstBlock.substring(idx).trim();
-            }
-
-            const shortText = text.length > 15 ? text.substring(0, 15) + "..." : text;
-
-            return pos ? `${shortText} ${pos}` : shortText;
-        }
-
-        function handleWrongAnswer(element) {
-            const fbId = state.game.mode.startsWith('choice') ? 'choice-feedback' : 'spelling-feedback';
-            document.getElementById(fbId).className = "mt-4 text-red-500 font-bold";
-            document.getElementById(fbId).innerText = "拼錯囉！";
-            element.classList.add('shake');
-            setTimeout(() => element.classList.remove('shake'), 400);
-            state.game.wrongWords.add(state.game.currentWords[state.game.index]);
-        }
-
-        function nextQuestion() {
-            state.game.index++;
-            if (state.game.index < state.game.currentWords.length) {
-                if (state.game.mode === 'spelling') loadSpellingWord();
-                else loadChoiceQuestion();
-            } else {
-                endGame(false);
-            }
-        }
-
-        // ================= 結算邏輯 =================
-        function endGame(isAborted = false) {
-            document.getElementById('view-game-spelling').classList.add('hidden');
-            document.getElementById('view-game-choice').classList.add('hidden');
-            document.getElementById('view-game-result').classList.remove('hidden');
-
-            const list = document.getElementById('result-skipped-items');
-            const stat = document.getElementById('result-stat');
-            const title = document.getElementById('result-title');
-            const icon = document.getElementById('result-icon');
-
-            if (isAborted) {
-                title.innerText = "練習中斷";
-                icon.innerText = "⏸️";
-            } else {
-                title.innerText = "練習完成！";
-                icon.innerText = "🎉";
-            }
-
-            const wrongs = Array.from(state.game.wrongWords);
-            stat.innerText = `答錯/跳過: ${wrongs.length} 題`;
-            state.game.reviewSelection = [];
-
-            if (wrongs.length === 0) {
-                list.innerHTML = `<li class="p-4 text-center text-green-600 font-bold bg-green-50 rounded-xl">👏 完美！沒有錯誤單字。</li>`;
-            } else {
-                list.innerHTML = wrongs.map((w, idx) => {
-                    state.game.reviewSelection.push(w);
-                    const isAlreadyWrong = w.tags && w.tags.includes("錯題區");
-                    return `
-                    <li class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm flex items-center gap-3">
-                        <input type="checkbox" id="review-chk-${idx}" class="w-6 h-6 text-indigo-600 rounded flex-none" checked onchange="toggleReviewItem(${idx})">
-                        <div class="flex flex-col flex-1 min-w-0">
-                            <div class="flex items-center gap-2 flex-wrap">
-                                <span class="text-indigo-600 font-black text-lg break-all">${w.english}</span>
-                                ${isAlreadyWrong ? '<span class="text-xs bg-red-100 text-red-500 px-1 rounded flex-none">已在錯題區</span>' : ''}
-                            </div>
-                            <span class="text-gray-500 text-sm truncate">${w.meaning}</span>
-                        </div>
-                    </li>
-                `}).join('');
-            }
-
-            const saveSelect = document.getElementById('save-target-folder');
-            saveSelect.innerHTML = '<option value="NEW_FOLDER_OPTION" class="text-indigo-600 font-bold">+ 新增資料夾...</option>';
-            state.unitTags.forEach(tag => {
-                const isWrong = tag === "錯題區";
-                saveSelect.innerHTML += `<option value="${tag}" ${isWrong ? 'selected' : ''}>${tag}</option>`;
-            });
-        }
-
-        window.toggleReviewItem = function(idx) {
-            const wrongs = Array.from(state.game.wrongWords);
-            const word = wrongs[idx];
-            const checkbox = document.getElementById(`review-chk-${idx}`);
-            if (checkbox.checked) {
-                if(!state.game.reviewSelection.includes(word)) state.game.reviewSelection.push(word);
-            } else {
-                state.game.reviewSelection = state.game.reviewSelection.filter(w => w !== word);
-            }
-        };
-
-        function saveWrongWords() {
-            if (state.game.reviewSelection.length === 0) return alert("未選擇任何單字");
-
-            let targetFolder = document.getElementById('save-target-folder').value;
-
-            if (targetFolder === 'NEW_FOLDER_OPTION') {
-                const newName = prompt("請輸入新資料夾名稱：");
-                if (!newName || !newName.trim()) return;
-                targetFolder = newName.trim();
-
-                if (!state.folders.includes(targetFolder)) {
-                    state.folders.push(targetFolder);
-                }
-            }
-
-            let count = 0;
-            state.game.reviewSelection.forEach(word => {
-                if (!word.tags) word.tags = [];
-                if (!word.tags.includes(targetFolder)) {
-                    word.tags.push(targetFolder);
-                    count++;
-                }
-            });
-
-            saveDataLocally();
-            alert(`已將 ${count} 個單字加入「${targetFolder}」！`);
-            showView('practice');
-        }
-
-        window.onload = () => {
-            initSystem();
-            showView('home');
-        };
-    </script>
-
-    <!-- Firebase + Firestore + Auth 模組腳本 -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-        import {
-            getAuth,
-            onAuthStateChanged,
-            GoogleAuthProvider,
-            signInWithPopup,
-            signOut
-        } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
-        import {
-            getFirestore,
-            doc,
-            getDoc,
-            setDoc
-        } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyB2Q10x0JxoAGQt4IiwGr9rwyIm7M1xjbA",
-            authDomain: "wordking-434f7.firebaseapp.com",
-            projectId: "wordking-434f7",
-            storageBucket: "wordking-434f7.firebasestorage.app",
-            messagingSenderId: "340952543206",
-            appId: "1:340952543206:web:5388cff593ebee0d61b027"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const provider = new GoogleAuthProvider();
-
-        function updateAuthUI(user) {
-            const loginBtn = document.getElementById('btn-login');
-            const logoutBtn = document.getElementById('btn-logout');
-            const syncBtn = document.getElementById('btn-sync');
-            const userSpan = document.getElementById('user-email');
-
-            if (!loginBtn || !logoutBtn || !syncBtn || !userSpan) return;
-
-            if (user) {
-                loginBtn.classList.add('hidden');
-                logoutBtn.classList.remove('hidden');
-                syncBtn.classList.remove('hidden');
-                userSpan.classList.remove('hidden');
-                userSpan.textContent = user.email || user.displayName || '已登入';
-            } else {
-                loginBtn.classList.remove('hidden');
-                logoutBtn.classList.add('hidden');
-                syncBtn.classList.add('hidden');
-                userSpan.classList.add('hidden');
-                userSpan.textContent = '';
-            }
-        }
-
-        function mergeWords(baseWords, cloudWords) {
-            const map = new Map();
-
-            (baseWords || []).forEach(w => {
-                if (w && w.english) {
-                    map.set(w.english.toLowerCase(), { ...w });
-                }
-            });
-
-            (cloudWords || []).forEach(w => {
-                if (!w || !w.english) return;
-                const key = w.english.toLowerCase();
-                if (map.has(key)) {
-                    const base = map.get(key);
-                    const baseTags = Array.isArray(base.tags) ? base.tags : [];
-                    const cloudTags = Array.isArray(w.tags) ? w.tags : [];
-                    const mergedTags = Array.from(new Set([...baseTags, ...cloudTags]));
-
-                    map.set(key, {
-                        ...base,
-                        tags: mergedTags
-                    });
-                } else {
-                    map.set(key, { ...w });
-                }
-            });
-
-            return Array.from(map.values());
-        }
-
-        async function saveToCloud(user) {
-            if (!window.state) return;
-
-            const payload = {
-                words: window.state.words || [],
-                folders: window.state.folders || []
-            };
-
-            const ref = doc(db, 'users', user.uid);
-            await setDoc(ref, payload, { merge: true });
-        }
-
-        async function loadFromCloud(user) {
-            const ref = doc(db, 'users', user.uid);
-            const snap = await getDoc(ref);
-
-            if (!snap.exists()) {
-                await saveToCloud(user);
-                return;
-            }
-
-            const data = snap.data();
-            const cloudWords = data.words || [];
-            const cloudFolders = data.folders || [];
-
-            const baseWords =
-                (Array.isArray(window.defaultWordDatabase) && window.defaultWordDatabase.length > 0)
-                    ? window.defaultWordDatabase
-                    : (window.state?.words || []);
-
-            const mergedWords = mergeWords(baseWords, cloudWords);
-
-            if (window.state) {
-                window.state.words = mergedWords;
-                window.state.folders = Array.from(new Set(["錯題區", ...(cloudFolders || [])]));
-
-                if (typeof window.saveDataLocally === 'function') {
-                    window.saveDataLocally();
-                }
-
-                if (typeof window.refreshTags === 'function') {
-                    window.refreshTags();
-                }
-
-                const libView = document.getElementById('view-library');
-                const pracView = document.getElementById('view-practice');
-
-                if (libView && !libView.classList.contains('hidden') && typeof window.renderLibrary === 'function') {
-                    window.renderLibrary();
-                }
-                if (pracView && !pracView.classList.contains('hidden')
-                    && typeof window.renderPracticeOptions === 'function'
-                    && typeof window.renderPracticeWordSelection === 'function') {
-                    window.renderPracticeOptions();
-                    window.renderPracticeWordSelection();
-                }
-            }
-        }
-
-        window.firebaseLogin = async () => {
-            try {
-                await signInWithPopup(auth, provider);
-            } catch (err) {
-                console.error(err);
-                alert('登入失敗：' + (err.message || err));
-            }
-        };
-
-        window.firebaseLogout = async () => {
-            try {
-                await signOut(auth);
-            } catch (err) {
-                console.error(err);
-                alert('登出失敗：' + (err.message || err));
-            }
-        };
-
-        window.syncCloudNow = async () => {
-            const user = auth.currentUser;
-            if (!user) {
-                alert('請先登入');
-                return;
-            }
-            try {
-                await saveToCloud(user);
-                alert('已將目前資料同步到雲端');
-            } catch (err) {
-                console.error(err);
-                alert('同步失敗：' + (err.message || err));
-            }
-        };
-
-        window.autoSyncToCloud = async () => {
-            const user = auth.currentUser;
-            if (!user) return;
-            try {
-                await saveToCloud(user);
-            } catch (err) {
-                console.error('自動同步失敗', err);
-            }
-        };
-
-        onAuthStateChanged(auth, async user => {
-            updateAuthUI(user);
-            if (user) {
-                try {
-                    await loadFromCloud(user);
-                    console.log('已從雲端載入個人資料');
-                } catch (err) {
-                    console.error('載入雲端資料失敗', err);
-                }
+    }
+
+    // 合併兩個 meaning 字串（用 / 分段，去重，舊的在前）
+    function mergeMeaningStrings(oldMeaning, newMeaning) {
+        const splitParts = str =>
+            (str || '')
+                .split('/')
+                .map(s => s.trim())
+                .filter(s => s);
+
+        const partsOld = splitParts(oldMeaning);
+        const partsNew = splitParts(newMeaning);
+
+        const seen = new Set();
+        const merged = [];
+
+        partsOld.forEach(p => {
+            if (!seen.has(p)) {
+                seen.add(p);
+                merged.push(p);
             }
         });
-    </script>
+        partsNew.forEach(p => {
+            if (!seen.has(p)) {
+                seen.add(p);
+                merged.push(p);
+            }
+        });
+
+        return merged.join(' / ');
+    }
+
+    // 對整個單字陣列做去重＋合併：同一個英文的 meaning / tags 都融合
+    function mergeDuplicateWords(words) {
+        const map = new Map();
+
+        (words || []).forEach(w => {
+            if (!w || !w.english) return;
+            const key = w.english.toLowerCase();
+            const incomingTags = Array.isArray(w.tags) ? w.tags : [];
+
+            if (!map.has(key)) {
+                map.set(key, {
+                    english: w.english,
+                    meaning: w.meaning || '',
+                    tags: Array.from(new Set(incomingTags))
+                });
+            } else {
+                const exists = map.get(key);
+
+                exists.meaning = mergeMeaningStrings(exists.meaning, w.meaning);
+
+                const mergedTags = Array.from(
+                    new Set([...(exists.tags || []), ...incomingTags])
+                );
+                exists.tags = mergedTags;
+
+                map.set(key, exists);
+            }
+        });
+
+        return Array.from(map.values());
+    }
+
+    function saveDataLocally() {
+        // 先把可能重複的英文單字合併起來
+        state.words = mergeDuplicateWords(state.words || []);
+
+        const dataToSave = { words: state.words, folders: state.folders };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+        refreshTags();
+
+        if (window.autoSyncToCloud) {
+            window.autoSyncToCloud();
+        }
+    }
+
+    // 重置：清除自訂單字與資料夾，回到預設字庫（本機 + 雲端）
+    function confirmReset() {
+        if (!confirm("確定要重製嗎？\n這會刪除所有自訂單字與資料夾，只保留系統內建單字。\n若已登入，雲端也會一併重置。")) {
+            return;
+        }
+
+        localStorage.removeItem(STORAGE_KEY);
+
+        state.words = Array.isArray(defaultWordDatabase) ? [...defaultWordDatabase] : [];
+        state.folders = ["錯題區"];
+
+        saveDataLocally();
+        location.reload();
+    }
+
+    function showView(viewId) {
+        document.querySelectorAll('main > div').forEach(div => div.classList.add('hidden'));
+        document.getElementById(`view-${viewId}`).classList.remove('hidden');
+        if (viewId === 'library') renderLibrary();
+        if (viewId === 'practice') {
+            renderPracticeOptions();
+            setTimeout(renderPracticeWordSelection, 50);
+        }
+        window.scrollTo(0, 0);
+
+        if (viewId !== 'library') {
+            state.isEditing = false;
+            updateEditUI();
+        }
+    }
+
+    // ================= 搜尋功能 =================
+    function searchWord() {
+        const query = document.getElementById('search-input').value.trim().toLowerCase();
+        if (!query) return;
+        const foundWord = state.words.find(w => w.english.toLowerCase() === query || w.meaning.includes(query));
+        if (foundWord) {
+            const targetTag = foundWord.tags.find(t => !state.categories.includes(t)) || foundWord.tags[0];
+            if (targetTag) {
+                showView('word-list');
+                renderWordList(targetTag);
+                setTimeout(() => {
+                    const allCards = document.querySelectorAll('.word-card');
+                    let targetCard = null;
+                    allCards.forEach(card => {
+                        if(card.innerText.toLowerCase().includes(query) || card.innerText.includes(query)) targetCard = card;
+                    });
+                    if (targetCard) {
+                        targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        targetCard.classList.add('highlight-card');
+                        setTimeout(() => targetCard.classList.remove('highlight-card'), 1500);
+                    }
+                }, 100);
+            } else alert("找到了單字，但它似乎沒有分類標籤。");
+        } else alert("找不到這個單字！");
+    }
+
+    // ================= 資料夾與單字管理 =================
+    function toggleEditMode() { state.isEditing = !state.isEditing; updateEditUI(); renderLibrary(); }
+    function updateEditUI() {
+        const hint = document.getElementById('edit-hint');
+        const btn = document.getElementById('btn-edit-folders');
+        if (state.isEditing) {
+            hint.classList.remove('hidden');
+            btn.classList.replace('bg-orange-500', 'bg-gray-500');
+            btn.innerText = '完成編輯';
+        } else {
+            hint.classList.add('hidden');
+            btn.classList.replace('bg-gray-500', 'bg-orange-500');
+            btn.innerText = '管理資料夾';
+        }
+    }
+
+    function openNewFolderModal() {
+        document.getElementById('input-new-folder-name').value = '';
+        document.getElementById('new-folder-modal').classList.remove('hidden');
+    }
+
+    function confirmNewFolder() {
+        const name = document.getElementById('input-new-folder-name').value.trim();
+        if (!name) return;
+        if (state.folders.includes(name) || state.categories.includes(name)) {
+            alert("此資料夾已存在！");
+            return;
+        }
+        state.folders.push(name);
+        saveDataLocally();
+        renderLibrary();
+        document.getElementById('new-folder-modal').classList.add('hidden');
+    }
+
+    function handleFolderClick(name) {
+        if (state.isEditing) {
+            if (name === "錯題區" || state.categories.includes(name)) {
+                alert("此系統資料夾無法編輯或刪除。");
+                return;
+            }
+            openActionModal(name);
+        } else {
+            renderWordList(name);
+        }
+    }
+
+    function openActionModal(folderName) {
+        state.targetFolderAction = folderName;
+        document.getElementById('action-folder-name').innerText = folderName;
+        document.getElementById('folder-action-modal').classList.remove('hidden');
+    }
+
+    function closeActionModal() {
+        document.getElementById('folder-action-modal').classList.add('hidden');
+    }
+
+    function prepareRenameFolder() {
+        closeActionModal();
+        document.getElementById('input-rename-folder').value = state.targetFolderAction;
+        document.getElementById('rename-modal').classList.remove('hidden');
+    }
+
+    function executeRename() {
+        const oldName = state.targetFolderAction;
+        const newName = document.getElementById('input-rename-folder').value.trim();
+
+        if (newName && newName !== oldName) {
+            if (state.folders.includes(newName) || state.categories.includes(newName)) {
+                alert("此名稱已存在或系統保留。");
+                return;
+            }
+            state.words.forEach(w => {
+                if (w.tags && w.tags.includes(oldName)) {
+                    w.tags = w.tags.map(t => t === oldName ? newName : t);
+                }
+            });
+            state.folders = state.folders.map(f => f === oldName ? newName : f);
+            saveDataLocally();
+            renderLibrary();
+        }
+        document.getElementById('rename-modal').classList.add('hidden');
+        state.targetFolderAction = '';
+    }
+
+    function prepareDeleteFolder(deleteAll) {
+        closeActionModal();
+        state.pendingDeleteType = deleteAll ? 'all' : 'keep';
+
+        const title = document.getElementById('confirm-title');
+        const desc = document.getElementById('confirm-desc');
+
+        if (deleteAll) {
+            title.innerText = "刪除資料夾與單字？";
+            desc.innerText = "該資料夾內的所有單字都會被永久刪除！";
+        } else {
+            title.innerText = "僅刪除資料夾？";
+            desc.innerText = "單字會保留，但會移除此資料夾標籤。";
+        }
+
+        document.getElementById('confirm-modal').classList.remove('hidden');
+    }
+
+    function executeDelete() {
+        const oldName = state.targetFolderAction;
+        const type = state.pendingDeleteType;
+
+        if (type === 'keep') {
+            state.words.forEach(w => {
+                if (w.tags) w.tags = w.tags.filter(t => t !== oldName);
+            });
+        } else if (type === 'all') {
+            state.words = state.words.filter(w => {
+                if (!w.tags) return true;
+                return !w.tags.includes(oldName);
+            });
+        }
+
+        state.folders = state.folders.filter(f => f !== oldName);
+        saveDataLocally();
+        renderLibrary();
+
+        document.getElementById('confirm-modal').classList.add('hidden');
+        state.targetFolderAction = '';
+        state.pendingDeleteType = null;
+    }
+
+    function openAddModal(idx = -1) {
+        state.editingWordIndex = idx;
+        const modal = document.getElementById('add-modal');
+        const tagInput = document.getElementById('new-tag');
+
+        document.getElementById('modal-title').innerText = idx >= 0 ? "編輯單字" : "新增單字";
+
+        if (idx >= 0) {
+            const w = state.words[idx];
+            document.getElementById('new-word').value = w.english;
+            document.getElementById('new-meaning').value = w.meaning;
+            const selectedTags = Array.isArray(w.tags) ? w.tags : [];
+            renderTagCheckboxes(selectedTags);
+            if (tagInput) tagInput.value = '';
+        } else {
+            document.getElementById('new-word').value = '';
+            document.getElementById('new-meaning').value = '';
+            let preSelected = [];
+            const current = document.getElementById('list-title')?.innerText;
+            if (current && !state.categories.includes(current) && current !== '分類') {
+                preSelected = [current];
+            }
+            renderTagCheckboxes(preSelected);
+            if (tagInput) tagInput.value = '';
+        }
+
+        modal.classList.remove('hidden');
+    }
+
+    function closeAddModal() {
+        document.getElementById('add-modal').classList.add('hidden');
+        state.editingWordIndex = -1;
+    }
+
+    function saveNewWord() {
+        const eng = document.getElementById('new-word').value.trim();
+        const mean = document.getElementById('new-meaning').value.trim();
+        const tagInputEl = document.getElementById('new-tag');
+
+        if (!eng || !mean) return alert("請輸入單字和意思");
+
+        const selectedFromCheckbox = Array.from(document.querySelectorAll('.tag-checkbox:checked'))
+            .map(cb => cb.value);
+
+        let extraTags = [];
+        if (tagInputEl && tagInputEl.value.trim()) {
+            extraTags = tagInputEl.value.trim()
+                .split(/[,，]/)
+                .map(t => t.trim())
+                .filter(t => t);
+        }
+
+        const tags = Array.from(new Set([...selectedFromCheckbox, ...extraTags]));
+
+        tags.forEach(t => {
+            if (!state.folders.includes(t)) state.folders.push(t);
+        });
+
+        const data = { english: eng, meaning: mean, tags: tags };
+
+        if (state.editingWordIndex >= 0) {
+            state.words[state.editingWordIndex] = data;
+        } else {
+            state.words.push(data);
+        }
+
+        saveDataLocally();
+        closeAddModal();
+
+        if (!document.getElementById('view-word-list').classList.contains('hidden')) {
+            renderWordList(document.getElementById('list-title').innerText);
+        } else {
+            renderLibrary();
+        }
+    }
+
+    // ================= UI 渲染 (單字庫) =================
+    function renderLibrary() {
+        refreshTags();
+        const grid = document.getElementById('category-grid');
+        grid.innerHTML = '';
+        if(state.isEditing) grid.classList.add('editing-mode'); else grid.classList.remove('editing-mode');
+
+        if(state.words.length === 0 && state.folders.length <= 1) {
+            document.getElementById('empty-library-hint').classList.remove('hidden');
+        } else {
+            document.getElementById('empty-library-hint').classList.add('hidden');
+            if(!state.isEditing) {
+                state.categories.forEach(cat => {
+                    if(state.words.some(w => w.english.toUpperCase().startsWith(cat))) grid.appendChild(createCatBtn(cat, 'bg-white text-indigo-600 border border-indigo-100', false));
+                });
+            }
+            state.unitTags.forEach(tag => {
+                const isSystem = tag === "錯題區";
+                const count = state.words.filter(w => w.tags && w.tags.includes(tag)).length;
+                const style = isSystem ? 'bg-red-500 text-white font-bold' : 'bg-indigo-600 text-white font-bold';
+                grid.appendChild(createCatBtn(`${tag} (${count})`, style, !isSystem, tag));
+            });
+        }
+    }
+
+    function createCatBtn(name, cls, editable, oriName) {
+        const div = document.createElement('div');
+        div.className = `${cls} folder-card relative min-h-[80px] rounded-2xl flex items中心 justify中心 shadow-sm cursor-pointer active:scale-95 transition-all text-lg text-center px-2 break-all leading-tight`;
+        div.innerHTML = `<span>${name}</span>` + (state.isEditing && editable ? '<span class="absolute top-1 right-1 text-xs bg白色 text-red-500 rounded-full w-5 h-5 flex items中心 justify中心">✎</span>' : '');
+        div.onclick = () => handleFolderClick(oriName || name.split(' ')[0]);
+        return div;
+    }
+
+    function renderWordList(name) {
+        showView('word-list');
+        document.getElementById('list-title').innerText = name;
+        const container = document.getElementById('words-container');
+        container.innerHTML = '';
+        let filtered = state.words.map((w,i)=>({...w, idx:i}));
+        if(name.length===1 && state.categories.includes(name)) filtered = filtered.filter(w=>w.english.toUpperCase().startsWith(name));
+        else filtered = filtered.filter(w=>w.tags && w.tags.includes(name));
+        filtered.sort((a,b)=>a.english.localeCompare(b.english));
+
+        if(filtered.length === 0) return container.innerHTML = `<div class="text-center text-gray-400 py-10 w-full">無單字</div>`;
+
+        filtered.forEach(w => {
+            const card = document.createElement('div');
+            card.className = 'word-card w-full';
+            const parts = parseMeaning(w.meaning).map(p => `<div class="mb-3 text-indigo-800 font-bold text-lg">${p.text} <span class="block text-sm text-indigo-400 opacity-90 mt-1">${p.pos}</span></div>`).join('');
+            const badge = w.tags && w.tags.includes("錯題區") ? `<span class="absolute top-3 right-3 text-xs bg-red-100 text-red-500 px-2 py-1 rounded-full font-bold">錯題</span>` : '';
+
+            card.innerHTML = `
+                <div class="word-card-inner">
+                    <div class="word-card-front bg白色 border-2 border-indigo-50 p-6 relative flex flex-col justify中心 items中心 rounded-2xl">
+                        <button class="absolute top-3 left-3 text-gray-400 hover:text-indigo-600 bg白色 rounded-full p-1 shadow-sm z-20" onclick="event.stopPropagation(); openAddModal(${w.idx})">✎</button>
+                        ${badge}
+                        <span class="text-3xl font-black text-indigo-900 break-all text-center">${w.english}</span>
+                    </div>
+                    <div class="word-card-back p-6 overflow-y-auto bg-indigo-50 border-2 border-indigo-200 flex flex-col justify中心 rounded-2xl">${parts}</div>
+                </div>`;
+            card.onclick = () => card.classList.toggle('is-flipped');
+            container.appendChild(card);
+        });
+    }
+
+    function parseMeaning(raw) {
+        return raw.split('/').map(b => {
+            const t = b.trim(); const idx = t.lastIndexOf('(');
+            return idx !== -1 ? {text: t.substring(0, idx).trim(), pos: t.substring(idx)} : {text: t, pos: ""};
+        });
+    }
+
+    // ================= 練習區與單字篩選 =================
+    function renderPracticeOptions() {
+        refreshTags();
+        const select = document.getElementById('practice-scope');
+        select.innerHTML = '<option value="all">全部單字夾</option>';
+        state.unitTags.forEach(tag => select.innerHTML += `<option value="${tag}">${tag}</option>`);
+    }
+
+    function renderPracticeWordSelection() {
+        const scope = document.getElementById('practice-scope').value;
+        const container = document.getElementById('practice-word-selection');
+        const countLabel = document.getElementById('selection-count');
+        container.innerHTML = '';
+
+        let pool = (scope === 'all')
+            ? [...state.words]
+            : state.words.filter(w => w.tags && w.tags.includes(scope));
+
+        pool.sort((a,b) => a.english.localeCompare(b.english));
+
+        if(pool.length === 0) {
+            container.innerHTML = '<div class="text-gray-400 text-center py-4">此資料夾沒有單字</div>';
+            countLabel.innerText = '已選 0 個單字';
+            return;
+        }
+
+        pool.forEach((word) => {
+            const div = document.createElement('div');
+            div.className = "flex items中心 p-2 border-b border-gray-100 last:border-0 hover:bg白色 transition";
+            div.innerHTML = `
+                <input type="checkbox" class="practice-checkbox w-5 h-5 text-indigo-600 rounded mr-3" checked data-english="${word.english}">
+                <div class="flex-1 min-w-0">
+                    <div class="font-bold text-gray-800 truncate">${word.english}</div>
+                    <div class="text-xs text-gray-500 truncate">${word.meaning}</div>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+        updateSelectionCount();
+        document.querySelectorAll('.practice-checkbox').forEach(cb => cb.addEventListener('change', updateSelectionCount));
+    }
+
+    function updateSelectionCount() {
+        const checkboxes = document.querySelectorAll('.practice-checkbox:checked');
+        document.getElementById('selection-count').innerText = `已選 ${checkboxes.length} 個單字`;
+    }
+
+    function toggleAllPracticeWords(checked) {
+        document.querySelectorAll('.practice-checkbox').forEach(cb => cb.checked = checked);
+        updateSelectionCount();
+    }
+
+    // ================= 遊戲核心邏輯 =================
+    function startGame(mode) {
+        const checkboxes = document.querySelectorAll('.practice-checkbox:checked');
+        const selectedEnglishes = Array.from(checkboxes).map(cb => cb.dataset.english);
+        let pool = state.words.filter(w => selectedEnglishes.includes(w.english));
+
+        if (pool.length === 0) return alert("請至少勾選一個單字！");
+
+        if (mode.startsWith('choice') && pool.length < 5) {
+            if (state.words.length >= 5) alert("勾選單字不足 5 個，干擾選項將來自其他單元。");
+            else return alert("系統單字總量不足 5 個，無法進行選擇題！");
+        }
+
+        state.game.mode = mode;
+        state.game.currentWords = pool.sort(() => Math.random() - 0.5);
+        state.game.index = 0;
+        state.game.wrongWords = new Set();
+
+        if (mode === 'spelling') { showView('game-spelling'); loadSpellingWord(); }
+        else { showView('game-choice'); loadChoiceQuestion(); }
+    }
+
+    function quitGameAndSave() { endGame(true); }
+    function quitGame() { showView('practice'); }
+
+    // --- 拼字遊戲 ---
+    function loadSpellingWord() {
+        const word = state.game.currentWords[state.game.index];
+        const total = state.game.currentWords.length;
+        document.getElementById('spelling-progress-text').innerText = `${state.game.index + 1} / ${total}`;
+        document.getElementById('spelling-progress-bar').style.width = `${((state.game.index+1)/total)*100}%`;
+
+        const defArea = document.getElementById('spelling-definition-area');
+        defArea.innerHTML = parseMeaning(word.meaning).map(p => `
+            <div class="flex flex-col items中心 mb-3">
+                <div class="text-2xl font-extrabold text-gray-800 text-center">${p.text}</div>
+                <div class="mt-1 px-4 py-1 bg-indigo-50 text-indigo-500 rounded-full text-sm font-bold border border-indigo-100">${p.pos||"(?)"}</div>
+            </div>`).join('');
+
+        const eng = word.english;
+        let hint = eng.length > 2 ? eng[0] + "_".repeat(eng.length-2) + eng[eng.length-1] : eng[0] + "_".repeat(eng.length-1);
+        document.getElementById('spelling-hint').innerText = hint.split('').join(' ');
+        document.getElementById('spelling-input').value = '';
+        document.getElementById('spelling-feedback').innerText = '';
+    }
+
+    function checkSpellingAnswer() {
+        const input = document.getElementById('spelling-input');
+        const correct = state.game.currentWords[state.game.index].english.toLowerCase();
+        if (input.value.trim().toLowerCase() === correct) {
+            document.getElementById('spelling-feedback').className = "mt-4 text-green-500 font-bold";
+            document.getElementById('spelling-feedback').innerText = "正確！✨";
+            setTimeout(nextQuestion, 600);
+        } else handleWrongAnswer(input.parentElement);
+    }
+
+    function skipSpellingWord() {
+        const word = state.game.currentWords[state.game.index];
+        state.game.wrongWords.add(word);
+        document.getElementById('spelling-input').value = word.english;
+        document.getElementById('spelling-feedback').className = "mt-4 text-orange-500 font-bold";
+        document.getElementById('spelling-feedback').innerText = `答案：${word.english}`;
+        setTimeout(nextQuestion, 1500);
+    }
+
+    // --- 選擇題遊戲 ---
+    function loadChoiceQuestion() {
+        const word = state.game.currentWords[state.game.index];
+        const total = state.game.currentWords.length;
+        document.getElementById('choice-progress-text').innerText = `${state.game.index + 1} / ${total}`;
+        document.getElementById('choice-progress-bar').style.width = `${((state.game.index+1)/total)*100}%`;
+        document.getElementById('choice-feedback').innerText = '';
+
+        const isEnToCh = state.game.mode === 'choice-en-ch';
+        const questionEl = document.getElementById('choice-question');
+        questionEl.innerText = isEnToCh ? word.english : formatMeaning(word.meaning);
+
+        let options = [word];
+        let pool = state.game.currentWords.length >= 5 ? state.game.currentWords : state.words;
+
+        while (options.length < 5) {
+            const randomWord = pool[Math.floor(Math.random() * pool.length)];
+            if (!options.includes(randomWord)) options.push(randomWord);
+        }
+        options.sort(() => Math.random() - 0.5);
+
+        const optionsContainer = document.getElementById('choice-options');
+        optionsContainer.innerHTML = '';
+
+        options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = "choice-btn w-full bg白色 border-2 border-indigo-100 text-gray-700 font-bold py-4 rounded-xl text-lg shadow-sm hover:border-indigo-300";
+            btn.innerText = isEnToCh ? formatMeaning(opt.meaning) : opt.english;
+
+            btn.onclick = () => {
+                const allBtns = document.querySelectorAll('.choice-btn');
+                allBtns.forEach(b => b.disabled = true);
+
+                if (opt === word) {
+                    btn.classList.add('choice-correct');
+                    document.getElementById('choice-feedback').className = "mt-4 text-green-500 font-bold";
+                    document.getElementById('choice-feedback').innerText = "答對囉！🎉";
+                    setTimeout(nextQuestion, 800);
+                } else {
+                    btn.classList.add('choice-wrong');
+                    allBtns.forEach(b => {
+                        if ((isEnToCh && b.innerText === formatMeaning(word.meaning)) ||
+                            (!isEnToCh && b.innerText === word.english)) {
+                            b.classList.add('choice-correct');
+                        }
+                    });
+                    state.game.wrongWords.add(word);
+                    document.getElementById('choice-feedback').className = "mt-4 text-red-500 font-bold";
+                    document.getElementById('choice-feedback').innerText = "答錯囉！";
+                    setTimeout(nextQuestion, 1500);
+                }
+            };
+            optionsContainer.appendChild(btn);
+        });
+    }
+
+    // 題目/選項顯示「中文 + 詞性」，完全一樣的中文片段只保留一次（靠 mergeMeaningStrings）
+    function formatMeaning(raw) {
+        const firstBlock = (raw || '').split('/')[0].trim();
+        const idx = firstBlock.lastIndexOf('(');
+
+        let text = firstBlock;
+        let pos = '';
+
+        if (idx !== -1) {
+            text = firstBlock.substring(0, idx).trim();
+            pos = firstBlock.substring(idx).trim();
+        }
+
+        const shortText = text.length > 15 ? text.substring(0, 15) + "..." : text;
+
+        return pos ? `${shortText} ${pos}` : shortText;
+    }
+
+    function handleWrongAnswer(element) {
+        const fbId = state.game.mode.startsWith('choice') ? 'choice-feedback' : 'spelling-feedback';
+        document.getElementById(fbId).className = "mt-4 text-red-500 font-bold";
+        document.getElementById(fbId).innerText = "拼錯囉！";
+        element.classList.add('shake');
+        setTimeout(() => element.classList.remove('shake'), 400);
+        state.game.wrongWords.add(state.game.currentWords[state.game.index]);
+    }
+
+    function nextQuestion() {
+        state.game.index++;
+        if (state.game.index < state.game.currentWords.length) {
+            if (state.game.mode === 'spelling') loadSpellingWord();
+            else loadChoiceQuestion();
+        } else {
+            endGame(false);
+        }
+    }
+
+    // ================= 結算邏輯 =================
+    function endGame(isAborted = false) {
+        document.getElementById('view-game-spelling').classList.add('hidden');
+        document.getElementById('view-game-choice').classList.add('hidden');
+        document.getElementById('view-game-result').classList.remove('hidden');
+
+        const list = document.getElementById('result-skipped-items');
+        const stat = document.getElementById('result-stat');
+        const title = document.getElementById('result-title');
+        const icon = document.getElementById('result-icon');
+
+        if (isAborted) {
+            title.innerText = "練習中斷";
+            icon.innerText = "⏸️";
+        } else {
+            title.innerText = "練習完成！";
+            icon.innerText = "🎉";
+        }
+
+        const wrongs = Array.from(state.game.wrongWords);
+        stat.innerText = `答錯/跳過: ${wrongs.length} 題`;
+        state.game.reviewSelection = [];
+
+        if (wrongs.length === 0) {
+            list.innerHTML = `<li class="p-4 text-center text-green-600 font-bold bg-green-50 rounded-xl">👏 完美！沒有錯誤單字。</li>`;
+        } else {
+            list.innerHTML = wrongs.map((w, idx) => {
+                state.game.reviewSelection.push(w);
+                const isAlreadyWrong = w.tags && w.tags.includes("錯題區");
+                return `
+                <li class="bg白色 p-3 rounded-xl border border-gray-100 shadow-sm flex items中心 gap-3">
+                    <input type="checkbox" id="review-chk-${idx}" class="w-6 h-6 text-indigo-600 rounded flex-none" checked onchange="toggleReviewItem(${idx})">
+                    <div class="flex flex-col flex-1 min-w-0">
+                        <div class="flex items中心 gap-2 flex-wrap">
+                            <span class="text-indigo-600 font-black text-lg break-all">${w.english}</span>
+                            ${isAlreadyWrong ? '<span class="text-xs bg-red-100 text-red-500 px-1 rounded flex-none">已在錯題區</span>' : ''}
+                        </div>
+                        <span class="text-gray-500 text-sm truncate">${w.meaning}</span>
+                    </div>
+                </li>
+            `}).join('');
+        }
+
+        const saveSelect = document.getElementById('save-target-folder');
+        saveSelect.innerHTML = '<option value="NEW_FOLDER_OPTION" class="text-indigo-600 font-bold">+ 新增資料夾...</option>';
+        state.unitTags.forEach(tag => {
+            const isWrong = tag === "錯題區";
+            saveSelect.innerHTML += `<option value="${tag}" ${isWrong ? 'selected' : ''}>${tag}</option>`;
+        });
+    }
+
+    window.toggleReviewItem = function(idx) {
+        const wrongs = Array.from(state.game.wrongWords);
+        const word = wrongs[idx];
+        const checkbox = document.getElementById(`review-chk-${idx}`);
+        if (checkbox.checked) {
+            if(!state.game.reviewSelection.includes(word)) state.game.reviewSelection.push(word);
+        } else {
+            state.game.reviewSelection = state.game.reviewSelection.filter(w => w !== word);
+        }
+    };
+
+    function saveWrongWords() {
+        if (state.game.reviewSelection.length === 0) return alert("未選擇任何單字");
+
+        let targetFolder = document.getElementById('save-target-folder').value;
+
+        if (targetFolder === 'NEW_FOLDER_OPTION') {
+            const newName = prompt("請輸入新資料夾名稱：");
+            if (!newName || !newName.trim()) return;
+            targetFolder = newName.trim();
+
+            if (!state.folders.includes(targetFolder)) {
+                state.folders.push(targetFolder);
+            }
+        }
+
+        let count = 0;
+        state.game.reviewSelection.forEach(word => {
+            if (!word.tags) word.tags = [];
+            if (!word.tags.includes(targetFolder)) {
+                word.tags.push(targetFolder);
+                count++;
+            }
+        });
+
+        saveDataLocally();
+        alert(`已將 ${count} 個單字加入「${targetFolder}」！`);
+        showView('practice');
+    }
+
+    window.onload = () => {
+        initSystem();
+        showView('home');
+    };
+</script>
+
+<!-- Firebase + Firestore + Auth 模組腳本 -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+    import {
+        getAuth,
+        onAuthStateChanged,
+        GoogleAuthProvider,
+        signInWithPopup,
+        signOut
+    } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+    import {
+        getFirestore,
+        doc,
+        getDoc,
+        setDoc
+    } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyB2Q10x0JxoAGQt4IiwGr9rwyIm7M1xjbA",
+        authDomain: "wordking-434f7.firebaseapp.com",
+        projectId: "wordking-434f7",
+        storageBucket: "wordking-434f7.firebasestorage.app",
+        messagingSenderId: "340952543206",
+        appId: "1:340952543206:web:5388cff593ebee0d61b027"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+
+    function updateAuthUI(user) {
+        const loginBtn = document.getElementById('btn-login');
+        const logoutBtn = document.getElementById('btn-logout');
+        const syncBtn = document.getElementById('btn-sync');
+        const userSpan = document.getElementById('user-email');
+
+        if (!loginBtn || !logoutBtn || !syncBtn || !userSpan) return;
+
+        if (user) {
+            loginBtn.classList.add('hidden');
+            logoutBtn.classList.remove('hidden');
+            syncBtn.classList.remove('hidden');
+            userSpan.classList.remove('hidden');
+            userSpan.textContent = user.email || user.displayName || '已登入';
+        } else {
+            loginBtn.classList.remove('hidden');
+            logoutBtn.classList.add('hidden');
+            syncBtn.classList.add('hidden');
+            userSpan.classList.add('hidden');
+            userSpan.textContent = '';
+        }
+    }
+
+    function mergeWords(baseWords, cloudWords) {
+        const map = new Map();
+
+        (baseWords || []).forEach(w => {
+            if (w && w.english) {
+                map.set(w.english.toLowerCase(), { ...w });
+            }
+        });
+
+        (cloudWords || []).forEach(w => {
+            if (!w || !w.english) return;
+            const key = w.english.toLowerCase();
+            if (map.has(key)) {
+                const base = map.get(key);
+                const baseTags = Array.isArray(base.tags) ? base.tags : [];
+                const cloudTags = Array.isArray(w.tags) ? w.tags : [];
+                const mergedTags = Array.from(new Set([...baseTags, ...cloudTags]));
+
+                map.set(key, {
+                    ...base,
+                    tags: mergedTags
+                });
+            } else {
+                map.set(key, { ...w });
+            }
+        });
+
+        return Array.from(map.values());
+    }
+
+    async function saveToCloud(user) {
+        if (!window.state) return;
+
+        const payload = {
+            words: window.state.words || [],
+            folders: window.state.folders || []
+        };
+
+        const ref = doc(db, 'users', user.uid);
+        await setDoc(ref, payload, { merge: true });
+    }
+
+    async function loadFromCloud(user) {
+        const ref = doc(db, 'users', user.uid);
+        const snap = await getDoc(ref);
+
+        if (!snap.exists()) {
+            await saveToCloud(user);
+            return;
+        }
+
+        const data = snap.data();
+        const cloudWords = data.words || [];
+        const cloudFolders = data.folders || [];
+
+        const baseWords =
+            (Array.isArray(window.defaultWordDatabase) && window.defaultWordDatabase.length > 0)
+                ? window.defaultWordDatabase
+                : (window.state?.words || []);
+
+        const mergedWords = mergeWords(baseWords, cloudWords);
+
+        if (window.state) {
+            window.state.words = mergedWords;
+            window.state.folders = Array.from(new Set(["錯題區", ...(cloudFolders || [])]));
+
+            if (typeof window.saveDataLocally === 'function') {
+                window.saveDataLocally();
+            }
+
+            if (typeof window.refreshTags === 'function') {
+                window.refreshTags();
+            }
+
+            const libView = document.getElementById('view-library');
+            const pracView = document.getElementById('view-practice');
+
+            if (libView && !libView.classList.contains('hidden') && typeof window.renderLibrary === 'function') {
+                window.renderLibrary();
+            }
+            if (pracView && !pracView.classList.contains('hidden')
+                && typeof window.renderPracticeOptions === 'function'
+                && typeof window.renderPracticeWordSelection === 'function') {
+                window.renderPracticeOptions();
+                window.renderPracticeWordSelection();
+            }
+        }
+    }
+
+    window.firebaseLogin = async () => {
+        try {
+            await signInWithPopup(auth, provider);
+        } catch (err) {
+            console.error(err);
+            alert('登入失敗：' + (err.message || err));
+        }
+    };
+
+    window.firebaseLogout = async () => {
+        try {
+            await signOut(auth);
+        } catch (err) {
+            console.error(err);
+            alert('登出失敗：' + (err.message || err));
+        }
+    };
+
+    window.syncCloudNow = async () => {
+        const user = auth.currentUser;
+        if (!user) {
+            alert('請先登入');
+            return;
+        }
+        try {
+            await saveToCloud(user);
+            alert('已將目前資料同步到雲端');
+        } catch (err) {
+            console.error(err);
+            alert('同步失敗：' + (err.message || err));
+        }
+    };
+
+    window.autoSyncToCloud = async () => {
+        const user = auth.currentUser;
+        if (!user) return;
+        try {
+            await saveToCloud(user);
+        } catch (err) {
+            console.error('自動同步失敗', err);
+        }
+    };
+
+    onAuthStateChanged(auth, async user => {
+        updateAuthUI(user);
+        if (user) {
+            try {
+                await loadFromCloud(user);
+                console.log('已從雲端載入個人資料');
+            } catch (err) {
+                console.error('載入雲端資料失敗', err);
+            }
+        }
+    });
+</script>
+
 </body>
 </html>
