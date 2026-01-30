@@ -275,7 +275,6 @@
     {"english": "astonish", "meaning": "使...震驚 (v.)", "tags": ["晟景Lv5U8"]}
         ];
 
-        // 讓 Firebase 模組能拿到「官方最新版字庫」
         window.defaultWordDatabase = defaultWordDatabase;
     </script>
 
@@ -527,10 +526,25 @@
                     <input type="text" id="new-meaning" class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 outline-none text-lg">
                 </div>
                 <div>
-                    <label class="text-xs text-gray-500 font-bold ml-1">資料夾/標籤 (多個請用逗號分隔)</label>
-                    <input type="text" id="new-tag" list="folder-list" placeholder="例如: 錯題區, L1" class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 outline-none text-lg">
-                    <datalist id="folder-list"></datalist>
-                    <p class="text-xs text-gray-400 mt-1 ml-1">* 若要移出錯題區，請在此刪除「錯題區」文字</p>
+                    <label class="text-xs text-gray-500 font-bold ml-1">資料夾/標籤</label>
+
+                    <!-- 既有資料夾複選 -->
+                    <div
+                        id="tag-checkbox-container"
+                        class="mt-1 max-h-32 overflow-y-auto custom-scrollbar border-2 border-gray-200 rounded-xl bg-gray-50 p-2 text-sm space-y-1">
+                        <!-- 由 JS 動態產生複選框 -->
+                    </div>
+
+                    <!-- 新增資料夾（選填） -->
+                    <input
+                        type="text"
+                        id="new-tag"
+                        placeholder="可選：新增資料夾，多個用逗號分隔"
+                        class="mt-2 w-full border-2 border-gray-200 p-2 rounded-xl focus:border-indigo-500 outline-none text-sm">
+
+                    <p class="text-xs text-gray-400 mt-1 ml-1">
+                        * 若要移出「錯題區」，請在上方清單取消勾選「錯題區」
+                    </p>
                 </div>
                 <div class="grid grid-cols-2 gap-3 pt-2">
                     <button onclick="closeAddModal()" class="py-3 text-gray-500 font-bold bg-gray-100 rounded-xl active:bg-gray-200 transition">取消</button>
@@ -613,7 +627,6 @@
             pendingDeleteType: null // 'keep' or 'all'
         };
 
-        // 讓 Firebase 模組也能存取、修改全域狀態
         window.state = state;
 
         function initSystem() {
@@ -622,12 +635,14 @@
                 try {
                     const parsed = JSON.parse(storedData);
                     state.words = parsed.words || [];
-                    state.folders = parsed.folders || [];
+                    state.folders = parsed.folders || ["錯題區"];
                 } catch(e) {
                     state.words = [...defaultWordDatabase];
+                    state.folders = ["錯題區"];
                 }
             } else {
                 state.words = [...defaultWordDatabase];
+                state.folders = ["錯題區"];
             }
             if (!state.folders.includes("錯題區")) state.folders.unshift("錯題區");
             refreshTags();
@@ -641,8 +656,43 @@
             });
             state.unitTags = Array.from(tagsSet).sort();
 
+            // 舊版 datalist 已不使用，這裡保留相容，不會出錯
             const datalist = document.getElementById('folder-list');
-            if(datalist) datalist.innerHTML = state.unitTags.map(t => `<option value="${t}">`).join('');
+            if (datalist) {
+                datalist.innerHTML = state.unitTags.map(t => `<option value="${t}">`).join('');
+            }
+        }
+
+        // 產生「資料夾/標籤」複選清單
+        function renderTagCheckboxes(selectedTags = []) {
+            const container = document.getElementById('tag-checkbox-container');
+            if (!container) return;
+
+            const allTags = state.unitTags || [];
+            container.innerHTML = '';
+
+            if (allTags.length === 0) {
+                container.innerHTML = '<div class="text-xs text-gray-400">目前沒有資料夾，請先建立。</div>';
+                return;
+            }
+
+            allTags.forEach(tag => {
+                const safeId = 'tag-chk-' + tag.replace(/\s+/g, '_');
+                const wrapper = document.createElement('label');
+                wrapper.className = 'inline-flex items-center space-x-2 mr-3 mb-1';
+
+                const checked = selectedTags.includes(tag) ? 'checked' : '';
+                wrapper.innerHTML = `
+                    <input type="checkbox"
+                           class="tag-checkbox w-4 h-4 text-indigo-600 rounded"
+                           value="${tag}"
+                           id="${safeId}"
+                           ${checked}>
+                    <span class="text-sm text-gray-700">${tag}</span>
+                `;
+
+                container.appendChild(wrapper);
+            });
         }
 
         function saveDataLocally() {
@@ -650,19 +700,24 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
             refreshTags();
 
-            // 若已登入，嘗試自動同步到雲端（失敗只記在 console，不顯示 alert）
             if (window.autoSyncToCloud) {
                 window.autoSyncToCloud();
             }
         }
 
+        // 重置：清除自訂單字與資料夾，回到預設字庫（本機 + 雲端）
         function confirmReset() {
-            if(confirm("確定要清空資料嗎？\n(包含所有單字與自訂資料夾)")) {
-                localStorage.removeItem(STORAGE_KEY);
-                state.words = [];
-                state.folders = ["錯題區"];
-                location.reload();
+            if (!confirm("確定要重製嗎？\n這會刪除所有自訂單字與資料夾，只保留系統內建單字。\n若已登入，雲端也會一併重置。")) {
+                return;
             }
+
+            localStorage.removeItem(STORAGE_KEY);
+
+            state.words = Array.isArray(defaultWordDatabase) ? [...defaultWordDatabase] : [];
+            state.folders = ["錯題區"];
+
+            saveDataLocally();
+            location.reload();
         }
 
         function showView(viewId) {
@@ -723,7 +778,6 @@
             }
         }
 
-        // 新增資料夾
         function openNewFolderModal() {
             document.getElementById('input-new-folder-name').value = '';
             document.getElementById('new-folder-modal').classList.remove('hidden');
@@ -742,7 +796,6 @@
             document.getElementById('new-folder-modal').classList.add('hidden');
         }
 
-        // 點擊資料夾
         function handleFolderClick(name) {
             if (state.isEditing) {
                 if (name === "錯題區" || state.categories.includes(name)) {
@@ -755,7 +808,6 @@
             }
         }
 
-        // 打開操作選單
         function openActionModal(folderName) {
             state.targetFolderAction = folderName;
             document.getElementById('action-folder-name').innerText = folderName;
@@ -766,7 +818,6 @@
             document.getElementById('folder-action-modal').classList.add('hidden');
         }
 
-        // 準備重命名
         function prepareRenameFolder() {
             closeActionModal();
             document.getElementById('input-rename-folder').value = state.targetFolderAction;
@@ -795,7 +846,6 @@
             state.targetFolderAction = '';
         }
 
-        // 準備刪除
         function prepareDeleteFolder(deleteAll) {
             closeActionModal();
             state.pendingDeleteType = deleteAll ? 'all' : 'keep';
@@ -841,33 +891,81 @@
         function openAddModal(idx = -1) {
             state.editingWordIndex = idx;
             const modal = document.getElementById('add-modal');
+            const tagInput = document.getElementById('new-tag');
+
             document.getElementById('modal-title').innerText = idx >= 0 ? "編輯單字" : "新增單字";
+
             if (idx >= 0) {
                 const w = state.words[idx];
                 document.getElementById('new-word').value = w.english;
                 document.getElementById('new-meaning').value = w.meaning;
-                document.getElementById('new-tag').value = w.tags.join(', ');
+                const selectedTags = Array.isArray(w.tags) ? w.tags : [];
+                renderTagCheckboxes(selectedTags);
+                if (tagInput) tagInput.value = '';
             } else {
                 document.getElementById('new-word').value = '';
                 document.getElementById('new-meaning').value = '';
+                let preSelected = [];
                 const current = document.getElementById('list-title')?.innerText;
-                document.getElementById('new-tag').value = (current && !state.categories.includes(current)) ? current : '';
+                if (current && !state.categories.includes(current) && current !== '分類') {
+                    preSelected = [current];
+                }
+                renderTagCheckboxes(preSelected);
+                if (tagInput) tagInput.value = '';
             }
+
             modal.classList.remove('hidden');
         }
-        function closeAddModal() { document.getElementById('add-modal').classList.add('hidden'); state.editingWordIndex = -1; }
+
+        function closeAddModal() {
+            document.getElementById('add-modal').classList.add('hidden');
+            state.editingWordIndex = -1;
+        }
+
         function saveNewWord() {
             const eng = document.getElementById('new-word').value.trim();
             const mean = document.getElementById('new-meaning').value.trim();
-            const tags = document.getElementById('new-tag').value.trim().split(/[,，]/).map(t=>t.trim()).filter(t=>t);
-            if(!eng || !mean) return alert("請輸入單字和意思");
-            tags.forEach(t => { if(!state.folders.includes(t)) state.folders.push(t); });
+            const tagInputEl = document.getElementById('new-tag');
+
+            if (!eng || !mean) return alert("請輸入單字和意思");
+
+            // 1. 從複選框收集既有資料夾
+            const selectedFromCheckbox = Array.from(document.querySelectorAll('.tag-checkbox:checked'))
+                .map(cb => cb.value);
+
+            // 2. 從文字輸入框解析「新增」資料夾（可選）
+            let extraTags = [];
+            if (tagInputEl && tagInputEl.value.trim()) {
+                extraTags = tagInputEl.value.trim()
+                    .split(/[,，]/)
+                    .map(t => t.trim())
+                    .filter(t => t);
+            }
+
+            // 3. 合併、去重
+            const tags = Array.from(new Set([...selectedFromCheckbox, ...extraTags]));
+
+            // 4. 將新資料夾加入 state.folders
+            tags.forEach(t => {
+                if (!state.folders.includes(t)) state.folders.push(t);
+            });
+
             const data = { english: eng, meaning: mean, tags: tags };
-            if(state.editingWordIndex >= 0) state.words[state.editingWordIndex] = data;
-            else state.words.push(data);
-            saveDataLocally(); closeAddModal();
-            if(!document.getElementById('view-word-list').classList.contains('hidden')) renderWordList(document.getElementById('list-title').innerText);
-            else renderLibrary();
+
+            if (state.editingWordIndex >= 0) {
+                state.words[state.editingWordIndex] = data;
+            } else {
+                state.words.push(data);
+            }
+
+            saveDataLocally();
+            closeAddModal();
+
+            if (!document.getElementById('view-word-list').classList.contains('hidden')) {
+                renderWordList(document.getElementById('list-title').innerText);
+            } else {
+                renderLibrary();
+            }
         }
 
         // ================= UI 渲染 (單字庫) =================
@@ -888,12 +986,13 @@
                 }
                 state.unitTags.forEach(tag => {
                     const isSystem = tag === "錯題區";
-                    const count = state.words.filter(w => w.tags.includes(tag)).length;
+                    const count = state.words.filter(w => w.tags && w.tags.includes(tag)).length;
                     const style = isSystem ? 'bg-red-500 text-white font-bold' : 'bg-indigo-600 text-white font-bold';
                     grid.appendChild(createCatBtn(`${tag} (${count})`, style, !isSystem, tag));
                 });
             }
         }
+
         function createCatBtn(name, cls, editable, oriName) {
             const div = document.createElement('div');
             div.className = `${cls} folder-card relative min-h-[80px] rounded-2xl flex items-center justify-center shadow-sm cursor-pointer active:scale-95 transition-all text-lg text-center px-2 break-all leading-tight`;
@@ -901,6 +1000,7 @@
             div.onclick = () => handleFolderClick(oriName || name.split(' ')[0]);
             return div;
         }
+
         function renderWordList(name) {
             showView('word-list');
             document.getElementById('list-title').innerText = name;
@@ -908,7 +1008,7 @@
             container.innerHTML = '';
             let filtered = state.words.map((w,i)=>({...w, idx:i}));
             if(name.length===1 && state.categories.includes(name)) filtered = filtered.filter(w=>w.english.toUpperCase().startsWith(name));
-            else filtered = filtered.filter(w=>w.tags.includes(name));
+            else filtered = filtered.filter(w=>w.tags && w.tags.includes(name));
             filtered.sort((a,b)=>a.english.localeCompare(b.english));
 
             if(filtered.length === 0) return container.innerHTML = `<div class="text-center text-gray-400 py-10 w-full">無單字</div>`;
@@ -917,7 +1017,7 @@
                 const card = document.createElement('div');
                 card.className = 'word-card w-full';
                 const parts = parseMeaning(w.meaning).map(p => `<div class="mb-3 text-indigo-800 font-bold text-lg">${p.text} <span class="block text-sm text-indigo-400 opacity-90 mt-1">${p.pos}</span></div>`).join('');
-                const badge = w.tags.includes("錯題區") ? `<span class="absolute top-3 right-3 text-xs bg-red-100 text-red-500 px-2 py-1 rounded-full font-bold">錯題</span>` : '';
+                const badge = w.tags && w.tags.includes("錯題區") ? `<span class="absolute top-3 right-3 text-xs bg-red-100 text-red-500 px-2 py-1 rounded-full font-bold">錯題</span>` : '';
 
                 card.innerHTML = `
                     <div class="word-card-inner">
@@ -932,6 +1032,7 @@
                 container.appendChild(card);
             });
         }
+
         function parseMeaning(raw) {
             return raw.split('/').map(b => {
                 const t = b.trim(); const idx = t.lastIndexOf('(');
@@ -955,7 +1056,7 @@
 
             let pool = (scope === 'all')
                 ? [...state.words]
-                : state.words.filter(w => w.tags.includes(scope));
+                : state.words.filter(w => w.tags && w.tags.includes(scope));
 
             pool.sort((a,b) => a.english.localeCompare(b.english));
 
@@ -1049,7 +1150,7 @@
 
         function skipSpellingWord() {
             const word = state.game.currentWords[state.game.index];
-            state.game.wrongWords.add(word); // 拼字跳過視為錯
+            state.game.wrongWords.add(word);
             document.getElementById('spelling-input').value = word.english;
             document.getElementById('spelling-feedback').className = "mt-4 text-orange-500 font-bold";
             document.getElementById('spelling-feedback').innerText = `答案：${word.english}`;
@@ -1112,9 +1213,22 @@
             });
         }
 
+        // 題目/選項顯示「中文 + 詞性」
         function formatMeaning(raw) {
-            const firstPart = raw.split('/')[0].split('(')[0].trim();
-            return firstPart.length > 15 ? firstPart.substring(0, 15) + "..." : firstPart;
+            const firstBlock = raw.split('/')[0].trim();
+            const idx = firstBlock.lastIndexOf('(');
+
+            let text = firstBlock;
+            let pos = '';
+
+            if (idx !== -1) {
+                text = firstBlock.substring(0, idx).trim();
+                pos = firstBlock.substring(idx).trim();
+            }
+
+            const shortText = text.length > 15 ? text.substring(0, 15) + "..." : text;
+
+            return pos ? `${shortText} ${pos}` : shortText;
         }
 
         function handleWrongAnswer(element) {
@@ -1164,7 +1278,7 @@
             } else {
                 list.innerHTML = wrongs.map((w, idx) => {
                     state.game.reviewSelection.push(w);
-                    const isAlreadyWrong = w.tags.includes("錯題區");
+                    const isAlreadyWrong = w.tags && w.tags.includes("錯題區");
                     return `
                     <li class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm flex items-center gap-3">
                         <input type="checkbox" id="review-chk-${idx}" class="w-6 h-6 text-indigo-600 rounded flex-none" checked onchange="toggleReviewItem(${idx})">
@@ -1180,7 +1294,6 @@
             }
 
             const saveSelect = document.getElementById('save-target-folder');
-            // 新增資料夾選項
             saveSelect.innerHTML = '<option value="NEW_FOLDER_OPTION" class="text-indigo-600 font-bold">+ 新增資料夾...</option>';
             state.unitTags.forEach(tag => {
                 const isWrong = tag === "錯題區";
@@ -1204,7 +1317,6 @@
 
             let targetFolder = document.getElementById('save-target-folder').value;
 
-            // 處理「新增資料夾」邏輯
             if (targetFolder === 'NEW_FOLDER_OPTION') {
                 const newName = prompt("請輸入新資料夾名稱：");
                 if (!newName || !newName.trim()) return;
@@ -1252,7 +1364,6 @@
             setDoc
         } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
-        // 你的 Firebase 設定
         const firebaseConfig = {
             apiKey: "AIzaSyB2Q10x0JxoAGQt4IiwGr9rwyIm7M1xjbA",
             authDomain: "wordking-434f7.firebaseapp.com",
@@ -1262,13 +1373,11 @@
             appId: "1:340952543206:web:5388cff593ebee0d61b027"
         };
 
-        // 初始化 Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        // UI：登入狀態顯示
         function updateAuthUI(user) {
             const loginBtn = document.getElementById('btn-login');
             const logoutBtn = document.getElementById('btn-logout');
@@ -1292,18 +1401,15 @@
             }
         }
 
-        // 合併「官方最新版字庫」與「雲端使用者資料」
         function mergeWords(baseWords, cloudWords) {
             const map = new Map();
 
-            // 1. 先放入最新版預設字庫
             (baseWords || []).forEach(w => {
                 if (w && w.english) {
                     map.set(w.english.toLowerCase(), { ...w });
                 }
             });
 
-            // 2. 用雲端資料覆蓋 tags，保留官方英文＋中文解釋
             (cloudWords || []).forEach(w => {
                 if (!w || !w.english) return;
                 const key = w.english.toLowerCase();
@@ -1318,7 +1424,6 @@
                         tags: mergedTags
                     });
                 } else {
-                    // 不在官方字庫內，視為自訂單字
                     map.set(key, { ...w });
                 }
             });
@@ -1326,7 +1431,6 @@
             return Array.from(map.values());
         }
 
-        // 存 / 讀 雲端資料
         async function saveToCloud(user) {
             if (!window.state) return;
 
@@ -1344,7 +1448,6 @@
             const snap = await getDoc(ref);
 
             if (!snap.exists()) {
-                // 第一次登入：用目前本機狀態建立一份雲端資料
                 await saveToCloud(user);
                 return;
             }
@@ -1365,14 +1468,13 @@
                 window.state.folders = Array.from(new Set(["錯題區", ...(cloudFolders || [])]));
 
                 if (typeof window.saveDataLocally === 'function') {
-                    window.saveDataLocally(); // 也會更新 localStorage
+                    window.saveDataLocally();
                 }
 
                 if (typeof window.refreshTags === 'function') {
                     window.refreshTags();
                 }
 
-                // 若目前在單字庫或練習頁，重新渲染
                 const libView = document.getElementById('view-library');
                 const pracView = document.getElementById('view-practice');
 
@@ -1388,11 +1490,9 @@
             }
         }
 
-        // 對外 API：給 HTML onclick 用
         window.firebaseLogin = async () => {
             try {
                 await signInWithPopup(auth, provider);
-                // onAuthStateChanged 會自動處理後續載入
             } catch (err) {
                 console.error(err);
                 alert('登入失敗：' + (err.message || err));
@@ -1423,7 +1523,6 @@
             }
         };
 
-        // 自動同步：被 saveDataLocally() 呼叫，但不跳 alert
         window.autoSyncToCloud = async () => {
             const user = auth.currentUser;
             if (!user) return;
@@ -1434,7 +1533,6 @@
             }
         };
 
-        // 監聽登入狀態變化
         onAuthStateChanged(auth, async user => {
             updateAuthUI(user);
             if (user) {
