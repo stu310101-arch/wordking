@@ -17,6 +17,7 @@
             touch-action: manipulation;
         }
 
+        /* 單字卡高度固定 */
         .word-card {
             perspective: 1000px;
             cursor: pointer;
@@ -38,24 +39,31 @@
             transform: rotateY(180deg);
         }
 
-        .word-card-front, .word-card-back {
+        .word-card-front,
+        .word-card-back {
             grid-area: card-content;
             width: 100%;
-            height: 100%;
+            height: 100%; /* 前後面都跟卡片一樣高 */
             -webkit-backface-visibility: hidden;
             backface-visibility: hidden;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
             border-radius: 1rem;
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
             padding: 1.5rem;
         }
 
+        .word-card-front {
+            justify-content: center;
+        }
+
         .word-card-back {
             transform: rotateY(180deg);
             background-color: #f3f4f6;
+            justify-content: flex-start;  /* 從最上方開始 */
+            align-items: stretch;         /* 內容撐滿寬度 */
+            overflow-y: auto;             /* 固定高度內捲動，看得到第一個中文 */
         }
 
         @keyframes shake {
@@ -386,8 +394,7 @@
 
     <!-- 單字列表 -->
     <div id="view-word-list" class="hidden">
-        <!-- 這裡移除 sticky top-0，避免遮住第一個單字 -->
-        <div class="bg-gray-50 py-2 z-10 flex items-center justify-between mb-2">
+        <div class="sticky top-0 bg-gray-50 py-2 z-10 flex items-center justify-between mb-2">
             <button onclick="showView('library')" class="text-gray-500 font-bold px-3 py-2 bg-gray-200 rounded-lg">← 返回</button>
             <span id="list-title" class="font-bold text-lg text-indigo-900 truncate max-w-[150px]">分類</span>
             <div class="w-10"></div>
@@ -594,7 +601,7 @@
 </div>
 
 <!-- 新增資料夾 Modal -->
-<div id="new-folder-modal" class="fixed inset-0 bg黑 bg-opacity-60 hidden flex items-center justify-center p-4 z-[120]">
+<div id="new-folder-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center p-4 z-[120]">
     <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
         <h3 class="text-xl font-bold mb-4 text-center">新增資料夾</h3>
         <input type="text" id="input-new-folder-name" class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 outline-none text-lg mb-4" placeholder="輸入名稱">
@@ -1094,7 +1101,7 @@
                         ${badge}
                         <span class="text-3xl font-black text-indigo-900 break-all text-center">${w.english}</span>
                     </div>
-                    <div class="word-card-back p-6 overflow-y-auto bg-indigo-50 border-2 border-indigo-200 flex flex-col justify-center rounded-2xl">
+                    <div class="word-card-back p-6 bg-indigo-50 border-2 border-indigo-200 flex flex-col rounded-2xl">
                         ${parts}
                     </div>
                 </div>`;
@@ -1482,7 +1489,7 @@
     function updateAuthUI(user) {
         const loginBtn = document.getElementById('btn-login');
         const logoutBtn = document.getElementById('btn-logout');
-        const syncBtn = document.getElementById('btn-sync');
+        the syncBtn = document.getElementById('btn-sync');
         const userSpan = document.getElementById('user-email');
 
         if (!loginBtn || !logoutBtn || !syncBtn || !userSpan) return;
@@ -1577,7 +1584,7 @@
             }
 
             const libView = document.getElementById('view-library');
-            const pracView = document.getElementById('view-practice');
+            the pracView = document.getElementById('view-practice');
 
             if (libView && !libView.classList.contains('hidden') && typeof window.renderLibrary === 'function') {
                 window.renderLibrary();
