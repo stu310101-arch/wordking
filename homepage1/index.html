@@ -291,7 +291,8 @@
 <nav class="bg-indigo-600 text-white p-4 shadow-lg sticky top-0 z-50">
     <div class="flex flex-col gap-3">
         <div class="flex justify-between items-center w-full">
-            <h1 class="text-2xl font-bold tracking-tight cursor-pointer flex items-center gap-2" onclick="showView('home')">
+            <!-- Logo：連到首頁「分頁」 -->
+            <h1 class="text-2xl font-bold tracking-tight cursor-pointer flex items-center gap-2" onclick="navigateTo('home')">
                 <span>🎓</span> 單字王
             </h1>
 
@@ -341,10 +342,11 @@
             </div>
         </div>
 
+        <!-- 導覽按鈕：改用 navigateTo，並更新網址 -->
         <div class="grid grid-cols-3 gap-2">
-            <button onclick="showView('library')" class="bg-indigo-500 hover:bg-indigo-700 py-2 rounded-lg text-sm font-bold transition">單字庫</button>
-            <button onclick="showView('practice')" class="bg-indigo-500 hover:bg-indigo-700 py-2 rounded-lg text-sm font-bold transition">練習區</button>
-            <button onclick="confirmReset()" class="bg-red-500 hover:bg-red-600 py-2 rounded-lg text-sm font-bold transition">重置</button>
+            <button onclick="navigateTo('home')" class="bg-indigo-500 hover:bg-indigo-700 py-2 rounded-lg text-sm font-bold transition">首頁</button>
+            <button onclick="navigateTo('library')" class="bg-indigo-500 hover:bg-indigo-700 py-2 rounded-lg text-sm font-bold transition">單字庫</button>
+            <button onclick="navigateTo('practice')" class="bg-indigo-500 hover:bg-indigo-700 py-2 rounded-lg text-sm font-bold transition">練習區</button>
         </div>
     </div>
 </nav>
@@ -358,11 +360,11 @@
         </div>
 
         <div class="flex flex-col gap-4">
-            <div class="bg-white p-6 rounded-2xl shadow-md border-l-8 border-indigo-500 cursor-pointer active:bg-gray-50" onclick="showView('library')">
+            <div class="bg-white p-6 rounded-2xl shadow-md border-l-8 border-indigo-500 cursor-pointer active:bg-gray-50" onclick="navigateTo('library')">
                 <h3 class="text-xl font-bold text-gray-800">📖 資料夾清單</h3>
                 <p class="text-gray-500 mt-1">瀏覽、編輯單字與資料夾</p>
             </div>
-            <div class="bg-white p-6 rounded-2xl shadow-md border-l-8 border-green-500 cursor-pointer active:bg-gray-50" onclick="showView('practice')">
+            <div class="bg-white p-6 rounded-2xl shadow-md border-l-8 border-green-500 cursor-pointer active:bg-gray-50" onclick="navigateTo('practice')">
                 <h3 class="text-xl font-bold text-gray-800">🎯 練習專區</h3>
                 <p class="text-gray-500 mt-1">拼字練習、選擇題挑戰</p>
             </div>
@@ -372,7 +374,8 @@
     <!-- 單字庫 -->
     <div id="view-library" class="hidden">
         <div class="flex justify-between items-center mb-4">
-            <button onclick="showView('home')" class="text-gray-500 font-bold px-3 py-2 bg-gray-200 rounded-lg text-sm">← 返回</button>
+            <!-- 返回：改成 history.back() 比較符合「上一頁」的感覺 -->
+            <button onclick="history.back()" class="text-gray-500 font-bold px-3 py-2 bg-gray-200 rounded-lg text-sm">← 返回</button>
             <div class="flex gap-2">
                 <button id="btn-edit-folders" onclick="toggleEditMode()" class="bg-orange-500 text-white px-3 py-2 rounded-lg text-sm font-bold shadow-md active:scale-95 transition">管理資料夾</button>
                 <button onclick="openAddModal()" class="bg-indigo-600 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg text-2xl pb-1 active:scale-95 transition">+</button>
@@ -395,7 +398,7 @@
     <!-- 單字列表 -->
     <div id="view-word-list" class="hidden">
         <div class="sticky top-0 bg-gray-50 py-2 z-10 flex items-center justify-between mb-2">
-            <button onclick="showView('library')" class="text-gray-500 font-bold px-3 py-2 bg-gray-200 rounded-lg">← 返回</button>
+            <button onclick="history.back()" class="text-gray-500 font-bold px-3 py-2 bg-gray-200 rounded-lg">← 返回</button>
             <span id="list-title" class="font-bold text-lg text-indigo-900 truncate max-w-[150px]">分類</span>
             <div class="w-10"></div>
         </div>
@@ -514,7 +517,7 @@
                 </button>
             </div>
 
-            <button onclick="showView('practice')" class="w-full py-3 mt-3 bg-gray-200 text-gray-600 rounded-xl font-bold text-lg active:scale-95 transition">
+            <button onclick="navigateTo('practice')" class="w-full py-3 mt-3 bg-gray-200 text-gray-600 rounded-xl font-bold text-lg active:scale-95 transition">
                 不儲存，直接返回
             </button>
         </div>
@@ -637,6 +640,22 @@
 
     window.state = state;
 
+    // 讓網址有 page 參數，例如 ?page=library
+    function navigateTo(viewId) {
+        showView(viewId);
+        const url = new URL(window.location);
+        url.searchParams.set('page', viewId);
+        history.pushState({ viewId }, '', url);
+    }
+
+    window.onpopstate = (event) => {
+        const viewId =
+            (event.state && event.state.viewId) ||
+            new URL(window.location).searchParams.get('page') ||
+            'home';
+        showView(viewId);
+    };
+
     function initSystem() {
         const storedData = localStorage.getItem(STORAGE_KEY);
         if (storedData) {
@@ -670,7 +689,6 @@
         }
     }
 
-    // 合併 meaning：不同段落都保留，完全一樣的段落只出現一次
     function mergeMeaningStrings(oldMeaning, newMeaning) {
         const splitParts = str =>
             (str || '')
@@ -700,7 +718,6 @@
         return merged.join(' / ');
     }
 
-    // 對整個 words 陣列做「同英文合併」：meaning / tags 都融合
     function mergeDuplicateWords(words) {
         const map = new Map();
 
@@ -732,7 +749,6 @@
         return Array.from(map.values());
     }
 
-    // 產生「資料夾/標籤」複選清單
     function renderTagCheckboxes(selectedTags = []) {
         const container = document.getElementById('tag-checkbox-container');
         if (!container) return;
@@ -765,7 +781,6 @@
     }
 
     function saveDataLocally() {
-        // 儲存前先把重複英文的單字合併起來
         state.words = mergeDuplicateWords(state.words || []);
 
         const dataToSave = { words: state.words, folders: state.folders };
@@ -777,7 +792,6 @@
         }
     }
 
-    // 重置：清除自訂單字與資料夾，回到預設字庫（本機 + 雲端）
     function confirmReset() {
         if (!confirm("確定要重製嗎？\n這會刪除所有自訂單字與資料夾，只保留系統內建單字。\n若已登入，雲端也會一併重置。")) {
             return;
@@ -794,7 +808,9 @@
 
     function showView(viewId) {
         document.querySelectorAll('main > div').forEach(div => div.classList.add('hidden'));
-        document.getElementById(`view-${viewId}`).classList.remove('hidden');
+        const target = document.getElementById(`view-${viewId}`);
+        if (target) target.classList.remove('hidden');
+
         if (viewId === 'library') renderLibrary();
         if (viewId === 'practice') {
             renderPracticeOptions();
@@ -806,9 +822,16 @@
             state.isEditing = false;
             updateEditUI();
         }
+
+        // 動態修改標題，增加「分頁感」
+        const titleMap = {
+            home: '單字王 - 首頁',
+            library: '單字王 - 單字庫',
+            practice: '單字王 - 練習區'
+        };
+        document.title = titleMap[viewId] || '單字王 - 核心系統';
     }
 
-    // ================= 搜尋功能 =================
     function searchWord() {
         const query = document.getElementById('search-input').value.trim().toLowerCase();
         if (!query) return;
@@ -816,6 +839,7 @@
         if (foundWord) {
             const targetTag = foundWord.tags && foundWord.tags.find(t => !state.categories.includes(t)) || (foundWord.tags && foundWord.tags[0]);
             if (targetTag) {
+                navigateTo('library');
                 showView('word-list');
                 renderWordList(targetTag);
                 setTimeout(() => {
@@ -834,7 +858,6 @@
         } else alert("找不到這個單字！");
     }
 
-    // ================= 資料夾與單字管理 =================
     function toggleEditMode() { state.isEditing = !state.isEditing; updateEditUI(); renderLibrary(); }
     function updateEditUI() {
         const hint = document.getElementById('edit-hint');
@@ -877,6 +900,9 @@
             openActionModal(name);
         } else {
             renderWordList(name);
+            const url = new URL(window.location);
+            url.searchParams.set('page', 'library');
+            history.pushState({ viewId: 'library' }, '', url);
         }
     }
 
@@ -1036,7 +1062,6 @@
         }
     }
 
-    // ================= UI 渲染 (單字庫) =================
     function renderLibrary() {
         refreshTags();
         const grid = document.getElementById('category-grid');
@@ -1110,12 +1135,10 @@
         });
     }
 
-    // 修改後：支援在同一段中用 ; 或 ； 或 、 分隔多個中文，並各自帶上同一個詞性
     function parseMeaning(raw) {
         const results = [];
         if (!raw) return results;
 
-        // 先以 / 拆成大段
         const blocks = raw.split('/').map(b => b.trim()).filter(Boolean);
 
         blocks.forEach(block => {
@@ -1126,17 +1149,15 @@
 
             if (idx !== -1) {
                 textPart = block.substring(0, idx).trim();
-                posPart = block.substring(idx).trim();  // 例如 "(v.)"
+                posPart = block.substring(idx).trim();
             }
 
-            // 再把同一段內用 ; 、 ； 等分隔的多個意思拆開
             const subTexts = textPart
                 .split(/[;；、]/)
                 .map(s => s.trim())
                 .filter(Boolean);
 
             if (subTexts.length === 0) {
-                // 沒有拆出任何東西就直接放進去
                 results.push({ text: textPart, pos: posPart });
             } else {
                 subTexts.forEach(t => {
@@ -1148,7 +1169,6 @@
         return results;
     }
 
-    // ================= 練習區與單字篩選 =================
     function renderPracticeOptions() {
         refreshTags();
         const select = document.getElementById('practice-scope');
@@ -1200,7 +1220,6 @@
         updateSelectionCount();
     }
 
-    // ================= 遊戲核心邏輯 =================
     function startGame(mode) {
         const checkboxes = document.querySelectorAll('.practice-checkbox:checked');
         const selectedEnglishes = Array.from(checkboxes).map(cb => cb.dataset.english);
@@ -1218,14 +1237,16 @@
         state.game.index = 0;
         state.game.wrongWords = new Set();
 
-        if (mode === 'spelling') { showView('game-spelling'); loadSpellingWord(); }
-        else { showView('game-choice'); loadChoiceQuestion(); }
+        if (mode === 'spelling') { showView('game-spelling'); }
+        else { showView('game-choice'); }
+
+        if (mode === 'spelling') loadSpellingWord();
+        else loadChoiceQuestion();
     }
 
     function quitGameAndSave() { endGame(true); }
-    function quitGame() { showView('practice'); }
+    function quitGame() { navigateTo('practice'); }
 
-    // --- 拼字遊戲 ---
     function loadSpellingWord() {
         const word = state.game.currentWords[state.game.index];
         const total = state.game.currentWords.length;
@@ -1265,7 +1286,6 @@
         setTimeout(nextQuestion, 1500);
     }
 
-    // --- 選擇題遊戲 ---
     function loadChoiceQuestion() {
         const word = state.game.currentWords[state.game.index];
         const total = state.game.currentWords.length;
@@ -1321,7 +1341,6 @@
         });
     }
 
-    // 題目/選項顯示「中文 + 詞性」
     function formatMeaning(raw) {
         const firstBlock = raw.split('/')[0].trim();
         const idx = firstBlock.lastIndexOf('(');
@@ -1358,7 +1377,6 @@
         }
     }
 
-    // ================= 結算邏輯 =================
     function endGame(isAborted = false) {
         document.getElementById('view-game-spelling').classList.add('hidden');
         document.getElementById('view-game-choice').classList.add('hidden');
@@ -1446,12 +1464,15 @@
 
         saveDataLocally();
         alert(`已將 ${count} 個單字加入「${targetFolder}」！`);
-        showView('practice');
+        navigateTo('practice');
     }
 
     window.onload = () => {
         initSystem();
-        showView('home');
+        const params = new URL(window.location).searchParams;
+        const page = params.get('page') || 'home';
+        showView(page);
+        history.replaceState({ viewId: page }, '', window.location);
     };
 </script>
 
@@ -1489,7 +1510,7 @@
     function updateAuthUI(user) {
         const loginBtn = document.getElementById('btn-login');
         const logoutBtn = document.getElementById('btn-logout');
-        the syncBtn = document.getElementById('btn-sync');
+        const syncBtn = document.getElementById('btn-sync');
         const userSpan = document.getElementById('user-email');
 
         if (!loginBtn || !logoutBtn || !syncBtn || !userSpan) return;
@@ -1584,7 +1605,7 @@
             }
 
             const libView = document.getElementById('view-library');
-            the pracView = document.getElementById('view-practice');
+            const pracView = document.getElementById('view-practice');
 
             if (libView && !libView.classList.contains('hidden') && typeof window.renderLibrary === 'function') {
                 window.renderLibrary();
