@@ -386,7 +386,8 @@
 
     <!-- 單字列表 -->
     <div id="view-word-list" class="hidden">
-        <div class="sticky top-0 bg-gray-50 py-2 z-10 flex items-center justify-between mb-2">
+        <!-- 這裡移除 sticky top-0，避免遮住第一個單字 -->
+        <div class="bg-gray-50 py-2 z-10 flex items-center justify-between mb-2">
             <button onclick="showView('library')" class="text-gray-500 font-bold px-3 py-2 bg-gray-200 rounded-lg">← 返回</button>
             <span id="list-title" class="font-bold text-lg text-indigo-900 truncate max-w-[150px]">分類</span>
             <div class="w-10"></div>
