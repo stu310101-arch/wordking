@@ -499,7 +499,7 @@
 
             <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 mt-4">
                 <label class="block text-sm font-bold text-indigo-900 mb-2">將勾選單字加入到：</label>
-                <select id="save-target-folder" class="w-full p-3 rounded-lg border border-indigo-200 mb-3 bg白 outline-none font-bold text-gray-700 cursor-pointer hover:border-indigo-400 transition"></select>
+                <select id="save-target-folder" class="w-full p-3 rounded-lg border border-indigo-200 mb-3 bg-white outline-none font-bold text-gray-700 cursor-pointer hover:border-indigo-400 transition"></select>
                 <button onclick="saveWrongWords()" class="w-full py-3 bg-indigo-600 text-white rounded-lg font-bold text-lg shadow-md hover:bg-indigo-700 active:scale-95 transition">
                     確認加入
                 </button>
@@ -586,7 +586,7 @@
         <p id="confirm-desc" class="text-gray-500 mb-6">此動作無法復原。</p>
         <div class="grid grid-cols-2 gap-3">
             <button onclick="document.getElementById('confirm-modal').classList.add('hidden')" class="py-3 text-gray-500 font-bold bg-gray-100 rounded-xl active:bg-gray-200 transition">取消</button>
-            <button onclick="executeDelete()" class="py-3 bg-red-600 text白 rounded-xl font-bold shadow-md active:bg-red-700 transition">確認刪除</button>
+            <button onclick="executeDelete()" class="py-3 bg-red-600 text-white rounded-xl font-bold shadow-md active:bg-red-700 transition">確認刪除</button>
         </div>
     </div>
 </div>
@@ -1075,7 +1075,14 @@
         filtered.forEach(w => {
             const card = document.createElement('div');
             card.className = 'word-card w-full';
-            const parts = parseMeaning(w.meaning).map(p => `<div class="mb-3 text-indigo-800 font-bold text-lg">${p.text} <span class="block text-sm text-indigo-400 opacity-90 mt-1">${p.pos}</span></div>`).join('');
+
+            const parts = parseMeaning(w.meaning).map(p => `
+                <div class="mb-3 text-indigo-800 font-bold text-lg">
+                    ${p.text}
+                    <span class="block text-sm text-indigo-400 opacity-90 mt-1">${p.pos}</span>
+                </div>
+            `).join('');
+
             const badge = w.tags && w.tags.includes("錯題區") ? `<span class="absolute top-3 right-3 text-xs bg-red-100 text-red-500 px-2 py-1 rounded-full font-bold">錯題</span>` : '';
 
             card.innerHTML = `
@@ -1085,18 +1092,51 @@
                         ${badge}
                         <span class="text-3xl font-black text-indigo-900 break-all text-center">${w.english}</span>
                     </div>
-                    <div class="word-card-back p-6 overflow-y-auto bg-indigo-50 border-2 border-indigo-200 flex flex-col justify-center rounded-2xl">${parts}</div>
+                    <div class="word-card-back p-6 overflow-y-auto bg-indigo-50 border-2 border-indigo-200 flex flex-col justify-center rounded-2xl">
+                        ${parts}
+                    </div>
                 </div>`;
             card.onclick = () => card.classList.toggle('is-flipped');
             container.appendChild(card);
         });
     }
 
+    // 修改後：支援在同一段中用 ; 或 ； 或 、 分隔多個中文，並各自帶上同一個詞性
     function parseMeaning(raw) {
-        return raw.split('/').map(b => {
-            const t = b.trim(); const idx = t.lastIndexOf('(');
-            return idx !== -1 ? {text: t.substring(0, idx).trim(), pos: t.substring(idx)} : {text: t, pos: ""};
+        const results = [];
+        if (!raw) return results;
+
+        // 先以 / 拆成大段
+        const blocks = raw.split('/').map(b => b.trim()).filter(Boolean);
+
+        blocks.forEach(block => {
+            if (!block) return;
+            const idx = block.lastIndexOf('(');
+            let textPart = block;
+            let posPart = '';
+
+            if (idx !== -1) {
+                textPart = block.substring(0, idx).trim();
+                posPart = block.substring(idx).trim();  // 例如 "(v.)"
+            }
+
+            // 再把同一段內用 ; 、 ； 等分隔的多個意思拆開
+            const subTexts = textPart
+                .split(/[;；、]/)
+                .map(s => s.trim())
+                .filter(Boolean);
+
+            if (subTexts.length === 0) {
+                // 沒有拆出任何東西就直接放進去
+                results.push({ text: textPart, pos: posPart });
+            } else {
+                subTexts.forEach(t => {
+                    results.push({ text: t, pos: posPart });
+                });
+            }
         });
+
+        return results;
     }
 
     // ================= 練習區與單字篩選 =================
@@ -1242,7 +1282,7 @@
 
         options.forEach(opt => {
             const btn = document.createElement('button');
-            btn.className = "choice-btn w-full bg白 border-2 border-indigo-100 text-gray-700 font-bold py-4 rounded-xl text-lg shadow-sm hover:border-indigo-300";
+            btn.className = "choice-btn w-full bg-white border-2 border-indigo-100 text-gray-700 font-bold py-4 rounded-xl text-lg shadow-sm hover:border-indigo-300";
             btn.innerText = isEnToCh ? formatMeaning(opt.meaning) : opt.english;
 
             btn.onclick = () => {
