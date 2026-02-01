@@ -781,13 +781,71 @@
         refreshTags();
         if (state.words.length > 0 || state.folders.length > 1) saveDataLocally();
     }
+        // 將資料夾名稱拆成「前綴文字」+「數字序列」
+    // 例如：
+    //  "晟景Lv5U6"      -> prefix: "晟景Lv", numbers: [5, 6]
+    //  "晟景單字 Lv5U10" -> prefix: "晟景單字 Lv", numbers: [5, 10]
+    //  "龍騰C6U3"       -> prefix: "龍騰C", numbers: [6, 3]
+    //  "學測單字"       -> prefix: "學測單字", numbers: []
+    function splitTagForSeries(tag) {
+        // 抓到「一開始連續的非數字」當作前綴
+        const m = tag.match(/^(\D+)(.*)$/);
+        if (!m) {
+            // 開頭就是數字，當作整個都是前綴（沒有系列數字）
+            return { prefix: tag, numbers: [] };
+        }
+        const prefix = m[1].trim();
+        const rest = m[2];
 
+        if (!rest) {
+            return { prefix, numbers: [] };
+        }
+
+        // 把後面所有數字抓出來，照出現順序組成陣列
+        const nums = rest.match(/\d+/g);
+        const numbers = nums ? nums.map(n => parseInt(n, 10)) : [];
+
+        return { prefix, numbers };
+    }
+
+    // 自訂標籤排序：
+    // 1. 「錯題區」永遠排到最後
+    // 2. 其餘標籤，先按「前綴」群組（名字相似度），
+    //    同前綴時用數字序列排序（U5, U6, U7, U10 會排成 5,6,7,10），
+    //    沒數字就用字典順序。
+    function compareTagsBySeries(a, b) {
+        // 「錯題區」固定在最後
+        if (a === "錯題區" && b !== "錯題區") return 1;   // a 往後
+        if (b === "錯題區" && a !== "錯題區") return -1;  // b 往後
+
+        const sa = splitTagForSeries(a);
+        const sb = splitTagForSeries(b);
+
+        // 先比前綴（系列名）
+        if (sa.prefix !== sb.prefix) {
+            // 中文用 zh-Hant 排序會比較自然
+            return sa.prefix.localeCompare(sb.prefix, 'zh-Hant');
+        }
+
+        // 前綴一樣：同一系列，改用數字序列排序
+        const len = Math.max(sa.numbers.length, sb.numbers.length);
+        for (let i = 0; i < len; i++) {
+            const na = sa.numbers[i] ?? 0;
+            const nb = sb.numbers[i] ?? 0;
+            if (na !== nb) return na - nb;
+        }
+
+        // 數字也一樣或都沒有數字時，最後再比整個字串
+        return a.localeCompare(b, 'zh-Hant');
+    }
+    
     function refreshTags() {
         const tagsSet = new Set(state.folders);
         state.words.forEach(w => {
             if (w.tags) w.tags.forEach(t => tagsSet.add(t));
         });
-        state.unitTags = Array.from(tagsSet).sort();
+                // 使用自訂排序：同系列按前綴 + 數字順序排，「錯題區」永遠最後
+        state.unitTags = Array.from(tagsSet).sort(compareTagsBySeries);
 
         const datalist = document.getElementById('folder-list');
         if (datalist) {
