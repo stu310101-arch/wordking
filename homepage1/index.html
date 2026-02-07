@@ -817,13 +817,19 @@
 <script>
     const STORAGE_KEY = 'wordKingData_v2';
 
-    // 背景音樂清單：一首你的本機音樂 + 一首公用測試音樂
+    // 背景音樂清單：兩首你的本機音樂 + 一首公用測試音樂
     const BGM_TRACKS = [
         {
-            id: 'bgm_user',
-            name: '我的背景音樂',
-            // 放在專案根目錄（和 index.html 同一層）的 mp3 檔
+            id: 'bgm_new_dora',
+            name: '新哆啦A夢主題曲',
+            // 新版主題曲（放在專案根目錄，和 index.html 同一層）
             url: './新哆啦A夢主題曲.mp3'
+        },
+        {
+            id: 'bgm_old_dora',
+            name: '哆啦A夢主題曲',
+            // 舊版主題曲（同樣放在專案根目錄）
+            url: './舊版哆啦A夢.mp3'
         },
         {
             id: 'bgm_demo',
@@ -837,8 +843,7 @@
         bgmEnabled: true,                  // 是否開啟背景音樂
         bgmVolume: 0.5,                    // 0~1
         speechVolume: 1.0,                 // 0~1
-        // 預設播放「我的背景音樂」這首
-        selectedBgmId: 'bgm_user'
+        // 預設播放「新哆啦A夢主題曲」這首         selectedBgmId: 'bgm_new_dora'    };
     };
 
     // 發音時要把 BGM 壓低多少：0.3 = 30%
