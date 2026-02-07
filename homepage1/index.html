@@ -911,7 +911,20 @@
             audio.src = track.url;
         }
 
-        // 若載入音樂檔失敗，顯示提示訊息，方便檢查路徑或雲端連結       連 audio.onerror = () => {             console.error('背景音樂載入失敗', {               d src: audio.currentSrc || audio.src,               e error: audio.error           g });           = if (!audio._bgmErrorNotified) {               . audio._bgmErrorNotified = true;               完 alert(                   
+        // 若載入音樂檔失敗，顯示提示訊息，方便檢查路徑或雲端連結
+        audio.onerror = () => {
+            console.error('背景音樂載入失敗', {
+                src: audio.currentSrc || audio.src,
+                error: audio.error
+            });
+            if (!audio._bgmErrorNotified) {
+                audio._bgmErrorNotified = true;
+                alert(
+                    '背景音樂載入失敗，請確認：\n' +
+                    '1. 檔案是否存在，路徑是否正確\n' +
+                    '2. 如果是雲端連結，檔案是否設為「擁有連結者可查看」\n' +
+                    '3. 檔案格式是否為瀏覽器可播放的音訊格式（例如 mp3）'
+                );
             }
         };
 
