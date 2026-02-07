@@ -120,6 +120,15 @@
         }
     </style>
 
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/"
+  }
+}
+</script>
 </head>
 <body class="bg-gray-50 min-h-screen font-sans pb-24">
 
@@ -168,7 +177,7 @@
     {"english": "infinity", "meaning": "無限 (n.)", "tags": ["晟景Lv5U6"]},
     {"english": "sober", "meaning": "清醒的；嚴肅的 (a.) / 使清醒 (v.)", "tags": ["晟景Lv5U6"]},
     {"english": "ridiculous", "meaning": "荒謬的 (a.)", "tags": ["晟景Lv5U6"]},
-    {"english": "ridicule", "meaning": "嘲笑 (v.) / 嘲笑 (n.)", "tags": ["晟景Lv5U6"]},
+    {"english": "ridicule", "meaning": "嘲笑 (v.) /嘲笑 (n.)", "tags": ["晟景Lv5U6"]},
     {"english": "beloved", "meaning": "摯愛的 (a.) / 深愛的人 (n.)", "tags": ["晟景Lv5U6"]},
     {"english": "continental", "meaning": "大陸的 (a.)", "tags": ["晟景Lv5U6"]},
     {"english": "sturdy", "meaning": "強健的；牢固的 (a.)", "tags": ["晟景Lv5U6"]},
@@ -746,12 +755,28 @@
 
     window.state = state;
 
+    // 新增：發音功能
+    window.speakWord = function(text) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel(); // 停止目前正在播放的語音
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US'; 
+            window.speechSynthesis.speak(utterance);
+        } else {
+            alert("您的瀏覽器不支援發音功能");
+        }
+    };
+
     // 讓網址有 page 參數，例如 ?page=library
     function navigateTo(viewId) {
         showView(viewId);
-        const url = new URL(window.location);
-        url.searchParams.set('page', viewId);
-        history.pushState({ viewId }, '', url);
+        try {
+            const url = new URL(window.location);
+            url.searchParams.set('page', viewId);
+            history.pushState({ viewId }, '', url);
+        } catch (e) {
+            console.log("History API not supported or restricted:", e);
+        }
     }
 
     window.onpopstate = (event) => {
@@ -1288,6 +1313,12 @@
                         <button class="absolute top-3 left-3 text-gray-400 hover:text-indigo-600 bg-white rounded-full p-1 shadow-sm z-20" onclick="event.stopPropagation(); openAddModal(${w.idx})">✎</button>
                         ${badge}
                         <span class="text-3xl font-black text-indigo-900 break-all text-center">${w.english}</span>
+                        <!-- 喇叭發音按鈕 -->
+                        <button class="mt-4 text-indigo-500 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-full transition-colors z-20 shadow-sm flex items-center justify-center" onclick="event.stopPropagation(); speakWord('${w.english.replace(/'/g, "\\'")}')" title="發音">
+                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                               <path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
+                             </svg>
+                        </button>
                     </div>
                     <div class="word-card-back p-6 bg-indigo-50 border-2 border-indigo-200 flex flex-col rounded-2xl">
                         ${parts}
@@ -1635,7 +1666,11 @@
         const params = new URL(window.location).searchParams;
         const page = params.get('page') || 'home';
         showView(page);
-        history.replaceState({ viewId: page }, '', window.location);
+        try {
+            history.replaceState({ viewId: page }, '', window.location);
+        } catch (e) {
+            console.log("History API not supported or restricted:", e);
+        }
     };
 </script>
 
@@ -1838,5 +1873,6 @@
     });
 </script>
 
+<div id="root" style="display: none;"></div>
 </body>
 </html>
