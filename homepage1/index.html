@@ -58,6 +58,13 @@
             justify-content: center;
         }
 
+        /* 英文字 + 喇叭圖示：只有正面顯示，點擊時發音 */
+        .word-card-front span[title="發音"]::after {
+            content: '🔊';
+            margin-left: 0.4rem;
+            font-size: 1.6rem;
+        }
+
         .word-card-back {
             transform: rotateY(180deg);
             background-color: #f3f4f6;
@@ -478,6 +485,17 @@
             <button onclick="navigateTo('library')" class="bg-indigo-500 hover:bg-indigo-700 py-2 rounded-lg text-sm font-bold transition">單字庫</button>
             <button onclick="navigateTo('practice')" class="bg-indigo-500 hover:bg-indigo-700 py-2 rounded-lg text-sm font-bold transition">練習區</button>
         </div>
+
+        <!-- 重置全部資料（回到初始狀態，並同步雲端） -->
+        <div class="mt-2 flex justify-end">
+            <button
+                type="button"
+                onclick="confirmReset()"
+                class="text-xs text-red-500 hover:text-red-700 underline underline-offset-2"
+                title="恢復初始狀態（包含雲端同步資料）">
+                重置全部資料
+            </button>
+        </div>
     </div>
 </nav>
 
@@ -830,6 +848,8 @@
             name: '哆啦A夢主題曲',
             // 舊版主題曲（同樣放在專案根目錄）
             url: './舊版哆啦A夢主題曲.mp3'
+
+
         },
         {
             id: 'bgm_demo',
@@ -985,6 +1005,8 @@
 
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'en-US';
+        // 唸慢一點，方便跟讀
+        utterance.rate = 0.8;
 
         const speechVol =
             clamp01(state.settings && typeof state.settings.speechVolume === 'number'
@@ -1572,13 +1594,13 @@
                     <div class="word-card-front bg-white border-2 border-indigo-50 p-6 relative flex flex-col justify-center items-center rounded-2xl">
                         <button class="absolute top-3 left-3 text-gray-400 hover:text-indigo-600 bg-white rounded-full p-1 shadow-sm z-20" onclick="event.stopPropagation(); openAddModal(${w.idx})">✎</button>
                         ${badge}
-                        <span class="text-3xl font-black text-indigo-900 break-all text-center">${w.english}</span>
-                        <!-- 喇叭發音按鈕 -->
-                        <button class="mt-4 text-indigo-500 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-full transition-colors z-20 shadow-sm flex items-center justify-center" onclick="event.stopPropagation(); speakWord('${w.english.replace(/'/g, "\\'")}')" title="發音">
-                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
-                               <path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
-                             </svg>
-                        </button>
+                        <span
+                            class="text-3xl font-black text-indigo-900 break-all text-center cursor-pointer"
+                            title="發音"
+                            onclick="event.stopPropagation(); speakWord('${w.english.replace(/'/g, "\\'")}')"
+                        >
+                            ${w.english}
+                        </span>
                     </div>
                     <div class="word-card-back p-6 bg-indigo-50 border-2 border-indigo-200 flex flex-col rounded-2xl">
                         ${parts}
