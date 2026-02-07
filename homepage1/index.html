@@ -120,17 +120,20 @@
         }
     </style>
 
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@^19.2.4",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "react/": "https://esm.sh/react@^19.2.4/"
-  }
-}
-</script>
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@^19.2.4",
+        "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+        "react/": "https://esm.sh/react@^19.2.4/"
+      }
+    }
+    </script>
 </head>
 <body class="bg-gray-50 min-h-screen font-sans pb-24">
+
+<!-- 背景音樂 audio 元素 -->
+<audio id="bgm-audio" class="hidden" loop></audio>
 
 <!-- 預設字庫 -->
 <script>
@@ -412,7 +415,7 @@
                 <span>🎓</span> 單字王
             </h1>
 
-            <!-- 右側：搜尋 ＋ 登入/登出/同步 -->
+            <!-- 右側：搜尋 ＋ 設定 ＋ 登入/登出/同步 -->
             <div class="flex items-center gap-2">
                 <!-- 搜尋框 -->
                 <div class="relative flex items-center">
@@ -426,6 +429,15 @@
                         🔍
                     </button>
                 </div>
+
+                <!-- 設定按鈕 -->
+                <button
+                    type="button"
+                    onclick="openSettingsModal()"
+                    class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-indigo-500 text-white text-lg shadow-md active:scale-95 transition"
+                    title="設定">
+                    ⚙
+                </button>
 
                 <!-- 使用者資訊 ＋ 登入 / 登出 / 同步 -->
                 <div class="flex items-center gap-1">
@@ -508,7 +520,7 @@
 
         <h2 class="text-xl font-bold text-indigo-900 mb-4">資料夾目錄</h2>
         <div class="grid grid-cols-2 gap-3" id="category-grid"></div>
-        <div id="empty-library-hint" class="hidden text-center text-gray-400 py-10 text-lg">目前沒有單字<br>請點擊右上角 + 新增</div>
+        <div id="empty-library-hint" class="hidden text中心 text-gray-400 py-10 text-lg">目前沒有單字<br>請點擊右上角 + 新增</div>
     </div>
 
     <!-- 單字列表 -->
@@ -730,15 +742,117 @@
     </div>
 </div>
 
+<!-- 系統設定 Modal -->
+<div id="settings-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center p-4 z-[95]">
+    <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+        <h3 class="text-xl font-bold mb-4 text-center">系統設定</h3>
+
+        <div class="space-y-6">
+            <!-- 背景音樂開關 + 曲目選擇 -->
+            <div class="border-b pb-4 space-y-3">
+                <label class="flex items-center justify-between">
+                    <span class="font-bold text-gray-700">啟用背景音樂</span>
+                    <input
+                        type="checkbox"
+                        id="settings-bgm-enabled"
+                        class="w-5 h-5"
+                        onchange="toggleBgmEnabledFromCheckbox(this.checked)">
+                </label>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">背景音樂曲目</label>
+                    <select
+                        id="settings-bgm-select"
+                        class="w-full border-2 border-gray-200 p-2 rounded-xl focus:border-indigo-500 outline-none text-sm"
+                        onchange="changeBgmTrackFromSelect(this.value)">
+                        <!-- 由 JS 動態填入 -->
+                    </select>
+                </div>
+            </div>
+
+            <!-- 背景音樂音量 -->
+            <div>
+                <div class="flex items-center justify-between mb-1">
+                    <label class="block text-sm font-bold text-gray-700">背景音樂音量</label>
+                    <span id="settings-bgm-volume-value" class="text-xs text-gray-500">50%</span>
+                </div>
+                <input
+                    type="range"
+                    id="settings-bgm-volume"
+                    min="0"
+                    max="100"
+                    step="1"
+                    class="w-full"
+                    oninput="updateBgmVolumeFromSlider(this.value)">
+            </div>
+
+            <!-- 單字發音音量 -->
+            <div>
+                <div class="flex items-center justify-between mb-1">
+                    <label class="block text-sm font-bold text-gray-700">單字發音音量</label>
+                    <span id="settings-speech-volume-value" class="text-xs text-gray-500">100%</span>
+                </div>
+                <input
+                    type="range"
+                    id="settings-speech-volume"
+                    min="0"
+                    max="100"
+                    step="1"
+                    class="w-full"
+                    oninput="updateSpeechVolumeFromSlider(this.value)">
+            </div>
+
+            <button
+                onclick="closeSettingsModal()"
+                class="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-md active:bg-indigo-700 transition">
+                完成
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- 主程式腳本（非 module，掛在 window 上） -->
 <script>
     const STORAGE_KEY = 'wordKingData_v2';
+
+    // 背景音樂清單（目前先放你提供的這一首，之後可再擴充）
+    const BGM_TRACKS = [
+        {
+            id: 'bgm1',
+            name: '背景音樂 1',
+            // Google Drive 直接音訊連結
+            url: 'https://drive.google.com/uc?export=download&id=1qKXQMkfDdwxvi579zWR7A50bNA3OxPRN'
+        }
+    ];
+
+    const DEFAULT_SETTINGS = {
+        bgmEnabled: true,                  // 是否開啟背景音樂
+        bgmVolume: 0.5,                    // 0~1
+        speechVolume: 1.0,                 // 0~1
+        selectedBgmId: BGM_TRACKS[0].id    // 預設曲目
+    };
+
+    // 發音時要把 BGM 壓低多少：0.3 = 30%
+    const bgmDucking = {
+        isDucking: false,
+        ratio: 0.3
+    };
+
+    function clamp01(value) {
+        const n = typeof value === 'number' ? value : parseFloat(value);
+        if (isNaN(n)) return 0;
+        return Math.max(0, Math.min(1, n));
+    }
 
     let state = {
         words: [],
         categories: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(''),
         unitTags: ["錯題區"],
         folders: ["錯題區"],
+        settings: { ...DEFAULT_SETTINGS },
+        audio: {
+            bgmElement: null
+        },
         game: {
             mode: '',
             currentWords: [],
@@ -755,16 +869,99 @@
 
     window.state = state;
 
-    // 新增：發音功能
-    window.speakWord = function(text) {
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel(); // 停止目前正在播放的語音
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'en-US'; 
-            window.speechSynthesis.speak(utterance);
-        } else {
-            alert("您的瀏覽器不支援發音功能");
+    function hydrateSettings(saved) {
+        const base = { ...DEFAULT_SETTINGS };
+        if (saved && typeof saved === 'object') {
+            if (typeof saved.bgmEnabled === 'boolean') base.bgmEnabled = saved.bgmEnabled;
+            if (typeof saved.bgmVolume === 'number') base.bgmVolume = clamp01(saved.bgmVolume);
+            if (typeof saved.speechVolume === 'number') base.speechVolume = clamp01(saved.speechVolume);
+            if (typeof saved.selectedBgmId === 'string') base.selectedBgmId = saved.selectedBgmId;
         }
+        return base;
+    }
+
+    function getCurrentBgmTrack() {
+        const id = state.settings && state.settings.selectedBgmId;
+        const found = BGM_TRACKS.find(t => t.id === id);
+        return found || BGM_TRACKS[0] || null;
+    }
+
+    function setupAudioSystem() {
+        let audio = document.getElementById('bgm-audio');
+        if (!audio) {
+            audio = document.createElement('audio');
+            audio.id = 'bgm-audio';
+            audio.className = 'hidden';
+            document.body.appendChild(audio);
+        }
+        audio.loop = true;
+        audio.preload = 'auto';
+
+        const track = getCurrentBgmTrack();
+        if (track) audio.src = track.url;
+
+        state.audio = state.audio || {};
+        state.audio.bgmElement = audio;
+        applyBgmSettingsToElement();
+    }
+
+    function applyBgmSettingsToElement() {
+        if (!state.audio || !state.audio.bgmElement) return;
+        const audio = state.audio.bgmElement;
+
+        audio.volume = clamp01(state.settings.bgmVolume);
+
+        if (state.settings.bgmEnabled) {
+            audio.play().catch(() => {
+                // 有些瀏覽器會阻擋自動播放，需要使用者互動
+            });
+        } else {
+            audio.pause();
+        }
+    }
+    window.applyBgmSettingsToElement = applyBgmSettingsToElement;
+
+    // 新版發音功能（會自動壓低背景音量）
+    window.speakWord = function(text) {
+        if (!('speechSynthesis' in window)) {
+            alert("您的瀏覽器不支援發音功能");
+            return;
+        }
+
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US';
+
+        const speechVol =
+            clamp01(state.settings && typeof state.settings.speechVolume === 'number'
+                ? state.settings.speechVolume
+                : DEFAULT_SETTINGS.speechVolume);
+        utterance.volume = speechVol;
+
+        const bgmEl = (state.audio && state.audio.bgmElement) || document.getElementById('bgm-audio');
+        const shouldDuck =
+            bgmEl &&
+            !bgmEl.paused &&
+            state.settings &&
+            state.settings.bgmEnabled;
+
+        if (shouldDuck) {
+            bgmDucking.isDucking = true;
+            bgmEl.volume = clamp01(state.settings.bgmVolume * bgmDucking.ratio);
+
+            const restore = () => {
+                bgmDucking.isDucking = false;
+                bgmEl.volume = clamp01(state.settings.bgmVolume);
+                utterance.onend = null;
+                utterance.onerror = null;
+            };
+
+            utterance.onend = restore;
+            utterance.onerror = restore;
+        }
+
+        window.speechSynthesis.speak(utterance);
     };
 
     // 讓網址有 page 參數，例如 ?page=library
@@ -794,19 +991,23 @@
                 const parsed = JSON.parse(storedData);
                 state.words = parsed.words || [];
                 state.folders = parsed.folders || ["錯題區"];
+                state.settings = hydrateSettings(parsed.settings);
             } catch(e) {
                 state.words = [...defaultWordDatabase];
                 state.folders = ["錯題區"];
+                state.settings = { ...DEFAULT_SETTINGS };
             }
         } else {
             state.words = [...defaultWordDatabase];
             state.folders = ["錯題區"];
+            state.settings = { ...DEFAULT_SETTINGS };
         }
         if (!state.folders.includes("錯題區")) state.folders.unshift("錯題區");
         refreshTags();
         if (state.words.length > 0 || state.folders.length > 1) saveDataLocally();
     }
-        // 將資料夾名稱拆成「前綴文字」+「數字序列」
+
+    // 將資料夾名稱拆成「前綴文字」+「數字序列」
     // 例如：
     //  "晟景Lv5U6"      -> prefix: "晟景Lv", numbers: [5, 6]
     //  "晟景單字 Lv5U10" -> prefix: "晟景單字 Lv", numbers: [5, 10]
@@ -863,13 +1064,13 @@
         // 數字也一樣或都沒有數字時，最後再比整個字串
         return a.localeCompare(b, 'zh-Hant');
     }
-    
+
     function refreshTags() {
         const tagsSet = new Set(state.folders);
         state.words.forEach(w => {
             if (w.tags) w.tags.forEach(t => tagsSet.add(t));
         });
-                // 使用自訂排序：同系列按前綴 + 數字順序排，「錯題區」永遠最後
+        // 使用自訂排序：同系列按前綴 + 數字順序排，「錯題區」永遠最後
         state.unitTags = Array.from(tagsSet).sort(compareTagsBySeries);
 
         const datalist = document.getElementById('folder-list');
@@ -972,7 +1173,11 @@
     function saveDataLocally() {
         state.words = mergeDuplicateWords(state.words || []);
 
-        const dataToSave = { words: state.words, folders: state.folders };
+        const dataToSave = {
+            words: state.words,
+            folders: state.folders,
+            settings: state.settings
+        };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
         refreshTags();
 
@@ -990,8 +1195,10 @@
 
         state.words = Array.isArray(defaultWordDatabase) ? [...defaultWordDatabase] : [];
         state.folders = ["錯題區"];
+        state.settings = { ...DEFAULT_SETTINGS };
 
         saveDataLocally();
+        applyBgmSettingsToElement();
         location.reload();
     }
 
@@ -1390,7 +1597,7 @@
 
         pool.forEach((word) => {
             const div = document.createElement('div');
-            div.className = "flex items-center p-2 border-b border-gray-100 last:border-0 hover:bg-white transition";
+            div.className = "flex items-center p-2 border-b border-gray-100 last:border-0 hover:bg白 transition";
             div.innerHTML = `
                 <input type="checkbox" class="practice-checkbox w-5 h-5 text-indigo-600 rounded mr-3" checked data-english="${word.english}">
                 <div class="flex-1 min-w-0">
@@ -1661,8 +1868,117 @@
         navigateTo('practice');
     }
 
+    // 設定 Modal 相關
+    window.openSettingsModal = function() {
+        const modal = document.getElementById('settings-modal');
+        if (!modal) return;
+
+        const bgmEnabledEl = document.getElementById('settings-bgm-enabled');
+        const bgmVolumeEl = document.getElementById('settings-bgm-volume');
+        const bgmVolumeLabel = document.getElementById('settings-bgm-volume-value');
+        const speechVolumeEl = document.getElementById('settings-speech-volume');
+        const speechVolumeLabel = document.getElementById('settings-speech-volume-value');
+        const bgmSelectEl = document.getElementById('settings-bgm-select');
+
+        if (bgmSelectEl && !bgmSelectEl.options.length) {
+            BGM_TRACKS.forEach(track => {
+                const opt = document.createElement('option');
+                opt.value = track.id;
+                opt.textContent = track.name;
+                bgmSelectEl.appendChild(opt);
+            });
+        }
+
+        if (bgmEnabledEl) bgmEnabledEl.checked = !!state.settings.bgmEnabled;
+
+        if (bgmVolumeEl) {
+            const v = Math.round(clamp01(state.settings.bgmVolume) * 100);
+            bgmVolumeEl.value = v;
+            if (bgmVolumeLabel) bgmVolumeLabel.textContent = v + '%';
+        }
+
+        if (speechVolumeEl) {
+            const v = Math.round(clamp01(state.settings.speechVolume) * 100);
+            speechVolumeEl.value = v;
+            if (speechVolumeLabel) speechVolumeLabel.textContent = v + '%';
+        }
+
+        if (bgmSelectEl) {
+            bgmSelectEl.value = state.settings.selectedBgmId;
+        }
+
+        modal.classList.remove('hidden');
+    };
+
+    window.closeSettingsModal = function() {
+        const modal = document.getElementById('settings-modal');
+        if (modal) modal.classList.add('hidden');
+        saveSettingsFromUI();
+    };
+
+    function saveSettingsFromUI() {
+        const bgmEnabledEl = document.getElementById('settings-bgm-enabled');
+        const bgmVolumeEl = document.getElementById('settings-bgm-volume');
+        const speechVolumeEl = document.getElementById('settings-speech-volume');
+        const bgmSelectEl = document.getElementById('settings-bgm-select');
+
+        if (bgmEnabledEl) state.settings.bgmEnabled = !!bgmEnabledEl.checked;
+        if (bgmVolumeEl) state.settings.bgmVolume = clamp01((parseInt(bgmVolumeEl.value, 10) || 0) / 100);
+        if (speechVolumeEl) state.settings.speechVolume = clamp01((parseInt(speechVolumeEl.value, 10) || 0) / 100);
+        if (bgmSelectEl && bgmSelectEl.value) state.settings.selectedBgmId = bgmSelectEl.value;
+
+        applyBgmSettingsToElement();
+        saveDataLocally();
+    }
+
+    window.updateBgmVolumeFromSlider = function(value) {
+        const v = Math.max(0, Math.min(100, parseInt(value, 10) || 0));
+        const label = document.getElementById('settings-bgm-volume-value');
+        if (label) label.textContent = v + '%';
+        state.settings.bgmVolume = clamp01(v / 100);
+
+        if (state.audio && state.audio.bgmElement) {
+            const audio = state.audio.bgmElement;
+            if (bgmDucking.isDucking) {
+                audio.volume = clamp01(state.settings.bgmVolume * bgmDucking.ratio);
+            } else {
+                audio.volume = clamp01(state.settings.bgmVolume);
+            }
+        }
+    };
+
+    window.updateSpeechVolumeFromSlider = function(value) {
+        const v = Math.max(0, Math.min(100, parseInt(value, 10) || 0));
+        const label = document.getElementById('settings-speech-volume-value');
+        if (label) label.textContent = v + '%';
+        state.settings.speechVolume = clamp01(v / 100);
+    };
+
+    window.toggleBgmEnabledFromCheckbox = function(checked) {
+        state.settings.bgmEnabled = !!checked;
+        applyBgmSettingsToElement();
+        saveDataLocally();
+    };
+
+    window.changeBgmTrackFromSelect = function(trackId) {
+        state.settings.selectedBgmId = trackId;
+        if (!state.audio || !state.audio.bgmElement) return;
+        const audio = state.audio.bgmElement;
+        const track = getCurrentBgmTrack();
+        if (track) {
+            const wasPlaying = !audio.paused;
+            audio.src = track.url;
+            if (state.settings.bgmEnabled && wasPlaying) {
+                audio.play().catch(() => {});
+            }
+        }
+        saveDataLocally();
+    };
+
     window.onload = () => {
         initSystem();
+        setupAudioSystem(); // 初始化背景音樂（依設定決定是否播放）
+
         const params = new URL(window.location).searchParams;
         const page = params.get('page') || 'home';
         showView(page);
@@ -1763,7 +2079,8 @@
 
         const payload = {
             words: window.state.words || [],
-            folders: window.state.folders || []
+            folders: window.state.folders || [],
+            settings: window.state.settings || undefined
         };
 
         const ref = doc(db, 'users', user.uid);
@@ -1782,6 +2099,7 @@
         const data = snap.data();
         const cloudWords = data.words || [];
         const cloudFolders = data.folders || [];
+        const cloudSettings = data.settings || null;
 
         const baseWords =
             (Array.isArray(window.defaultWordDatabase) && window.defaultWordDatabase.length > 0)
@@ -1794,12 +2112,20 @@
             window.state.words = mergedWords;
             window.state.folders = Array.from(new Set(["錯題區", ...(cloudFolders || [])]));
 
+            if (cloudSettings && typeof window.hydrateSettings === 'function') {
+                window.state.settings = window.hydrateSettings(cloudSettings);
+            }
+
             if (typeof window.saveDataLocally === 'function') {
                 window.saveDataLocally();
             }
 
             if (typeof window.refreshTags === 'function') {
                 window.refreshTags();
+            }
+
+            if (typeof window.applyBgmSettingsToElement === 'function') {
+                window.applyBgmSettingsToElement();
             }
 
             const libView = document.getElementById('view-library');
