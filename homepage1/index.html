@@ -410,12 +410,23 @@
 <nav class="bg-indigo-600 text-white p-4 shadow-lg sticky top-0 z-50">
     <div class="flex flex-col gap-3">
         <div class="flex justify-between items-center w-full">
-            <!-- Logo：連到首頁「分頁」 -->
-            <h1 class="text-2xl font-bold tracking-tight cursor-pointer flex items-center gap-2" onclick="navigateTo('home')">
-                <span>🎓</span> 單字王
-            </h1>
+            <!-- 左側：Logo + 標題 + 設定 -->
+            <div class="flex items-center gap-2">
+                <!-- Logo：連到首頁「分頁」 -->
+                <h1 class="text-2xl font-bold tracking-tight cursor-pointer flex items-center gap-2" onclick="navigateTo('home')">
+                    <span>🎓</span> 單字王
+                </h1>
+                <!-- 設定按鈕：緊貼在「單字王」右邊 -->
+                <button
+                    type="button"
+                    onclick="openSettingsModal()"
+                    class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-indigo-500 text-white text-lg shadow-md active:scale-95 transition"
+                    title="設定">
+                    ⚙
+                </button>
+            </div>
 
-            <!-- 右側：搜尋 ＋ 設定 ＋ 登入/登出/同步 -->
+            <!-- 右側：搜尋 ＋ 登入/登出/同步 -->
             <div class="flex items-center gap-2">
                 <!-- 搜尋框 -->
                 <div class="relative flex items-center">
@@ -429,15 +440,6 @@
                         🔍
                     </button>
                 </div>
-
-                <!-- 設定按鈕 -->
-                <button
-                    type="button"
-                    onclick="openSettingsModal()"
-                    class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-indigo-500 text-white text-lg shadow-md active:scale-95 transition"
-                    title="設定">
-                    ⚙
-                </button>
 
                 <!-- 使用者資訊 ＋ 登入 / 登出 / 同步 -->
                 <div class="flex items-center gap-1">
@@ -820,8 +822,8 @@
         {
             id: 'bgm1',
             name: '背景音樂 1',
-            // Google Drive 直接音訊連結
-            url: 'https://drive.google.com/uc?export=download&id=1qKXQMkfDdwxvi579zWR7A50bNA3OxPRN'
+            // Google Drive 直接音訊連結（由你提供的分享網址轉換而來）
+            url: 'https://drive.google.com/uc?export=download&id=1yL5fB7Zx8oF2xX9GDJw5Np2LPbCNN2c8'
         }
     ];
 
@@ -920,6 +922,26 @@
         }
     }
     window.applyBgmSettingsToElement = applyBgmSettingsToElement;
+
+    // 為了符合瀏覽器自動播放政策：在使用者第一次互動時再嘗試播放 BGM
+    function setupBgmAutoplayUnlock() {
+        const audio =
+            (state.audio && state.audio.bgmElement) ||
+            document.getElementById('bgm-audio');
+        if (!audio) return;
+
+        const tryPlay = () => {
+            if (!state.settings || !state.settings.bgmEnabled) return;
+            audio.play().catch(() => {});
+            window.removeEventListener('click', tryPlay);
+            window.removeEventListener('touchstart', tryPlay);
+            window.removeEventListener('keydown', tryPlay);
+        };
+
+        window.addEventListener('click', tryPlay, { once: true });
+        window.addEventListener('touchstart', tryPlay, { once: true });
+        window.addEventListener('keydown', tryPlay, { once: true });
+    }
 
     // 新版發音功能（會自動壓低背景音量）
     window.speakWord = function(text) {
@@ -1978,6 +2000,7 @@
     window.onload = () => {
         initSystem();
         setupAudioSystem(); // 初始化背景音樂（依設定決定是否播放）
+        setupBgmAutoplayUnlock(); // 由使用者第一次互動解鎖自動播放限制
 
         const params = new URL(window.location).searchParams;
         const page = params.get('page') || 'home';
