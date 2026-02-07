@@ -818,13 +818,10 @@
     const STORAGE_KEY = 'wordKingData_v2';
 
     // 背景音樂清單（目前先放你提供的這一首，之後可再擴充）
-    const BGM_TRACKS = [
-        {
-            id: 'bgm1',
-            name: '背景音樂 1',
-            // Google Drive 直接音訊連結（由你提供的分享網址轉換而來）
-            url: 'https://drive.google.com/file/d/1yL5fB7Zx8oF2xX9GDJw5Np2LPbCNN2c8/view'
-        }
+    const BGM_TRACKS = [         {             id: 'bgm1',             name: '背景音樂 1',             // Google Drive 直接音訊連結（注意：要用 uc?export=download 這種 raw 連結，不能用 /file/d/.../view）           e url: 'https://drive.google.com/uc?export=download&id=1yL5fB7Zx8oF2xX9GDJw5Np2LPbCNN2c8'        }
+    ];
+
+
     ];
 
     const DEFAULT_SETTINGS = {
