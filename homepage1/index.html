@@ -817,19 +817,19 @@
 <script>
     const STORAGE_KEY = 'wordKingData_v2';
 
-    // 背景音樂清單：一首公用測試音樂 + 你自己的 Google Drive 音樂
+    // 背景音樂清單：一首你的本機音樂 + 一首公用測試音樂
     const BGM_TRACKS = [
+        {
+            id: 'bgm_user',
+            name: '我的背景音樂',
+            // 放在專案根目錄（和 index.html 同一層）的 mp3 檔
+            url: './bgm.mp3'
+        },
         {
             id: 'bgm_demo',
             name: '測試音樂（公用）',
             // 公開可用的示範 MP3，用來確認程式邏輯與瀏覽器相容性
             url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
-        },
-        {
-            id: 'bgm_drive1',
-            name: '我的 Google Drive 音樂',
-            // 由你提供的分享連結轉成 raw 下載連結（使用 docs.google.com）
-            url: 'https://docs.google.com/uc?export=download&id=1qKXQMkfDdwxvi579zWR7A50bNA3OxPRN'
         }
     ];
 
@@ -837,8 +837,8 @@
         bgmEnabled: true,                  // 是否開啟背景音樂
         bgmVolume: 0.5,                    // 0~1
         speechVolume: 1.0,                 // 0~1
-        // 預設播放公用測試音樂，確保程式邏輯先正常
-        selectedBgmId: 'bgm_demo'
+        // 預設播放「我的背景音樂」這首
+        selectedBgmId: 'bgm_user'
     };
 
     // 發音時要把 BGM 壓低多少：0.3 = 30%
