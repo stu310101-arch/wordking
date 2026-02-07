@@ -900,7 +900,18 @@
         audio.preload = 'auto';
 
         const track = getCurrentBgmTrack();
-        if (track) audio.src = track.url;
+        if (track) {
+            audio.src = track.url;
+        }
+
+        // 若載入音樂檔失敗，顯示提示訊息，方便檢查 Google Drive 連結或權限
+        audio.onerror = () => {
+            console.error('背景音樂載入失敗', audio.error);
+            if (!audio._bgmErrorNotified) {
+                audio._bgmErrorNotified = true;
+                alert('背景音樂載入失敗，請確認:\n1. Google Drive 檔案已設為「擁有連結者皆可查看」\n2. 連結是否正確（ID 是否完整）');
+            }
+        };
 
         state.audio = state.audio || {};
         state.audio.bgmElement = audio;
