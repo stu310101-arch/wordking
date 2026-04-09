@@ -2016,8 +2016,12 @@
             return alert("請先選擇或建立資料夾");
         }
 
+        // reviewSelection 的物件引用可能因 mergeDuplicateWords 而過期，
+        // 改為用英文單字在 state.words 中查找當前物件再加 tag
+        const englishSet = new Set(state.game.reviewSelection.map(w => w.english.toLowerCase()));
         let count = 0;
-        state.game.reviewSelection.forEach(word => {
+        state.words.forEach(word => {
+            if (!englishSet.has(word.english.toLowerCase())) return;
             if (!word.tags) word.tags = [];
             if (!word.tags.includes(targetFolder)) {
                 word.tags.push(targetFolder);
