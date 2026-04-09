@@ -1424,10 +1424,11 @@
             return;
         }
         state.folders.push(name);
-        saveDataLocally();
         document.getElementById('new-folder-modal').classList.add('hidden');
 
-        // 若是從結算畫面觸發，把 select 切換到新資料夾並結束
+        // 若是從結算畫面觸發，把 select 切換到新資料夾後結束，
+        // 不在這裡 save（讓 saveWrongWords 統一 save，避免 mergeDuplicateWords
+        // 在加 tag 之前就把 state.words 換成新物件導致 tag 遺失）
         if (state._pendingResultFolder) {
             state._pendingResultFolder = false;
             const saveSelect = document.getElementById('save-target-folder');
@@ -1441,6 +1442,7 @@
             return;
         }
 
+        saveDataLocally();
         renderLibrary();
     }
 
