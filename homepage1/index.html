@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -665,7 +666,7 @@
                 <div id="spelling-definition-area" class="space-y-2 mb-6 min-h-[80px] flex flex-col justify-center"></div>
                 <div id="spelling-hint" class="text-4xl tracking-[0.1em] font-mono mb-8 text-indigo-600 font-bold break-all"></div>
                 <div class="space-y-4 w-full">
-                    <input type="text" id="spelling-input" autocomplete="off" onkeydown="handleSpellingInputKeydown(event)" class="w-full border-b-4 border-indigo-100 p-3 text-3xl text-center focus:border-indigo-500 outline-none transition-all placeholder-gray-200 rounded-none bg-transparent" placeholder="輸入答案">
+                    <input type="text" id="spelling-input" autocomplete="off" class="w-full border-b-4 border-indigo-100 p-3 text-3xl text-center focus:border-indigo-500 outline-none transition-all placeholder-gray-200 rounded-none bg-transparent" placeholder="輸入答案" onkeydown="if(event.key==='Enter') checkSpellingAnswer()">
                     <div class="flex flex-col gap-3 mt-4">
                         <button onclick="checkSpellingAnswer()" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-xl shadow-md active:bg-indigo-800">檢查</button>
                         <button onclick="skipSpellingWord()" class="w-full bg-gray-100 text-gray-500 py-4 rounded-xl font-bold text-lg active:bg-gray-200">跳過 (視為答錯)</button>
@@ -1821,16 +1822,8 @@
         const eng = word.english;
         let hint = eng.length > 2 ? eng[0] + "_".repeat(eng.length-2) + eng[eng.length-1] : eng[0] + "_".repeat(eng.length-1);
         document.getElementById('spelling-hint').innerText = hint.split('').join(' ');
-        const input = document.getElementById('spelling-input');
-        input.value = '';
-        input.focus();
+        document.getElementById('spelling-input').value = '';
         document.getElementById('spelling-feedback').innerText = '';
-    }
-
-    function handleSpellingInputKeydown(event) {
-        if (event.key !== 'Enter' || event.isComposing) return;
-        event.preventDefault();
-        checkSpellingAnswer();
     }
 
     function checkSpellingAnswer() {
