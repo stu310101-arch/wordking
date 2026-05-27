@@ -5,138 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self'; script-src 'self' https://cdn.tailwindcss.com https://www.gstatic.com https://apis.google.com https://www.googleapis.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://www.gstatic.com https://www.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://*.googleapis.com https://*.firebaseio.com; img-src 'self' data: https:; media-src 'self' https://www.soundhelix.com; frame-src https://accounts.google.com https://*.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self';">
     <title>單字王 - 核心系統</title>
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <style>
-        html, body {
-            overflow-x: hidden;
-            width: 100%;
-            -webkit-text-size-adjust: 100%;
-            touch-action: manipulation;
-        }
-
-        /* 單字卡高度固定 */
-        .word-card {
-            perspective: 1000px;
-            cursor: pointer;
-            height: 220px; /* 固定每張單字卡高度 */
-        }
-
-        .word-card-inner {
-            display: grid;
-            grid-template-areas: "card-content";
-            position: relative;
-            width: 100%;
-            height: 100%; /* 內部填滿整個卡片高度 */
-            transition: transform 0.35s ease-out; /* 翻轉動畫縮短、變小一點 */
-            transform-style: preserve-3d;
-            transform-origin: center;
-        }
-
-        .word-card.is-flipped .word-card-inner {
-            transform: rotateY(180deg);
-        }
-
-        .word-card-front,
-        .word-card-back {
-            grid-area: card-content;
-            width: 100%;
-            height: 100%; /* 前後面都跟卡片一樣高 */
-            -webkit-backface-visibility: hidden;
-            backface-visibility: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            border-radius: 1rem;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-            padding: 1.5rem;
-        }
-
-        .word-card-front {
-            justify-content: center;
-        }
-
-        /* 英文字 + 喇叭圖示：只有正面顯示，點擊時發音 */
-        .word-card-front span[title="發音"]::after {
-            content: '🔊';
-            margin-left: 0.4rem;
-            font-size: 1.6rem;
-        }
-
-        .word-card-back {
-            transform: rotateY(180deg);
-            background-color: #f3f4f6;
-            justify-content: flex-start;      /* 從最上方開始排版 */
-            align-items: stretch;             /* 內容撐滿寬度 */
-            overflow-y: auto;                 /* 超出時用捲動查看其他翻譯 */
-            overflow-x: hidden;
-            -webkit-overflow-scrolling: touch;
-            text-align: center;               /* 中文水平置中 */
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-        .shake { animation: shake 0.2s ease-in-out 0s 2; }
-
-        @keyframes highlight {
-            0% { border-color: #f59e0b; box-shadow: 0 0 15px #f59e0b; transform: scale(1.05); }
-            50% { border-color: #f59e0b; box-shadow: 0 0 25px #f59e0b; transform: scale(1.1); }
-            100% { border-color: #e5e7eb; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); transform: scale(1); }
-        }
-        .highlight-card .word-card-front {
-            animation: highlight 1.5s ease-in-out;
-            border-width: 4px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-
-        @keyframes woggle {
-            0% { transform: rotate(0deg); }
-            25% { transform: rotate(1deg); }
-            75% { transform: rotate(-1deg); }
-            100% { transform: rotate(0deg); }
-        }
-        .editing-mode .folder-card {
-            animation: woggle 0.3s infinite;
-            border: 2px solid #ef4444;
-        }
-
-        .choice-btn {
-            transition: all 0.2s;
-        }
-        .choice-btn:active {
-            transform: scale(0.98);
-        }
-        .choice-correct {
-            background-color: #22c55e !important;
-            color: white !important;
-            border-color: #22c55e !important;
-        }
-        .choice-wrong {
-            background-color: #ef4444 !important;
-            color: white !important;
-            border-color: #ef4444 !important;
-            opacity: 0.6;
-        }
-    </style>
-
-    <script type="importmap">
-    {
-      "imports": {
-        "react": "https://esm.sh/react@^19.2.4",
-        "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-        "react/": "https://esm.sh/react@^19.2.4/"
-      }
-    }
-    </script>
+    <link rel="stylesheet" href="./assets/styles.css">
 </head>
 <body class="bg-gray-50 min-h-screen font-sans pb-24">
 
@@ -144,376 +19,6 @@
 <audio id="bgm-audio" class="hidden" loop></audio>
 
 <!-- 預設字庫 -->
-<script>
-    const defaultWordDatabase = [
-    {"english": "penetrate", "meaning": "穿透；滲透 (v.)", "tags": ["晟景Lv5U6"]},
-    {"english": "penetrating", "meaning": "具穿透力的；響亮的 (a.)", "tags": ["晟景Lv5U6"]},
-    {"english": "penetration", "meaning": "滲透 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "exclaim", "meaning": "大叫；驚呼 (v.)", "tags": ["晟景Lv5U6"]},
-    {"english": "exclamation", "meaning": "大叫；驚呼 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "contemplate", "meaning": "沉思；凝視 (v.)", "tags": ["晟景Lv5U6"]},
-    {"english": "contemplation", "meaning": "注視；沉思 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "naive", "meaning": "天真的 (a.)", "tags": ["晟景Lv5U6"]},
-    {"english": "exceptional", "meaning": "異常的；非凡的 (a.)", "tags": ["晟景Lv5U6"]},
-    {"english": "curriculum", "meaning": "課程 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "supervise", "meaning": "監督 (v.)", "tags": ["晟景Lv5U6"]},
-    {"english": "supervisor", "meaning": "監督人 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "supervision", "meaning": "監督 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "steer", "meaning": "駕駛 (v.)", "tags": ["晟景Lv5U6"]},
-    {"english": "confession", "meaning": "認罪；懺悔 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "workshop", "meaning": "工作坊；研習營 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "behalf", "meaning": "代表 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "sole", "meaning": "唯一的 (a.) / 腳底；鞋底 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "minimal", "meaning": "極少的；最低限度的 (a.)", "tags": ["晟景Lv5U6"]},
-    {"english": "minimize", "meaning": "使最小化 (v.)", "tags": ["晟景Lv5U6"]},
-    {"english": "miniature", "meaning": "迷你的 (a.) / 小複製品 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "optimism", "meaning": "樂觀 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "optimistic", "meaning": "樂觀的 (a.)", "tags": ["晟景Lv5U6"]},
-    {"english": "optimist", "meaning": "樂觀主義者 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "scan", "meaning": "掃描；瀏覽 (v.) / 掃描；瀏覽 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "commodity", "meaning": "商品 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "yield", "meaning": "產生；屈服 (v.) / 產量 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "caution", "meaning": "謹慎 (n.) / 告誡 (v.)", "tags": ["晟景Lv5U6"]},
-    {"english": "cautious", "meaning": "謹慎的 (a.)", "tags": ["晟景Lv5U6"]},
-    {"english": "precaution", "meaning": "預防措施 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "verbal", "meaning": "言語上的 (a.) / 準動詞 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "peasant", "meaning": "小型自耕農 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "contempt", "meaning": "輕視 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "conceal", "meaning": "隱藏 (v.)", "tags": ["晟景Lv5U6"]},
-    {"english": "concealment", "meaning": "隱藏 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "tempt", "meaning": "誘惑 (v.)", "tags": ["晟景Lv5U6"]},
-    {"english": "tempting", "meaning": "誘人的 (a.)", "tags": ["晟景Lv5U6"]},
-    {"english": "temptation", "meaning": "誘惑 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "infinite", "meaning": "無限的 (a.)", "tags": ["晟景Lv5U6"]},
-    {"english": "infinity", "meaning": "無限 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "sober", "meaning": "清醒的；嚴肅的 (a.) / 使清醒 (v.)", "tags": ["晟景Lv5U6"]},
-    {"english": "ridiculous", "meaning": "荒謬的 (a.)", "tags": ["晟景Lv5U6"]},
-    {"english": "ridicule", "meaning": "嘲笑 (v.) / 嘲笑 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "beloved", "meaning": "摯愛的 (a.) / 深愛的人 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "continental", "meaning": "大陸的 (a.)", "tags": ["晟景Lv5U6"]},
-    {"english": "sturdy", "meaning": "強健的；牢固的 (a.)", "tags": ["晟景Lv5U6"]},
-    {"english": "structural", "meaning": "結構上的 (a.)", "tags": ["晟景Lv5U6"]},
-    {"english": "startle", "meaning": "驚嚇 (v.)", "tags": ["晟景Lv5U6"]},
-    {"english": "startling", "meaning": "驚人的 (a.)", "tags": ["晟景Lv5U6"]},
-    {"english": "preference", "meaning": "偏好 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "preferable", "meaning": "更好的 (a.)", "tags": ["晟景Lv5U6"]},
-    {"english": "haul", "meaning": "拖曳 (v.) / 漁獲量 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "bulk", "meaning": "大量 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "via", "meaning": "經由 (prep.)", "tags": ["晟景Lv5U6"]},
-    {"english": "patron", "meaning": "贊助人；老主顧 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "compromise", "meaning": "妥協；損及 (v.) / 妥協 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "absurd", "meaning": "荒謬的 (a.)", "tags": ["晟景Lv5U6"]},
-    {"english": "absurdity", "meaning": "荒唐 (n.)", "tags": ["晟景Lv5U6"]},
-    {"english": "odds", "meaning": "可能性 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "apt", "meaning": "貼切的；恰當的；易於...的 (a.)", "tags": ["晟景Lv5U7"]},
-    {"english": "aptitude", "meaning": "資質；傾向；性向 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "blast", "meaning": "強風；爆震 (n.) / 爆炸 (v.)", "tags": ["晟景Lv5U7"]},
-    {"english": "doorway", "meaning": "門口 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "driveway", "meaning": "私人車道 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "slap", "meaning": "一巴掌；侮辱 (n.) / 搧巴掌 (v.)", "tags": ["晟景Lv5U7"]},
-    {"english": "commute", "meaning": "通勤 (v.)", "tags": ["晟景Lv5U7"]},
-    {"english": "commuter", "meaning": "通勤者 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "indulge", "meaning": "放任 (v.)", "tags": ["晟景Lv5U7"]},
-    {"english": "consent", "meaning": "同意 (n.) / 同意 (v.)", "tags": ["晟景Lv5U7"]},
-    {"english": "consensus", "meaning": "共識 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "hostile", "meaning": "有敵意的 (a.)", "tags": ["晟景Lv5U7"]},
-    {"english": "hostility", "meaning": "敵意 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "quest", "meaning": "追尋 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "ego", "meaning": "自我 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "resort", "meaning": "訴諸於 (v.) / 訴求；勝地 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "corridor", "meaning": "走廊 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "immense", "meaning": "無限的 (a.)", "tags": ["晟景Lv5U7"]},
-    {"english": "immensity", "meaning": "無限；極度嚴重 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "carbon", "meaning": "碳 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "carbohydrate", "meaning": "碳水化合物 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "applause", "meaning": "鼓掌 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "saddle", "meaning": "馬鞍 (n.) / 為馬上鞍 (v.)", "tags": ["晟景Lv5U7"]},
-    {"english": "assault", "meaning": "襲擊 (v.) / 襲擊 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "slam", "meaning": "砰然關上 (v.) / 砰然關上 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "currency", "meaning": "流通；貨幣 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "current", "meaning": "現行的 (a.) / 電流 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "likelihood", "meaning": "可能性 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "shiver", "meaning": "發抖 (n.) / 發抖 (v.)", "tags": ["晟景Lv5U7"]},
-    {"english": "quiver", "meaning": "顫抖 (v.) / 顫抖 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "counsel", "meaning": "勸告 (v.) / 勸告 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "counselor", "meaning": "顧問；輔導員 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "counseling", "meaning": "諮商 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "consultation", "meaning": "商議 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "consult", "meaning": "商議 (v.)", "tags": ["晟景Lv5U7"]},
-    {"english": "vertical", "meaning": "垂直的 (a.) / 垂直線 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "horizontal", "meaning": "水平的 (a.) / 水平線 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "scrap", "meaning": "碎片 (n.) / 廢除；廢棄 (v.)", "tags": ["晟景Lv5U7"]},
-    {"english": "dialect", "meaning": "方言 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "creek", "meaning": "小溪流 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "muscular", "meaning": "肌肉的；肌肉發達的 (a.)", "tags": ["晟景Lv5U7"]},
-    {"english": "masculine", "meaning": "男性的；陽剛的 (a.)", "tags": ["晟景Lv5U7"]},
-    {"english": "profile", "meaning": "側面；輪廓；人物簡介 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "grim", "meaning": "嚴厲的 (a.)", "tags": ["晟景Lv5U7"]},
-    {"english": "stack", "meaning": "一疊 (n.) / 堆疊 (v.)", "tags": ["晟景Lv5U7"]},
-    {"english": "noticeable", "meaning": "顯著的 (a.)", "tags": ["晟景Lv5U7"]},
-    {"english": "cluster", "meaning": "串；束 (n.) / 群聚 (v.)", "tags": ["晟景Lv5U7"]},
-    {"english": "tournament", "meaning": "聯賽；錦標賽 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "asset", "meaning": "資產 (n.)", "tags": ["晟景Lv5U7"]},
-    {"english": "journalist", "meaning": "新聞記者 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "journalism", "meaning": "新聞學 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "mock", "meaning": "嘲弄 (v.) / 模擬的；假的 (a.) / 模擬測驗 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "intent", "meaning": "目的 (n.) / 一心一意想要... (a.)", "tags": ["晟景Lv5U8"]},
-    {"english": "intend", "meaning": "打算 (v.)", "tags": ["晟景Lv5U8"]},
-    {"english": "intention", "meaning": "意向 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "soak", "meaning": "浸泡 (v.) / 浸泡 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "soaked", "meaning": "溼的 (a.)", "tags": ["晟景Lv5U8"]},
-    {"english": "tin", "meaning": "錫；罐頭 (n.) / 將食物裝罐 (v.)", "tags": ["晟景Lv5U8"]},
-    {"english": "delegate", "meaning": "代表 (n.) / 委託 (v.)", "tags": ["晟景Lv5U8"]},
-    {"english": "delegation", "meaning": "代表團；委任 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "trim", "meaning": "刪減；修剪 (v.) / 修剪 (n.) / 修剪整齊的 (a.)", "tags": ["晟景Lv5U8"]},
-    {"english": "thigh", "meaning": "大腿 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "statistical", "meaning": "統計的 (a.)", "tags": ["晟景Lv5U8"]},
-    {"english": "statistic", "meaning": "統計數字 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "alien", "meaning": "不熟悉的；異國的 (a.) / 外星人；外國人 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "stereotype", "meaning": "刻板印象 (n.) / 使定型 (v.)", "tags": ["晟景Lv5U8"]},
-    {"english": "molecule", "meaning": "分子 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "nominate", "meaning": "提名；任命 (v.)", "tags": ["晟景Lv5U8"]},
-    {"english": "nomination", "meaning": "提名 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "nominee", "meaning": "被提名者 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "framework", "meaning": "框架；體制；架構 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "frame", "meaning": "邊框 (n.) / 裝框 (v.)", "tags": ["晟景Lv5U8"]},
-    {"english": "notify", "meaning": "通知 (v.)", "tags": ["晟景Lv5U8"]},
-    {"english": "transparent", "meaning": "透明的 (a.)", "tags": ["晟景Lv5U8"]},
-    {"english": "transparency", "meaning": "透明 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "fatigue", "meaning": "疲倦 (n.) / 使疲倦 (v.)", "tags": ["晟景Lv5U8"]},
-    {"english": "outsider", "meaning": "局外人 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "fascinate", "meaning": "使...著迷 (v.)", "tags": ["晟景Lv5U8"]},
-    {"english": "compact", "meaning": "緊密的；迷你的；小巧的 (a.) / 使緊密 (v.) / 小型車 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "juvenile", "meaning": "青少年的 (a.) / 青少年 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "adolescent", "meaning": "青春期的 (a.) / 青少年 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "dough", "meaning": "麵團；錢 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "ballot", "meaning": "投票；選票 (n.) / 不記名投票 (v.)", "tags": ["晟景Lv5U8"]},
-    {"english": "stall", "meaning": "攤位；柵欄；小隔間 (n.) / 拖延；拋錨 (v.)", "tags": ["晟景Lv5U8"]},
-    {"english": "rib", "meaning": "肋骨 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "wilderness", "meaning": "荒野 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "wildlife", "meaning": "野生動物 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "indifferent", "meaning": "冷漠的 (a.)", "tags": ["晟景Lv5U8"]},
-    {"english": "attendance", "meaning": "出席；照顧 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "abolish", "meaning": "廢止 (v.)", "tags": ["晟景Lv5U8"]},
-    {"english": "abolition", "meaning": "廢止 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "agenda", "meaning": "議程 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "agony", "meaning": "痛苦 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "aisle", "meaning": "走道 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "allergy", "meaning": "過敏 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "allergic", "meaning": "過敏的 (a.)", "tags": ["晟景Lv5U8"]},
-    {"english": "alternate", "meaning": "交替；輪流 (v.) / 輪流的；交替的 (a.)", "tags": ["晟景Lv5U8"]},
-    {"english": "antique", "meaning": "古董 (n.) / 古董的 (a.)", "tags": ["晟景Lv5U8"]},
-    {"english": "arena", "meaning": "競技場 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "ass", "meaning": "屁股；傻蛋 (n.)", "tags": ["晟景Lv5U8"]},
-    {"english": "astonish", "meaning": "使...震驚 (v.)", "tags": ["晟景Lv5U8"]},
-    {"english": "ban", "meaning": "禁止 (v.) / 禁令 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "belongings", "meaning": "財產 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "beneficial", "meaning": "有益的 (a.)", "tags": ["晟景Lv5U9"]},
-    {"english": "beware", "meaning": "提防；小心 (v.)", "tags": ["晟景Lv5U9"]},
-    {"english": "bolt", "meaning": "一道閃電 (n.) / 衝 (v.)", "tags": ["晟景Lv5U9"]},
-    {"english": "bonus", "meaning": "紅利；加碼 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "boom", "meaning": "繁榮；轟隆聲 (n.) / 使繁榮 (v.)", "tags": ["晟景Lv5U9"]},
-    {"english": "booth", "meaning": "小亭子；攤位 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "briefcase", "meaning": "公事包 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "bully", "meaning": "惡霸 (n.) / 欺負 (v.)", "tags": ["晟景Lv5U9"]},
-    {"english": "canal", "meaning": "運河 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "celebrity", "meaning": "名人 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "certificate", "meaning": "證明書 (n.) / 授予...證書 (v.)", "tags": ["晟景Lv5U9"]},
-    {"english": "choir", "meaning": "唱詩班 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "clause", "meaning": "條款；子句 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "comedian", "meaning": "諧星 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "commentator", "meaning": "名嘴 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "commentary", "meaning": "實況播報；評論；註解 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "compliment", "meaning": "恭維 (v.) / 恭維 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "comprehend", "meaning": "領悟；理解 (v.)", "tags": ["晟景Lv5U9"]},
-    {"english": "comprehension", "meaning": "理解；理解力 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "comprehensible", "meaning": "可理解的 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "contagious", "meaning": "具感染力的 (a.)", "tags": ["晟景Lv5U9"]},
-    {"english": "contaminate", "meaning": "汙染；汙衊 (v.)", "tags": ["晟景Lv5U9"]},
-    {"english": "contamination", "meaning": "汙染；玷汙 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "copyright", "meaning": "著作權 (n.) / 為...取得著作權 (v.)", "tags": ["晟景Lv5U9"]},
-    {"english": "customs", "meaning": "海關；關稅 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "deceive", "meaning": "欺騙 (v.)", "tags": ["晟景Lv5U9"]},
-    {"english": "deception", "meaning": "欺騙 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "deceptive", "meaning": "騙人的；誤導的 (a.)", "tags": ["晟景Lv5U9"]},
-    {"english": "destination", "meaning": "目的地 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "exile", "meaning": "流放 (v.) / 流放；離鄉背井 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "extinct", "meaning": "絕種的；滅絕的；熄火的 (a.)", "tags": ["晟景Lv5U9"]},
-    {"english": "extinction", "meaning": "消滅；滅絕 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "format", "meaning": "格式 (n.) / 格式化 (v.)", "tags": ["晟景Lv5U9"]},
-    {"english": "gorgeous", "meaning": "極好的；極美的；宜人的 (a.)", "tags": ["晟景Lv5U9"]},
-    {"english": "gravity", "meaning": "地心引力 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "greed", "meaning": "貪心；貪吃 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "greedy", "meaning": "貪心的；貪吃的 (a.)", "tags": ["晟景Lv5U9"]},
-    {"english": "guideline", "meaning": "指導方針 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "herb", "meaning": "草藥；香草植物 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "herbal", "meaning": "草藥的；香草的 (a.)", "tags": ["晟景Lv5U9"]},
-    {"english": "hostage", "meaning": "人質 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "idiot", "meaning": "白癡 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "landlord", "meaning": "房東 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "lord", "meaning": "領主 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "mainstream", "meaning": "主流 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "stream", "meaning": "河流 (n.) / 流出 (v.)", "tags": ["晟景Lv5U9"]},
-    {"english": "mansion", "meaning": "大廈；官邸 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "nasty", "meaning": "惡意的；惡劣的 (a.)", "tags": ["晟景Lv5U9"]},
-    {"english": "participant", "meaning": "參加者 (n.)", "tags": ["晟景Lv5U9"]},
-    {"english": "pessimism", "meaning": "悲觀主義 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "pessimist", "meaning": "悲觀主義者 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "pulse", "meaning": "脈搏跳動 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "refuge", "meaning": "避難；避難所 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "refugee", "meaning": "難民 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "sanctuary", "meaning": "避難所；庇護 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "rival", "meaning": "敵對的；競爭的 (a.) / 對手 (n.) / 匹敵；與...競爭 (v.)", "tags": ["晟景Lv5U10"]},
-    {"english": "scandal", "meaning": "醜聞 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "sow", "meaning": "播種 (v.)", "tags": ["晟景Lv5U10"]},
-    {"english": "superstition", "meaning": "迷信 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "tackle", "meaning": "處理；截球 (v.)", "tags": ["晟景Lv5U10"]},
-    {"english": "thrill", "meaning": "興奮；膽戰心驚 (n.) / 使...興奮 (v.)", "tags": ["晟景Lv5U10"]},
-    {"english": "thriller", "meaning": "驚悚戲劇/電影/讀物 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "thrilling", "meaning": "刺激的；驚悚的 (a.)", "tags": ["晟景Lv5U10"]},
-    {"english": "tuition", "meaning": "教學；學費 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "underline", "meaning": "在...下面畫線 (v.)", "tags": ["晟景Lv5U10"]},
-    {"english": "visa", "meaning": "簽證 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "warrior", "meaning": "戰士 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "whereabouts", "meaning": "行蹤下落 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "wig", "meaning": "假髮 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "yacht", "meaning": "遊艇 (n.) / 駕駛/乘坐遊艇 (v.)", "tags": ["晟景Lv5U10"]},
-    {"english": "blur", "meaning": "模糊 (n.) / 變模糊 (v.)", "tags": ["晟景Lv5U10"]},
-    {"english": "bodyguard", "meaning": "保鑣 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "browse", "meaning": "瀏覽 (v.) / 瀏覽；隨意觀看 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "browser", "meaning": "瀏覽器 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "butcher", "meaning": "屠夫；肉販 (n.) / 屠宰 (v.)", "tags": ["晟景Lv5U10"]},
-    {"english": "carnival", "meaning": "嘉年華；露天遊樂場 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "chef", "meaning": "主廚 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "considerate", "meaning": "體諒的；體貼的 (a.)", "tags": ["晟景Lv5U10"]},
-    {"english": "corrupt", "meaning": "腐敗的 (a.) / 腐化... (v.)", "tags": ["晟景Lv5U10"]},
-    {"english": "corruption", "meaning": "腐敗 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "democrat", "meaning": "民主主義者 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "democracy", "meaning": "民主 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "democratic", "meaning": "民主的 (a.)", "tags": ["晟景Lv5U10"]},
-    {"english": "republican", "meaning": "共和主義者 (n.) / 共和政體的 (a.)", "tags": ["晟景Lv5U10"]},
-    {"english": "republic", "meaning": "共和國 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "denial", "meaning": "否認；拒絕 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "descriptive", "meaning": "描述的 (a.)", "tags": ["晟景Lv5U10"]},
-    {"english": "discriminate", "meaning": "歧視；分辨 (v.)", "tags": ["晟景Lv5U10"]},
-    {"english": "discrimination", "meaning": "歧視；區別 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "dreadful", "meaning": "可怕的 (a.)", "tags": ["晟景Lv5U10"]},
-    {"english": "dread", "meaning": "畏懼 (v.) / 畏懼 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "exaggeration", "meaning": "誇大 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "filter", "meaning": "過濾器 (n.) / 過濾 (v.)", "tags": ["晟景Lv5U10"]},
-    {"english": "gasp", "meaning": "喘氣；倒抽一口氣 (v.) / 喘氣；倒抽一口氣 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "glare", "meaning": "強光；怒視 (n.) / 發強光；怒視 (v.)", "tags": ["晟景Lv5U10"]},
-    {"english": "hockey", "meaning": "曲棍球 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "howl", "meaning": "嚎叫；(風)怒號 (v.) / 嚎叫 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "roar", "meaning": "吼叫；咆哮 (v.) / 吼叫 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "laser", "meaning": "雷射 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "lawmaker", "meaning": "立法者；立委 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "lawsuit", "meaning": "訴訟 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "massage", "meaning": "按摩 (v.) / 按摩 (n.)", "tags": ["晟景Lv5U10"]},
-    {"english": "masterpiece", "meaning": "傑作 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "moan", "meaning": "呻吟 (v.) / 呻吟 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "mustard", "meaning": "芥末 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "overwhelm", "meaning": "壓倒；使...震撼；淹沒 (v.)", "tags": ["晟景Lv5U11"]},
-    {"english": "overwhelming", "meaning": "壓倒性的 (a.)", "tags": ["晟景Lv5U11"]},
-    {"english": "passionate", "meaning": "熱情的 (a.)", "tags": ["晟景Lv5U11"]},
-    {"english": "pastry", "meaning": "糕點 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "pillar", "meaning": "柱子；中流砥柱 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "beam", "meaning": "橫梁 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "column", "meaning": "圓柱 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "rack", "meaning": "架子 (n.) / 折磨；使...痛苦 (v.)", "tags": ["晟景Lv5U11"]},
-    {"english": "rally", "meaning": "集會 (n.) / 集合；恢復 (v.)", "tags": ["晟景Lv5U11"]},
-    {"english": "repay", "meaning": "償還；報答 (v.)", "tags": ["晟景Lv5U11"]},
-    {"english": "rod", "meaning": "棍子；桿子 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "sandal", "meaning": "涼鞋 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "sneak", "meaning": "潛行；鬼祟而行 (v.) / 告密者；鬼祟之人 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "solo", "meaning": "獨唱 (v.) / 獨唱 (n.) / 單獨的 (a.) / 單飛 (adv.)", "tags": ["晟景Lv5U11"]},
-    {"english": "terminal", "meaning": "終站；航廈 (n.) / 重症末期的 (a.)", "tags": ["晟景Lv5U11"]},
-    {"english": "toxic", "meaning": "有毒的 (a.)", "tags": ["晟景Lv5U11"]},
-    {"english": "toxin", "meaning": "毒素 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "vow", "meaning": "誓言 (n.) / 發誓 (v.)", "tags": ["晟景Lv5U11"]},
-    {"english": "wheelchair", "meaning": "輪椅 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "ethics", "meaning": "倫理 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "ethical", "meaning": "倫理的；道德的 (a.)", "tags": ["晟景Lv5U11"]},
-    {"english": "rear", "meaning": "在後面的 (a.) / 後面 (n.) / 養育；飼養 (v.)", "tags": ["晟景Lv5U11"]},
-    {"english": "parallel", "meaning": "平行的；同樣的；類似的 (a.) / 相似；比較 (n.) / 與...平行；與...類似；與...匹敵 (v.)", "tags": ["晟景Lv5U11"]},
-    {"english": "institute", "meaning": "研究機構 (n.) / 制定 (v.)", "tags": ["晟景Lv5U11"]},
-    {"english": "institution", "meaning": "制定；公益機構 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "grip", "meaning": "抓握；掌控；吸引 (v.) / 抓握；掌控 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "ally", "meaning": "聯盟；盟友 (n.) / 與...結盟 (v.)", "tags": ["晟景Lv5U11"]},
-    {"english": "alliance", "meaning": "同盟關係 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "substitute", "meaning": "替代物 (n.) / 代替；以...替代... (v.)", "tags": ["晟景Lv5U11"]},
-    {"english": "substitution", "meaning": "替代 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "venture", "meaning": "高危冒險；高風險投資 (n.) / 冒險；以...為賭注 (v.)", "tags": ["晟景Lv5U11"]},
-    {"english": "compound", "meaning": "混合物；化合物；建築；場地；基地 (n.) / 複合的 (a.) / 使...複雜 (v.)", "tags": ["晟景Lv5U11"]},
-    {"english": "undergraduate", "meaning": "大學生 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "conduct", "meaning": "進行；指揮；傳導 (v.) / 行為 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "conductor", "meaning": "指揮家；導體 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "grant", "meaning": "補助金 (n.) / 准許；授與；給予 (v.)", "tags": ["晟景Lv5U11"]},
-    {"english": "purchase", "meaning": "購買 (v.) / 購買；購買物 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "stain", "meaning": "汙點 (n.) / 弄髒；玷汙 (v.)", "tags": ["晟景Lv5U11"]},
-    {"english": "stainless", "meaning": "無瑕的；不會生鏽的 (a.)", "tags": ["晟景Lv5U11"]},
-    {"english": "thrust", "meaning": "插；塞；刺；戳 (v.) / 刺；戳；推；擠 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "strain", "meaning": "緊張；負擔；壓力 (n.) / 拉緊；盡全力 (v.)", "tags": ["晟景Lv5U11"]},
-    {"english": "convict", "meaning": "定罪 (v.) / 服刑中罪犯 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "conviction", "meaning": "定罪 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "ex-con", "meaning": "前科犯 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "bid", "meaning": "出價 (v.) / 出價；競標 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "decay", "meaning": "腐壞；衰敗；腐朽 (v.) / 腐壞；衰敗；腐朽 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "abortion", "meaning": "墮胎 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "miscarriage", "meaning": "意外流產 (n.)", "tags": ["晟景Lv5U11"]},
-    {"english": "abort", "meaning": "流產；中止 (v.)", "tags": ["晟景Lv5U11"]},
-    {"english": "abundant", "meaning": "充裕的；豐富的 (a.)", "tags": ["晟景Lv5U11"]},
-    {"english": "adore", "meaning": "崇拜；愛慕；喜愛 (v.)", "tags": ["晟景Lv5U11"]},
-    {"english": "adorable", "meaning": "漂亮的；可愛的 (a.)", "tags": ["晟景Lv5U11"]},
-    {"english": "awe", "meaning": "敬畏 (n.) / 使...敬畏 (v.)", "tags": ["晟景Lv5U12"]},
-    {"english": "banner", "meaning": "橫幅 (n.)", "tags": ["晟景Lv5U12"]},
-    {"english": "barren", "meaning": "貧瘠的；不孕的 (a.)", "tags": ["晟景Lv5U12"]},
-    {"english": "batch", "meaning": "一批 (n.) / 分批 (v.)", "tags": ["晟景Lv5U12"]},
-    {"english": "boredom", "meaning": "厭煩 (n.)", "tags": ["晟景Lv5U12"]},
-    {"english": "boxer", "meaning": "拳擊手 (n.)", "tags": ["晟景Lv5U12"]},
-    {"english": "bronze", "meaning": "青銅 (n.) / 青銅的 (a.)", "tags": ["晟景Lv5U12"]},
-    {"english": "bruise", "meaning": "瘀傷 (n.) / 擦傷 (v.)", "tags": ["晟景Lv5U12"]},
-    {"english": "chord", "meaning": "和弦；和音 (n.)", "tags": ["晟景Lv5U12"]},
-    {"english": "chubby", "meaning": "圓胖的 (a.)", "tags": ["晟景Lv5U12"]},
-    {"english": "compassion", "meaning": "同情 (n.)", "tags": ["晟景Lv5U12"]},
-    {"english": "compassionate", "meaning": "同情的 (a.)", "tags": ["晟景Lv5U12"]},
-    {"english": "cuisine", "meaning": "烹調方式；菜餚 (n.)", "tags": ["晟景Lv5U12"]},
-    {"english": "erupt", "meaning": "爆發 (v.)", "tags": ["晟景Lv5U12"]},
-    {"english": "eruption", "meaning": "爆發 (n.)", "tags": ["晟景Lv5U12"]},
-    {"english": "flip", "meaning": "輕彈；快速翻轉 (v.) / 輕彈；快速翻轉 (n.)", "tags": ["晟景Lv5U12"]},
-    {"english": "fluency", "meaning": "流利 (n.)", "tags": ["晟景Lv5U12"]},
-    {"english": "foul", "meaning": "惡臭的；汙穢的；犯規的；下流地 (a.) / 犯規地 (adv.) / 犯規 (n.) / 犯規；汙染 (v.)", "tags": ["晟景Lv5U12"]},
-    {"english": "gut", "meaning": "內臟；膽量 (n.) / 取出內臟；毀損；拆除內部 (v.)", "tags": ["晟景Lv5U12"]},
-    {"english": "bowel", "meaning": "腸 (n.)", "tags": ["晟景Lv5U12"]},
-    {"english": "jug", "meaning": "罐；壺 (n.)", "tags": ["晟景Lv5U12"]},
-    {"english": "lump", "meaning": "小塊；腫塊；一塊方糖 (n.) / 混為一談 (v.)", "tags": ["晟景Lv5U12"]},
-    {"english": "mammal", "meaning": "哺乳動物 (n.)", "tags": ["晟景Lv5U12"]},
-    {"english": "manifest", "meaning": "顯示；表現 (v.)", "tags": ["晟景Lv5U12"]},
-    {"english": "meantime", "meaning": "與此同時 (n.) / 同時 (adv.)", "tags": ["晟景Lv5U12"]},
-    {"english": "midst", "meaning": "正中央 (n.) / 在...之中 (prep.)", "tags": ["晟景Lv5U12"]},
-    {"english": "milestone", "meaning": "里程碑 (n.)", "tags": ["晟景Lv5U12"]},
-    {"english": "mint", "meaning": "薄荷 (n.)", "tags": ["晟景Lv5U12"]},
-    {"english": "mumble", "meaning": "嘀咕 (v.) / 嘀咕 (n.)", "tags": ["晟景Lv5U12"]},
-    {"english": "olive", "meaning": "橄欖；橄欖樹；橄欖綠 (n.) / 橄欖色的 (a.)", "tags": ["晟景Lv5U12"]},
-    {"english": "orchard", "meaning": "果園 (n.)", "tags": ["晟景Lv5U12"]},
-    {"english": "pier", "meaning": "碼頭 (n.)", "tags": ["晟景Lv5U12"]},
-    {"english": "pledge", "meaning": "誓約 (n.) / 發誓 (v.)", "tags": ["晟景Lv5U12"]},
-    {"english": "poke", "meaning": "戳；伸出 (v.) / 戳 (n.)", "tags": ["晟景Lv5U12"]},
-    {"english": "prey", "meaning": "獵物；受害者；犧牲者 (n.) / 捕食；劫掠 (v.)", "tags": ["晟景Lv5U12"]},
-    {"english": "predator", "meaning": "掠食者 (n.)", "tags": ["晟景Lv5U12"]},
-    {"english": "prolong", "meaning": "延長 (v.)", "tags": ["晟景Lv5U12"]},
-    {"english": "prophet", "meaning": "先知 (n.)", "tags": ["晟景Lv5U12"]},
-    {"english": "prophecy", "meaning": "預言 (n.)", "tags": ["晟景Lv5U12"]},
-    {"english": "pyramid", "meaning": "金字塔 (n.)", "tags": ["晟景Lv5U12"]},
-    {"english": "ragged", "meaning": "破爛的 (a.)", "tags": ["晟景Lv5U12"]},
-    {"english": "rag", "meaning": "破布 (n.)", "tags": ["晟景Lv5U12"]},
-    {"english": "rattle", "meaning": "發出嘎嘎聲；喋喋不休 (v.) / 嘎嘎作響的玩具 (n.)", "tags": ["晟景Lv5U12"]},
-    {"english": "reminder", "meaning": "提醒物；提醒訊息 (n.)", "tags": ["晟景Lv5U12"]},
-    {"english": "rim", "meaning": "邊緣 (n.) / 環繞 (v.)", "tags": ["晟景Lv5U12"]}
-];
-    window.defaultWordDatabase = defaultWordDatabase;
-</script>
-
 <!-- 導覽列 -->
 <nav class="bg-indigo-600 text-white p-4 shadow-lg sticky top-0 z-50">
     <div class="flex flex-col gap-3">
@@ -521,13 +26,12 @@
             <!-- 左側：Logo + 標題 + 設定 -->
             <div class="flex items-center gap-2">
                 <!-- Logo：連到首頁「分頁」 -->
-                <h1 class="text-2xl font-bold tracking-tight cursor-pointer flex items-center gap-2" onclick="navigateTo('home')">
+                <h1 class="text-2xl font-bold tracking-tight cursor-pointer flex items-center gap-2">
                     <span>🎓</span> 單字王
                 </h1>
                 <!-- 設定按鈕：緊貼在「單字王」右邊 -->
                 <button
                     type="button"
-                    onclick="openSettingsModal()"
                     class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-indigo-500 text-white text-lg shadow-md active:scale-95 transition"
                     title="設定">
                     ⚙
@@ -542,9 +46,8 @@
                         type="text"
                         id="search-input"
                         placeholder="搜尋..."
-                        class="w-32 sm:w-48 pl-3 pr-8 py-1 rounded-full text-gray-800 text-sm focus:w-40 sm:focus:w-56 transition-all outline-none"
-                        onkeypress="if(event.key === 'Enter') searchWord()">
-                    <button onclick="searchWord()" class="absolute right-2 text-gray-500 hover:text-indigo-600">
+                        class="w-32 sm:w-48 pl-3 pr-8 py-1 rounded-full text-gray-800 text-sm focus:w-40 sm:focus:w-56 transition-all outline-none">
+                    <button class="absolute right-2 text-gray-500 hover:text-indigo-600">
                         🔍
                     </button>
                 </div>
@@ -558,21 +61,18 @@
 
                     <button
                         id="btn-login"
-                        onclick="firebaseLogin()"
                         class="bg-white text-indigo-600 px-3 py-1 rounded-full text-xs sm:text-sm font-bold shadow-md active:scale-95 transition">
                         登入
                     </button>
 
                     <button
                         id="btn-logout"
-                        onclick="firebaseLogout()"
                         class="hidden bg-indigo-500 text-white px-3 py-1 rounded-full text-xs sm:text-sm font-bold shadow-md active:scale-95 transition">
                         登出
                     </button>
 
                     <button
                         id="btn-sync"
-                        onclick="syncCloudNow()"
                         class="hidden bg-amber-400 text-white px-3 py-1 rounded-full text-xs sm:text-sm font-bold shadow-md active:scale-95 transition">
                         ☁ 同步
                     </button>
@@ -582,16 +82,15 @@
 
         <!-- 導覽按鈕：改用 navigateTo，並更新網址 -->
         <div class="grid grid-cols-3 gap-2">
-            <button onclick="navigateTo('home')" class="bg-indigo-500 hover:bg-indigo-700 py-2 rounded-lg text-sm font-bold transition">首頁</button>
-            <button onclick="navigateTo('library')" class="bg-indigo-500 hover:bg-indigo-700 py-2 rounded-lg text-sm font-bold transition">單字庫</button>
-            <button onclick="navigateTo('practice')" class="bg-indigo-500 hover:bg-indigo-700 py-2 rounded-lg text-sm font-bold transition">練習區</button>
+            <button class="bg-indigo-500 hover:bg-indigo-700 py-2 rounded-lg text-sm font-bold transition">首頁</button>
+            <button class="bg-indigo-500 hover:bg-indigo-700 py-2 rounded-lg text-sm font-bold transition">單字庫</button>
+            <button class="bg-indigo-500 hover:bg-indigo-700 py-2 rounded-lg text-sm font-bold transition">練習區</button>
         </div>
 
         <!-- 重置全部資料（回到初始狀態，並同步雲端） -->
         <div class="mt-2 flex justify-end">
             <button
                 type="button"
-                onclick="confirmReset()"
                 class="text-xs text-red-500 hover:text-red-700 underline underline-offset-2"
                 title="恢復初始狀態（包含雲端同步資料）">
                 重置全部資料
@@ -605,15 +104,15 @@
     <div id="view-home" class="space-y-6 animate-in fade-in duration-500">
         <div class="text-center py-4">
             <h2 class="text-3xl font-extrabold text-gray-800">歡迎回來！</h2>
-            <p class="text-gray-600 mt-2 text-base">資料已存於本機 (LocalStorage)，登入後可同步至雲端</p>
+            <p class="text-gray-600 mt-2 text-base">預設單字由 JSON 載入；登入後個人單字、錯題與資料夾會儲存在雲端</p>
         </div>
 
         <div class="flex flex-col gap-4">
-            <div class="bg-white p-6 rounded-2xl shadow-md border-l-8 border-indigo-500 cursor-pointer active:bg-gray-50" onclick="navigateTo('library')">
+            <div class="bg-white p-6 rounded-2xl shadow-md border-l-8 border-indigo-500 cursor-pointer active:bg-gray-50">
                 <h3 class="text-xl font-bold text-gray-800">📖 資料夾清單</h3>
                 <p class="text-gray-500 mt-1">瀏覽、編輯單字與資料夾</p>
             </div>
-            <div class="bg-white p-6 rounded-2xl shadow-md border-l-8 border-green-500 cursor-pointer active:bg-gray-50" onclick="navigateTo('practice')">
+            <div class="bg-white p-6 rounded-2xl shadow-md border-l-8 border-green-500 cursor-pointer active:bg-gray-50">
                 <h3 class="text-xl font-bold text-gray-800">🎯 練習專區</h3>
                 <p class="text-gray-500 mt-1">拼字練習、選擇題挑戰</p>
             </div>
@@ -624,18 +123,18 @@
     <div id="view-library" class="hidden">
         <div class="flex justify-between items-center mb-4">
             <!-- 返回：上一頁 -->
-            <button onclick="history.back()" class="text-gray-500 font-bold px-3 py-2 bg-gray-200 rounded-lg text-sm">← 返回</button>
+            <button class="text-gray-500 font-bold px-3 py-2 bg-gray-200 rounded-lg text-sm">← 返回</button>
             <div class="flex gap-2">
-                <button id="btn-edit-folders" onclick="toggleEditMode()" class="bg-orange-500 text-white px-3 py-2 rounded-lg text-sm font-bold shadow-md active:scale-95 transition">管理資料夾</button>
-                <button onclick="openAddModal()" class="bg-indigo-600 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg text-2xl pb-1 active:scale-95 transition">+</button>
+                <button id="btn-edit-folders" class="bg-orange-500 text-white px-3 py-2 rounded-lg text-sm font-bold shadow-md active:scale-95 transition">管理資料夾</button>
+                <button class="bg-indigo-600 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg text-2xl pb-1 active:scale-95 transition">+</button>
             </div>
         </div>
 
         <div id="edit-hint" class="hidden bg-orange-100 text-orange-700 p-3 rounded-lg mb-4 text-sm font-bold text-center border border-orange-200">
             ⚠️ 編輯模式：點擊資料夾進行管理
             <div class="mt-2 flex justify-center gap-2">
-                <button onclick="openNewFolderModal()" class="bg-green-600 text-white px-3 py-1 rounded text-xs active:scale-95 transition">新增資料夾</button>
-                <button onclick="toggleEditMode()" class="bg-gray-500 text-white px-3 py-1 rounded text-xs active:scale-95 transition">完成編輯</button>
+                <button class="bg-green-600 text-white px-3 py-1 rounded text-xs active:scale-95 transition">新增資料夾</button>
+                <button class="bg-gray-500 text-white px-3 py-1 rounded text-xs active:scale-95 transition">完成編輯</button>
             </div>
         </div>
 
@@ -647,7 +146,7 @@
     <!-- 單字列表 -->
     <div id="view-word-list" class="hidden">
         <div class="sticky top-0 bg-gray-50 py-2 z-10 flex items-center justify-between mb-2">
-            <button onclick="history.back()" class="text-gray-500 font-bold px-3 py-2 bg-gray-200 rounded-lg">← 返回</button>
+            <button class="text-gray-500 font-bold px-3 py-2 bg-gray-200 rounded-lg">← 返回</button>
             <span id="list-title" class="font-bold text-lg text-indigo-900 truncate max-w-[150px]">分類</span>
             <div class="w-10"></div>
         </div>
@@ -663,7 +162,7 @@
                 <!-- Step 1: 選擇資料夾 -->
                 <div class="mb-6">
                     <label class="block font-bold text-gray-700 mb-3 text-lg">📂 1. 選擇資料夾</label>
-                    <select id="practice-scope" onchange="renderPracticeWordSelection()" class="w-full p-4 border-2 border-indigo-100 rounded-xl text-lg bg-white outline-none focus:border-indigo-500"></select>
+                    <select id="practice-scope" class="w-full p-4 border-2 border-indigo-100 rounded-xl text-lg bg-white outline-none focus:border-indigo-500"></select>
                 </div>
 
                 <!-- Step 2: 勾選單字 -->
@@ -671,8 +170,8 @@
                     <div class="flex justify-between items-center mb-2">
                         <label class="block font-bold text-gray-700 text-lg">📝 2. 勾選要練習的單字</label>
                         <div class="space-x-2">
-                            <button onclick="toggleAllPracticeWords(true)" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded">全選</button>
-                            <button onclick="toggleAllPracticeWords(false)" class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded">取消</button>
+                            <button class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded">全選</button>
+                            <button class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded">取消</button>
                         </div>
                     </div>
                     <div id="practice-word-selection" class="max-h-48 overflow-y-auto custom-scrollbar border-2 border-gray-100 rounded-xl p-2 bg-gray-50">
@@ -682,13 +181,13 @@
 
                 <!-- Step 3: 開始遊戲 -->
                 <div class="flex flex-col gap-4 border-t pt-4">
-                    <button onclick="startGame('spelling')" class="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold text-xl shadow-lg active:scale-95 transition flex items-center justify-center gap-2">
+                    <button class="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold text-xl shadow-lg active:scale-95 transition flex items-center justify-center gap-2">
                         🔤 拼字練習
                     </button>
-                    <button onclick="startGame('choice-en-ch')" class="w-full py-4 bg-green-600 text-white rounded-xl font-bold text-xl shadow-lg active:scale-95 transition">
+                    <button class="w-full py-4 bg-green-600 text-white rounded-xl font-bold text-xl shadow-lg active:scale-95 transition">
                         英選中
                     </button>
-                    <button onclick="startGame('choice-ch-en')" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold text-xl shadow-lg active:scale-95 transition">
+                    <button class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold text-xl shadow-lg active:scale-95 transition">
                         中選英
                     </button>
                 </div>
@@ -703,20 +202,26 @@
 
             <div class="flex justify-between items-center mb-4 mt-2">
                 <span id="spelling-progress-text" class="text-base font-bold text-indigo-400">0/0</span>
-                <button onclick="quitGameAndSave()" class="text-red-500 font-bold p-2 border border-red-200 rounded-lg hover:bg-red-50">離開並結算</button>
+                <button class="text-red-500 font-bold p-2 border border-red-200 rounded-lg hover:bg-red-50">離開並結算</button>
+            </div>
+            <div class="game-history-controls grid grid-cols-3 gap-2 mb-4">
+                <button type="button" data-game-nav="prev" class="py-2 rounded-lg bg-gray-100 text-gray-600 font-bold disabled:opacity-40 disabled:cursor-not-allowed">上一題</button>
+                <button type="button" data-game-nav="current" class="py-2 rounded-lg bg-indigo-100 text-indigo-700 font-bold disabled:opacity-40 disabled:cursor-not-allowed">回到現在</button>
+                <button type="button" data-game-nav="next" class="py-2 rounded-lg bg-gray-100 text-gray-600 font-bold disabled:opacity-40 disabled:cursor-not-allowed">下一題</button>
             </div>
 
             <div id="spelling-content" class="flex-1 flex flex-col justify-center">
                 <div id="spelling-definition-area" class="space-y-2 mb-6 min-h-[80px] flex flex-col justify-center"></div>
                 <div id="spelling-hint" class="text-4xl tracking-[0.1em] font-mono mb-8 text-indigo-600 font-bold break-all"></div>
                 <div class="space-y-4 w-full">
-                    <input type="text" id="spelling-input" autocomplete="off" class="w-full border-b-4 border-indigo-100 p-3 text-3xl text-center focus:border-indigo-500 outline-none transition-all placeholder-gray-200 rounded-none bg-transparent" placeholder="輸入答案" onkeydown="if(event.key==='Enter') checkSpellingAnswer()">
+                    <input type="text" id="spelling-input" autocomplete="off" class="w-full border-b-4 border-indigo-100 p-3 text-3xl text-center focus:border-indigo-500 outline-none transition-all placeholder-gray-200 rounded-none bg-transparent" placeholder="輸入答案">
                     <div class="flex flex-col gap-3 mt-4">
-                        <button onclick="checkSpellingAnswer()" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-xl shadow-md active:bg-indigo-800">檢查</button>
-                        <button onclick="skipSpellingWord()" class="w-full bg-gray-100 text-gray-500 py-4 rounded-xl font-bold text-lg active:bg-gray-200">跳過 (視為答錯)</button>
+                        <button class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-xl shadow-md active:bg-indigo-800">檢查</button>
+                        <button class="w-full bg-gray-100 text-gray-500 py-4 rounded-xl font-bold text-lg active:bg-gray-200">跳過 (視為答錯)</button>
                     </div>
                 </div>
                 <div id="spelling-feedback" class="mt-4 font-bold text-xl min-h-[2rem]"></div>
+                <div id="spelling-review-answer" class="hidden mt-3 p-3 rounded-xl bg-amber-50 border border-amber-100 text-amber-700 font-bold"></div>
             </div>
         </div>
     </div>
@@ -728,7 +233,12 @@
 
             <div class="flex justify-between items-center mb-4 mt-2">
                 <span id="choice-progress-text" class="text-base font-bold text-indigo-400">0/0</span>
-                <button onclick="quitGameAndSave()" class="text-red-500 font-bold p-2 border border-red-200 rounded-lg hover:bg-red-50">離開並結算</button>
+                <button class="text-red-500 font-bold p-2 border border-red-200 rounded-lg hover:bg-red-50">離開並結算</button>
+            </div>
+            <div class="game-history-controls grid grid-cols-3 gap-2 mb-4">
+                <button type="button" data-game-nav="prev" class="py-2 rounded-lg bg-gray-100 text-gray-600 font-bold disabled:opacity-40 disabled:cursor-not-allowed">上一題</button>
+                <button type="button" data-game-nav="current" class="py-2 rounded-lg bg-indigo-100 text-indigo-700 font-bold disabled:opacity-40 disabled:cursor-not-allowed">回到現在</button>
+                <button type="button" data-game-nav="next" class="py-2 rounded-lg bg-gray-100 text-gray-600 font-bold disabled:opacity-40 disabled:cursor-not-allowed">下一題</button>
             </div>
 
             <div id="choice-content" class="flex-1 flex flex-col">
@@ -759,13 +269,13 @@
 
             <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 mt-4">
                 <label class="block text-sm font-bold text-indigo-900 mb-2">將勾選單字加入到：</label>
-                <select id="save-target-folder" onchange="onSaveTargetFolderChange(this)" class="w-full p-3 rounded-lg border border-indigo-200 mb-3 bg-white outline-none font-bold text-gray-700 cursor-pointer hover:border-indigo-400 transition"></select>
-                <button onclick="saveWrongWords()" class="w-full py-3 bg-indigo-600 text-white rounded-lg font-bold text-lg shadow-md hover:bg-indigo-700 active:scale-95 transition">
+                <select id="save-target-folder" class="w-full p-3 rounded-lg border border-indigo-200 mb-3 bg-white outline-none font-bold text-gray-700 cursor-pointer hover:border-indigo-400 transition"></select>
+                <button class="w-full py-3 bg-indigo-600 text-white rounded-lg font-bold text-lg shadow-md hover:bg-indigo-700 active:scale-95 transition">
                     確認加入
                 </button>
             </div>
 
-            <button onclick="navigateTo('practice')" class="w-full py-3 mt-3 bg-gray-200 text-gray-600 rounded-xl font-bold text-lg active:scale-95 transition">
+            <button class="w-full py-3 mt-3 bg-gray-200 text-gray-600 rounded-xl font-bold text-lg active:scale-95 transition">
                 不儲存，直接返回
             </button>
         </div>
@@ -806,8 +316,8 @@
                 </p>
             </div>
             <div class="grid grid-cols-2 gap-3 pt-2">
-                <button onclick="closeAddModal()" class="py-3 text-gray-500 font-bold bg-gray-100 rounded-xl active:bg-gray-200 transition">取消</button>
-                <button onclick="saveNewWord()" class="py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-md active:bg-indigo-700 transition">儲存</button>
+                <button class="py-3 text-gray-500 font-bold bg-gray-100 rounded-xl active:bg-gray-200 transition">取消</button>
+                <button class="py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-md active:bg-indigo-700 transition">儲存</button>
             </div>
         </div>
     </div>
@@ -818,10 +328,10 @@
     <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center">
         <h3 class="text-xl font-bold mb-4">管理資料夾: <span id="action-folder-name" class="text-indigo-600"></span></h3>
         <div class="flex flex-col gap-3">
-            <button onclick="prepareRenameFolder()" class="w-full py-3 bg-blue-500 text-white rounded-xl font-bold active:scale-95 transition">重命名</button>
-            <button onclick="prepareDeleteFolder(false)" class="w-full py-3 bg-orange-500 text-white rounded-xl font-bold active:scale-95 transition">刪除資料夾 (保留單字)</button>
-            <button onclick="prepareDeleteFolder(true)" class="w-full py-3 bg-red-600 text-white rounded-xl font-bold active:scale-95 transition">刪除資料夾與單字</button>
-            <button onclick="closeActionModal()" class="w-full py-3 bg-gray-200 text-gray-600 rounded-xl font-bold active:scale-95 transition">取消</button>
+            <button class="w-full py-3 bg-blue-500 text-white rounded-xl font-bold active:scale-95 transition">重命名</button>
+            <button class="w-full py-3 bg-orange-500 text-white rounded-xl font-bold active:scale-95 transition">刪除資料夾 (保留單字)</button>
+            <button class="w-full py-3 bg-red-600 text-white rounded-xl font-bold active:scale-95 transition">刪除資料夾與單字</button>
+            <button class="w-full py-3 bg-gray-200 text-gray-600 rounded-xl font-bold active:scale-95 transition">取消</button>
         </div>
     </div>
 </div>
@@ -832,8 +342,8 @@
         <h3 class="text-xl font-bold mb-4 text-center">重命名資料夾</h3>
         <input type="text" id="input-rename-folder" class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 outline-none text-lg mb-4">
         <div class="grid grid-cols-2 gap-3">
-            <button onclick="document.getElementById('rename-modal').classList.add('hidden')" class="py-3 text-gray-500 font-bold bg-gray-100 rounded-xl active:bg-gray-200 transition">取消</button>
-            <button onclick="executeRename()" class="py-3 bg-blue-600 text-white rounded-xl font-bold shadow-md active:bg-blue-700 transition">確認</button>
+            <button class="py-3 text-gray-500 font-bold bg-gray-100 rounded-xl active:bg-gray-200 transition">取消</button>
+            <button class="py-3 bg-blue-600 text-white rounded-xl font-bold shadow-md active:bg-blue-700 transition">確認</button>
         </div>
     </div>
 </div>
@@ -845,8 +355,8 @@
         <h3 id="confirm-title" class="text-xl font-bold mb-2">確定刪除？</h3>
         <p id="confirm-desc" class="text-gray-500 mb-6">此動作無法復原。</p>
         <div class="grid grid-cols-2 gap-3">
-            <button onclick="document.getElementById('confirm-modal').classList.add('hidden')" class="py-3 text-gray-500 font-bold bg-gray-100 rounded-xl active:bg-gray-200 transition">取消</button>
-            <button onclick="executeDelete()" class="py-3 bg-red-600 text-white rounded-xl font-bold shadow-md active:bg-red-700 transition">確認刪除</button>
+            <button class="py-3 text-gray-500 font-bold bg-gray-100 rounded-xl active:bg-gray-200 transition">取消</button>
+            <button class="py-3 bg-red-600 text-white rounded-xl font-bold shadow-md active:bg-red-700 transition">確認刪除</button>
         </div>
     </div>
 </div>
@@ -857,8 +367,8 @@
         <h3 class="text-xl font-bold mb-4 text-center">新增資料夾</h3>
         <input type="text" id="input-new-folder-name" class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 outline-none text-lg mb-4" placeholder="輸入名稱">
         <div class="grid grid-cols-2 gap-3">
-            <button onclick="document.getElementById('new-folder-modal').classList.add('hidden')" class="py-3 text-gray-500 font-bold bg-gray-100 rounded-xl active:bg-gray-200 transition">取消</button>
-            <button onclick="confirmNewFolder()" class="py-3 bg-green-600 text-white rounded-xl font-bold shadow-md active:bg-green-700 transition">建立</button>
+            <button class="py-3 text-gray-500 font-bold bg-gray-100 rounded-xl active:bg-gray-200 transition">取消</button>
+            <button class="py-3 bg-green-600 text-white rounded-xl font-bold shadow-md active:bg-green-700 transition">建立</button>
         </div>
     </div>
 </div>
@@ -876,16 +386,14 @@
                     <input
                         type="checkbox"
                         id="settings-bgm-enabled"
-                        class="w-5 h-5"
-                        onchange="toggleBgmEnabledFromCheckbox(this.checked)">
+                        class="w-5 h-5">
                 </label>
 
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-1">背景音樂曲目</label>
                     <select
                         id="settings-bgm-select"
-                        class="w-full border-2 border-gray-200 p-2 rounded-xl focus:border-indigo-500 outline-none text-sm"
-                        onchange="changeBgmTrackFromSelect(this.value)">
+                        class="w-full border-2 border-gray-200 p-2 rounded-xl focus:border-indigo-500 outline-none text-sm">
                         <!-- 由 JS 動態填入 -->
                     </select>
                 </div>
@@ -903,8 +411,7 @@
                     min="0"
                     max="100"
                     step="1"
-                    class="w-full"
-                    oninput="updateBgmVolumeFromSlider(this.value)">
+                    class="w-full">
             </div>
 
             <!-- 單字發音音量 -->
@@ -919,12 +426,10 @@
                     min="0"
                     max="100"
                     step="1"
-                    class="w-full"
-                    oninput="updateSpeechVolumeFromSlider(this.value)">
+                    class="w-full">
             </div>
 
             <button
-                onclick="closeSettingsModal()"
                 class="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-md active:bg-indigo-700 transition">
                 完成
             </button>
@@ -933,1485 +438,6 @@
 </div>
 
 <!-- 主程式腳本（非 module，掛在 window 上） -->
-<script>
-    const STORAGE_KEY = 'wordKingData_v2';
-
-    // 背景音樂清單：四首你的本機音樂 + 一首公用測試音樂
-    const BGM_TRACKS = [
-        {
-            id: 'bgm_new_dora',
-            name: '新哆啦A夢主題曲',
-            // 新版主題曲（放在專案根目錄，和 index.html 同一層）
-            url: './新哆啦A夢主題曲.mp3'
-        },
-        {
-            id: 'bgm_old_dora',
-            name: '哆啦A夢主題曲',
-            // 舊版主題曲（同樣放在專案根目錄）
-            url: './舊版哆啦A夢主題曲.mp3'
-        },
-        {
-            id: 'bgm_summer',
-            name: "On Summer's Day",
-            // 夏日主題曲（同樣放在專案根目錄）
-            url: "./On Summer's Day.mp3"
-        },
-        {
-            id: 'bgm_columbina',
-            name: 'Genshin Impact - Columbina To Where She Flies',
-            // 原神主題曲（同樣放在專案根目錄）
-            url: './Genshin Impact - Columbina To Where She Flies.mp3'
-        },
-        {
-            id: 'bgm_demo',
-            name: '測試音樂（公用）',
-            // 公開可用的示範 MP3，用來確認程式邏輯與瀏覽器相容性
-            url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
-        }
-    ];
-
-    const DEFAULT_SETTINGS = {
-        bgmEnabled: true,                  // 是否開啟背景音樂
-        bgmVolume: 0.5,                    // 0~1
-        speechVolume: 1.0,                 // 0~1
-        // 預設播放「新哆啦A夢主題曲」這首
-        selectedBgmId: 'bgm_new_dora'
-    };
-
-    // 發音時要把 BGM 壓低多少：0.3 = 30%
-    const bgmDucking = {
-        isDucking: false,
-        ratio: 0.3
-    };
-
-    function clamp01(value) {
-        const n = typeof value === 'number' ? value : parseFloat(value);
-        if (isNaN(n)) return 0;
-        return Math.max(0, Math.min(1, n));
-    }
-
-    let state = {
-        words: [],
-        categories: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(''),
-        unitTags: ["錯題區"],
-        folders: ["錯題區"],
-        settings: { ...DEFAULT_SETTINGS },
-        audio: {
-            bgmElement: null
-        },
-        game: {
-            mode: '',
-            currentWords: [],
-            index: 0,
-            wrongWords: new Set(),
-            reviewSelection: [],
-            selectedPracticeWords: []
-        },
-        isEditing: false,
-        editingWordIndex: -1,
-        targetFolderAction: '',
-        pendingDeleteType: null // 'keep' or 'all'
-    };
-
-    window.state = state;
-
-    function hydrateSettings(saved) {
-        const base = { ...DEFAULT_SETTINGS };
-        if (saved && typeof saved === 'object') {
-            if (typeof saved.bgmEnabled === 'boolean') base.bgmEnabled = saved.bgmEnabled;
-            if (typeof saved.bgmVolume === 'number') base.bgmVolume = clamp01(saved.bgmVolume);
-            if (typeof saved.speechVolume === 'number') base.speechVolume = clamp01(saved.speechVolume);
-            if (typeof saved.selectedBgmId === 'string') base.selectedBgmId = saved.selectedBgmId;
-        }
-        return base;
-    }
-
-    function getCurrentBgmTrack() {
-        const id = state.settings && state.settings.selectedBgmId;
-        const found = BGM_TRACKS.find(t => t.id === id);
-        return found || BGM_TRACKS[0] || null;
-    }
-
-    function setupAudioSystem() {
-        let audio = document.getElementById('bgm-audio');
-        if (!audio) {
-            audio = document.createElement('audio');
-            audio.id = 'bgm-audio';
-            audio.className = 'hidden';
-            document.body.appendChild(audio);
-        }
-        audio.loop = true;
-        audio.preload = 'auto';
-
-        const track = getCurrentBgmTrack();
-        if (track) {
-            audio.src = track.url;
-        }
-
-        // 若載入音樂檔失敗，顯示提示訊息，方便檢查路徑或雲端連結
-        audio.onerror = () => {
-            console.error('背景音樂載入失敗', {
-                src: audio.currentSrc || audio.src,
-                error: audio.error
-            });
-            if (!audio._bgmErrorNotified) {
-                audio._bgmErrorNotified = true;
-                alert(
-                    '背景音樂載入失敗，請確認：\n' +
-                    '1. 檔案是否存在，路徑是否正確\n' +
-                    '2. 如果是雲端連結，檔案是否設為「擁有連結者可查看」\n' +
-                    '3. 檔案格式是否為瀏覽器可播放的音訊格式（例如 mp3）'
-                );
-            }
-        };
-
-        state.audio = state.audio || {};
-        state.audio.bgmElement = audio;
-        applyBgmSettingsToElement();
-    }
-
-    function applyBgmSettingsToElement() {
-        if (!state.audio || !state.audio.bgmElement) return;
-        const audio = state.audio.bgmElement;
-
-        audio.volume = clamp01(state.settings.bgmVolume);
-
-        if (state.settings.bgmEnabled) {
-            audio.play().catch(() => {
-                // 有些瀏覽器會阻擋自動播放，需要使用者互動
-            });
-        } else {
-            audio.pause();
-        }
-    }
-    window.applyBgmSettingsToElement = applyBgmSettingsToElement;
-
-    // 為了符合瀏覽器自動播放政策：在使用者第一次互動時再嘗試播放 BGM
-    function setupBgmAutoplayUnlock() {
-        const audio =
-            (state.audio && state.audio.bgmElement) ||
-            document.getElementById('bgm-audio');
-        if (!audio) return;
-
-        const tryPlay = () => {
-            if (!state.settings || !state.settings.bgmEnabled) return;
-            audio.play().catch(() => {});
-            window.removeEventListener('click', tryPlay);
-            window.removeEventListener('touchstart', tryPlay);
-            window.removeEventListener('keydown', tryPlay);
-        };
-
-        window.addEventListener('click', tryPlay, { once: true });
-        window.addEventListener('touchstart', tryPlay, { once: true });
-        window.addEventListener('keydown', tryPlay, { once: true });
-    }
-
-    // 新版發音功能（會自動壓低背景音量）
-    window.speakWord = function(text) {
-        if (!('speechSynthesis' in window)) {
-            alert("您的瀏覽器不支援發音功能");
-            return;
-        }
-
-        window.speechSynthesis.cancel();
-
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'en-US';
-        // 唸慢一點，方便跟讀
-        utterance.rate = 0.8;
-
-        const speechVol =
-            clamp01(state.settings && typeof state.settings.speechVolume === 'number'
-                ? state.settings.speechVolume
-                : DEFAULT_SETTINGS.speechVolume);
-        utterance.volume = speechVol;
-
-        const bgmEl = (state.audio && state.audio.bgmElement) || document.getElementById('bgm-audio');
-        const shouldDuck =
-            bgmEl &&
-            !bgmEl.paused &&
-            state.settings &&
-            state.settings.bgmEnabled;
-
-        if (shouldDuck) {
-            bgmDucking.isDucking = true;
-            bgmEl.volume = clamp01(state.settings.bgmVolume * bgmDucking.ratio);
-
-            const restore = () => {
-                bgmDucking.isDucking = false;
-                bgmEl.volume = clamp01(state.settings.bgmVolume);
-                utterance.onend = null;
-                utterance.onerror = null;
-            };
-
-            utterance.onend = restore;
-            utterance.onerror = restore;
-        }
-
-        window.speechSynthesis.speak(utterance);
-    };
-
-    // 讓網址有 page 參數，例如 ?page=library
-    function navigateTo(viewId) {
-        showView(viewId);
-        try {
-            const url = new URL(window.location);
-            url.searchParams.set('page', viewId);
-            history.pushState({ viewId }, '', url);
-        } catch (e) {
-            console.log("History API not supported or restricted:", e);
-        }
-    }
-
-    window.onpopstate = (event) => {
-        const viewId =
-            (event.state && event.state.viewId) ||
-            new URL(window.location).searchParams.get('page') ||
-            'home';
-        showView(viewId);
-    };
-
-    function initSystem() {
-        const storedData = localStorage.getItem(STORAGE_KEY);
-        if (storedData) {
-            try {
-                const parsed = JSON.parse(storedData);
-                state.words = parsed.words || [];
-                state.folders = parsed.folders || ["錯題區"];
-                state.settings = hydrateSettings(parsed.settings);
-            } catch(e) {
-                state.words = [...defaultWordDatabase];
-                state.folders = ["錯題區"];
-                state.settings = { ...DEFAULT_SETTINGS };
-            }
-        } else {
-            state.words = [...defaultWordDatabase];
-            state.folders = ["錯題區"];
-            state.settings = { ...DEFAULT_SETTINGS };
-        }
-        if (!state.folders.includes("錯題區")) state.folders.unshift("錯題區");
-        refreshTags();
-        if (state.words.length > 0 || state.folders.length > 1) saveDataLocally();
-    }
-
-    // 將資料夾名稱拆成「前綴文字」+「數字序列」
-    // 例如：
-    //  "晟景Lv5U6"      -> prefix: "晟景Lv", numbers: [5, 6]
-    //  "晟景單字 Lv5U10" -> prefix: "晟景單字 Lv", numbers: [5, 10]
-    //  "龍騰C6U3"       -> prefix: "龍騰C", numbers: [6, 3]
-    //  "學測單字"       -> prefix: "學測單字", numbers: []
-    function splitTagForSeries(tag) {
-        // 抓到「一開始連續的非數字」當作前綴
-        const m = tag.match(/^(\D+)(.*)$/);
-        if (!m) {
-            // 開頭就是數字，當作整個都是前綴（沒有系列數字）
-            return { prefix: tag, numbers: [] };
-        }
-        const prefix = m[1].trim();
-        const rest = m[2];
-
-        if (!rest) {
-            return { prefix, numbers: [] };
-        }
-
-        // 把後面所有數字抓出來，照出現順序組成陣列
-        const nums = rest.match(/\d+/g);
-        const numbers = nums ? nums.map(n => parseInt(n, 10)) : [];
-
-        return { prefix, numbers };
-    }
-
-    // 自訂標籤排序：
-    // 1. 「錯題區」永遠排到最後
-    // 2. 其餘標籤，先按「前綴」群組（名字相似度），
-    //    同前綴時用數字序列排序（U5, U6, U7, U10 會排成 5,6,7,10），
-    //    沒數字就用字典順序。
-    function compareTagsBySeries(a, b) {
-        // 「錯題區」固定在最後
-        if (a === "錯題區" && b !== "錯題區") return 1;   // a 往後
-        if (b === "錯題區" && a !== "錯題區") return -1;  // b 往後
-
-        const sa = splitTagForSeries(a);
-        const sb = splitTagForSeries(b);
-
-        // 先比前綴（系列名）
-        if (sa.prefix !== sb.prefix) {
-            // 中文用 zh-Hant 排序會比較自然
-            return sa.prefix.localeCompare(sb.prefix, 'zh-Hant');
-        }
-
-        // 前綴一樣：同一系列，改用數字序列排序
-        const len = Math.max(sa.numbers.length, sb.numbers.length);
-        for (let i = 0; i < len; i++) {
-            const na = sa.numbers[i] ?? 0;
-            const nb = sb.numbers[i] ?? 0;
-            if (na !== nb) return na - nb;
-        }
-
-        // 數字也一樣或都沒有數字時，最後再比整個字串
-        return a.localeCompare(b, 'zh-Hant');
-    }
-
-    function refreshTags() {
-        const tagsSet = new Set(state.folders);
-        state.words.forEach(w => {
-            if (w.tags) w.tags.forEach(t => tagsSet.add(t));
-        });
-        // 使用自訂排序：同系列按前綴 + 數字順序排，「錯題區」永遠最後
-        state.unitTags = Array.from(tagsSet).sort(compareTagsBySeries);
-
-        const datalist = document.getElementById('folder-list');
-        if (datalist) {
-            datalist.innerHTML = state.unitTags.map(t => `<option value="${t}">`).join('');
-        }
-    }
-
-    function mergeMeaningStrings(oldMeaning, newMeaning) {
-        const splitParts = str =>
-            (str || '')
-                .split('/')
-                .map(s => s.trim())
-                .filter(s => s);
-
-        const partsOld = splitParts(oldMeaning);
-        const partsNew = splitParts(newMeaning);
-
-        const seen = new Set();
-        const merged = [];
-
-        partsOld.forEach(p => {
-            if (!seen.has(p)) {
-                seen.add(p);
-                merged.push(p);
-            }
-        });
-        partsNew.forEach(p => {
-            if (!seen.has(p)) {
-                seen.add(p);
-                merged.push(p);
-            }
-        });
-
-        return merged.join(' / ');
-    }
-
-    function mergeDuplicateWords(words) {
-        const map = new Map();
-
-        (words || []).forEach(w => {
-            if (!w || !w.english) return;
-            const key = w.english.toLowerCase();
-            const incomingTags = Array.isArray(w.tags) ? w.tags : [];
-
-            if (!map.has(key)) {
-                map.set(key, {
-                    english: w.english,
-                    meaning: w.meaning || '',
-                    tags: Array.from(new Set(incomingTags))
-                });
-            } else {
-                const exists = map.get(key);
-
-                exists.meaning = mergeMeaningStrings(exists.meaning, w.meaning);
-
-                const mergedTags = Array.from(
-                    new Set([...(exists.tags || []), ...incomingTags])
-                );
-                exists.tags = mergedTags;
-
-                map.set(key, exists);
-            }
-        });
-
-        return Array.from(map.values());
-    }
-
-    function renderTagCheckboxes(selectedTags = []) {
-        const container = document.getElementById('tag-checkbox-container');
-        if (!container) return;
-
-        const allTags = state.unitTags || [];
-        container.innerHTML = '';
-
-        if (allTags.length === 0) {
-            container.innerHTML = '<div class="text-xs text-gray-400">目前沒有資料夾，請先建立。</div>';
-            return;
-        }
-
-        allTags.forEach(tag => {
-            const safeId = 'tag-chk-' + tag.replace(/\s+/g, '_');
-            const wrapper = document.createElement('label');
-            wrapper.className = 'inline-flex items-center space-x-2 mr-3 mb-1';
-
-            const checked = selectedTags.includes(tag) ? 'checked' : '';
-            wrapper.innerHTML = `
-                <input type="checkbox"
-                       class="tag-checkbox w-4 h-4 text-indigo-600 rounded"
-                       value="${tag}"
-                       id="${safeId}"
-                       ${checked}>
-                <span class="text-sm text-gray-700">${tag}</span>
-            `;
-
-            container.appendChild(wrapper);
-        });
-    }
-
-    function saveDataLocally() {
-        state.words = mergeDuplicateWords(state.words || []);
-
-        const dataToSave = {
-            words: state.words,
-            folders: state.folders,
-            settings: state.settings
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
-        refreshTags();
-
-        if (window.autoSyncToCloud) {
-            window.autoSyncToCloud();
-        }
-    }
-
-    function confirmReset() {
-        if (!confirm("確定要重製嗎？\n這會刪除所有自訂單字與資料夾，只保留系統內建單字。\n若已登入，雲端也會一併重置。")) {
-            return;
-        }
-
-        localStorage.removeItem(STORAGE_KEY);
-
-        state.words = Array.isArray(defaultWordDatabase) ? [...defaultWordDatabase] : [];
-        state.folders = ["錯題區"];
-        state.settings = { ...DEFAULT_SETTINGS };
-
-        saveDataLocally();
-        applyBgmSettingsToElement();
-        location.reload();
-    }
-
-    function showView(viewId) {
-        document.querySelectorAll('main > div').forEach(div => div.classList.add('hidden'));
-        const target = document.getElementById(`view-${viewId}`);
-        if (target) target.classList.remove('hidden');
-
-        if (viewId === 'library') renderLibrary();
-        if (viewId === 'practice') {
-            renderPracticeOptions();
-            setTimeout(renderPracticeWordSelection, 50);
-        }
-        window.scrollTo(0, 0);
-
-        if (viewId !== 'library') {
-            state.isEditing = false;
-            updateEditUI();
-        }
-
-        const titleMap = {
-            home: '單字王 - 首頁',
-            library: '單字王 - 單字庫',
-            practice: '單字王 - 練習區'
-        };
-        document.title = titleMap[viewId] || '單字王 - 核心系統';
-    }
-
-    function searchWord() {
-        const query = document.getElementById('search-input').value.trim().toLowerCase();
-        if (!query) return;
-        const foundWord = state.words.find(w => w.english.toLowerCase() === query || w.meaning.includes(query));
-        if (foundWord) {
-            const targetTag = foundWord.tags && foundWord.tags.find(t => !state.categories.includes(t)) || (foundWord.tags && foundWord.tags[0]);
-            if (targetTag) {
-                navigateTo('library');
-                showView('word-list');
-                renderWordList(targetTag);
-                setTimeout(() => {
-                    const allCards = document.querySelectorAll('.word-card');
-                    let targetCard = null;
-                    allCards.forEach(card => {
-                        if(card.innerText.toLowerCase().includes(query) || card.innerText.includes(query)) targetCard = card;
-                    });
-                    if (targetCard) {
-                        targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        targetCard.classList.add('highlight-card');
-                        setTimeout(() => targetCard.classList.remove('highlight-card'), 1500);
-                    }
-                }, 100);
-            } else alert("找到了單字，但它似乎沒有分類標籤。");
-        } else alert("找不到這個單字！");
-    }
-
-    function toggleEditMode() { state.isEditing = !state.isEditing; updateEditUI(); renderLibrary(); }
-    function updateEditUI() {
-        const hint = document.getElementById('edit-hint');
-        const btn = document.getElementById('btn-edit-folders');
-        if (state.isEditing) {
-            hint.classList.remove('hidden');
-            btn.classList.replace('bg-orange-500', 'bg-gray-500');
-            btn.innerText = '完成編輯';
-        } else {
-            hint.classList.add('hidden');
-            btn.classList.replace('bg-gray-500', 'bg-orange-500');
-            btn.innerText = '管理資料夾';
-        }
-    }
-
-    function openNewFolderModal() {
-        document.getElementById('input-new-folder-name').value = '';
-        document.getElementById('new-folder-modal').classList.remove('hidden');
-    }
-
-    function confirmNewFolder() {
-        const name = document.getElementById('input-new-folder-name').value.trim();
-        if (!name) return;
-        if (state.folders.includes(name) || state.categories.includes(name)) {
-            alert("此資料夾已存在！");
-            return;
-        }
-        state.folders.push(name);
-        document.getElementById('new-folder-modal').classList.add('hidden');
-
-        // 若是從結算畫面觸發，把 select 切換到新資料夾後結束，
-        // 不在這裡 save（讓 saveWrongWords 統一 save，避免 mergeDuplicateWords
-        // 在加 tag 之前就把 state.words 換成新物件導致 tag 遺失）
-        if (state._pendingResultFolder) {
-            state._pendingResultFolder = false;
-            const saveSelect = document.getElementById('save-target-folder');
-            if (saveSelect) {
-                const opt = document.createElement('option');
-                opt.value = name;
-                opt.text = name;
-                saveSelect.appendChild(opt);
-                saveSelect.value = name;
-            }
-            return;
-        }
-
-        saveDataLocally();
-        renderLibrary();
-    }
-
-    function handleFolderClick(name) {
-        if (state.isEditing) {
-            if (name === "錯題區" || state.categories.includes(name)) {
-                alert("此系統資料夾無法編輯或刪除。");
-                return;
-            }
-            openActionModal(name);
-        } else {
-            renderWordList(name);
-            const url = new URL(window.location);
-            url.searchParams.set('page', 'library');
-            history.pushState({ viewId: 'library' }, '', url);
-        }
-    }
-
-    function openActionModal(folderName) {
-        state.targetFolderAction = folderName;
-        document.getElementById('action-folder-name').innerText = folderName;
-        document.getElementById('folder-action-modal').classList.remove('hidden');
-    }
-
-    function closeActionModal() {
-        document.getElementById('folder-action-modal').classList.add('hidden');
-    }
-
-    function prepareRenameFolder() {
-        closeActionModal();
-        document.getElementById('input-rename-folder').value = state.targetFolderAction;
-        document.getElementById('rename-modal').classList.remove('hidden');
-    }
-
-    function executeRename() {
-        const oldName = state.targetFolderAction;
-        const newName = document.getElementById('input-rename-folder').value.trim();
-
-        if (newName && newName !== oldName) {
-            if (state.folders.includes(newName) || state.categories.includes(newName)) {
-                alert("此名稱已存在或系統保留。");
-                return;
-            }
-            state.words.forEach(w => {
-                if (w.tags && w.tags.includes(oldName)) {
-                    w.tags = w.tags.map(t => t === oldName ? newName : t);
-                }
-            });
-            state.folders = state.folders.map(f => f === oldName ? newName : f);
-            saveDataLocally();
-            renderLibrary();
-        }
-        document.getElementById('rename-modal').classList.add('hidden');
-        state.targetFolderAction = '';
-    }
-
-    function prepareDeleteFolder(deleteAll) {
-        closeActionModal();
-        state.pendingDeleteType = deleteAll ? 'all' : 'keep';
-
-        const title = document.getElementById('confirm-title');
-        const desc = document.getElementById('confirm-desc');
-
-        if (deleteAll) {
-            title.innerText = "刪除資料夾與單字？";
-            desc.innerText = "該資料夾內的所有單字都會被永久刪除！";
-        } else {
-            title.innerText = "僅刪除資料夾？";
-            desc.innerText = "單字會保留，但會移除此資料夾標籤。";
-        }
-
-        document.getElementById('confirm-modal').classList.remove('hidden');
-    }
-
-    function executeDelete() {
-        const oldName = state.targetFolderAction;
-        const type = state.pendingDeleteType;
-
-        if (type === 'keep') {
-            state.words.forEach(w => {
-                if (w.tags) w.tags = w.tags.filter(t => t !== oldName);
-            });
-        } else if (type === 'all') {
-            state.words = state.words.filter(w => {
-                if (!w.tags) return true;
-                return !w.tags.includes(oldName);
-            });
-        }
-
-        state.folders = state.folders.filter(f => f !== oldName);
-        saveDataLocally();
-        renderLibrary();
-
-        document.getElementById('confirm-modal').classList.add('hidden');
-        state.targetFolderAction = '';
-        state.pendingDeleteType = null;
-    }
-
-    function openAddModal(idx = -1) {
-        state.editingWordIndex = idx;
-        const modal = document.getElementById('add-modal');
-        const tagInput = document.getElementById('new-tag');
-
-        document.getElementById('modal-title').innerText = idx >= 0 ? "編輯單字" : "新增單字";
-
-        if (idx >= 0) {
-            const w = state.words[idx];
-            document.getElementById('new-word').value = w.english;
-            document.getElementById('new-meaning').value = w.meaning;
-            const selectedTags = Array.isArray(w.tags) ? w.tags : [];
-            renderTagCheckboxes(selectedTags);
-            if (tagInput) tagInput.value = '';
-        } else {
-            document.getElementById('new-word').value = '';
-            document.getElementById('new-meaning').value = '';
-            let preSelected = [];
-            const current = document.getElementById('list-title')?.innerText;
-            if (current && !state.categories.includes(current) && current !== '分類') {
-                preSelected = [current];
-            }
-            renderTagCheckboxes(preSelected);
-            if (tagInput) tagInput.value = '';
-        }
-
-        modal.classList.remove('hidden');
-    }
-
-    function closeAddModal() {
-        document.getElementById('add-modal').classList.add('hidden');
-        state.editingWordIndex = -1;
-    }
-
-    function saveNewWord() {
-        const eng = document.getElementById('new-word').value.trim();
-        const mean = document.getElementById('new-meaning').value.trim();
-        const tagInputEl = document.getElementById('new-tag');
-
-        if (!eng || !mean) return alert("請輸入單字和意思");
-
-        const selectedFromCheckbox = Array.from(document.querySelectorAll('.tag-checkbox:checked'))
-            .map(cb => cb.value);
-
-        let extraTags = [];
-        if (tagInputEl && tagInputEl.value.trim()) {
-            extraTags = tagInputEl.value.trim()
-                .split(/[,，]/)
-                .map(t => t.trim())
-                .filter(t => t);
-        }
-
-        const tags = Array.from(new Set([...selectedFromCheckbox, ...extraTags]));
-
-        tags.forEach(t => {
-            if (!state.folders.includes(t)) state.folders.push(t);
-        });
-
-        const data = { english: eng, meaning: mean, tags: tags };
-
-        if (state.editingWordIndex >= 0) {
-            state.words[state.editingWordIndex] = data;
-        } else {
-            state.words.push(data);
-        }
-
-        saveDataLocally();
-        closeAddModal();
-
-        if (!document.getElementById('view-word-list').classList.contains('hidden')) {
-            renderWordList(document.getElementById('list-title').innerText);
-        } else {
-            renderLibrary();
-        }
-    }
-
-    function renderLibrary() {
-        refreshTags();
-        const grid = document.getElementById('category-grid');
-        grid.innerHTML = '';
-        if(state.isEditing) grid.classList.add('editing-mode'); else grid.classList.remove('editing-mode');
-
-        if(state.words.length === 0 && state.folders.length <= 1) {
-            document.getElementById('empty-library-hint').classList.remove('hidden');
-        } else {
-            document.getElementById('empty-library-hint').classList.add('hidden');
-            if(!state.isEditing) {
-                state.categories.forEach(cat => {
-                    if(state.words.some(w => w.english.toUpperCase().startsWith(cat))) grid.appendChild(createCatBtn(cat, 'bg-white text-indigo-600 border border-indigo-100', false));
-                });
-            }
-            state.unitTags.forEach(tag => {
-                const isSystem = tag === "錯題區";
-                const count = state.words.filter(w => w.tags && w.tags.includes(tag)).length;
-                const style = isSystem ? 'bg-red-500 text-white font-bold' : 'bg-indigo-600 text-white font-bold';
-                grid.appendChild(createCatBtn(`${tag} (${count})`, style, !isSystem, tag));
-            });
-        }
-    }
-
-    function createCatBtn(name, cls, editable, oriName) {
-        const div = document.createElement('div');
-        div.className = `${cls} folder-card relative min-h-[80px] rounded-2xl flex items-center justify-center shadow-sm cursor-pointer active:scale-95 transition-all text-lg text-center px-2 break-all leading-tight`;
-        div.innerHTML = `<span>${name}</span>` + (state.isEditing && editable ? '<span class="absolute top-1 right-1 text-xs bg-white text-red-500 rounded-full w-5 h-5 flex items-center justify-center">✎</span>' : '');
-        div.onclick = () => handleFolderClick(oriName || name.split(' ')[0]);
-        return div;
-    }
-
-    function renderWordList(name) {
-        showView('word-list');
-        document.getElementById('list-title').innerText = name;
-        const container = document.getElementById('words-container');
-        container.innerHTML = '';
-        let filtered = state.words.map((w,i)=>({...w, idx:i}));
-        if(name.length===1 && state.categories.includes(name)) filtered = filtered.filter(w=>w.english.toUpperCase().startsWith(name));
-        else filtered = filtered.filter(w=>w.tags && w.tags.includes(name));
-        filtered.sort((a,b)=>a.english.localeCompare(b.english));
-
-        if(filtered.length === 0) return container.innerHTML = `<div class="text-center text-gray-400 py-10 w-full">無單字</div>`;
-
-        filtered.forEach(w => {
-            const card = document.createElement('div');
-            card.className = 'word-card w-full';
-
-            const parts = parseMeaning(w.meaning).map(p => `
-                <div class="mb-3 text-indigo-800 font-bold text-lg">
-                    ${p.text}
-                    <span class="block text-sm text-indigo-400 opacity-90 mt-1">${p.pos}</span>
-                </div>
-            `).join('');
-
-            const badge = w.tags && w.tags.includes("錯題區") ? `<span class="absolute top-3 right-3 text-xs bg-red-100 text-red-500 px-2 py-1 rounded-full font-bold">錯題</span>` : '';
-
-            card.innerHTML = `
-                <div class="word-card-inner">
-                    <div class="word-card-front bg-white border-2 border-indigo-50 p-6 relative flex flex-col justify-center items-center rounded-2xl">
-                        <button class="absolute top-3 left-3 text-gray-400 hover:text-indigo-600 bg-white rounded-full p-1 shadow-sm z-20" onclick="event.stopPropagation(); openAddModal(${w.idx})">✎</button>
-                        ${badge}
-                        <span
-                            class="text-3xl font-black text-indigo-900 break-all text-center cursor-pointer"
-                            title="發音"
-                            onclick="event.stopPropagation(); speakWord('${w.english.replace(/'/g, "\\'")}')"
-                        >
-                            ${w.english}
-                        </span>
-                    </div>
-                    <div class="word-card-back p-6 bg-indigo-50 border-2 border-indigo-200 flex flex-col rounded-2xl">
-                        ${parts}
-                    </div>
-                </div>`;
-            card.onclick = () => card.classList.toggle('is-flipped');
-            container.appendChild(card);
-        });
-    }
-
-    function parseMeaning(raw) {
-        const results = [];
-        if (!raw) return results;
-
-        const blocks = raw.split('/').map(b => b.trim()).filter(Boolean);
-
-        blocks.forEach(block => {
-            if (!block) return;
-            const idx = block.lastIndexOf('(');
-            let textPart = block;
-            let posPart = '';
-
-            if (idx !== -1) {
-                textPart = block.substring(0, idx).trim();
-                posPart = block.substring(idx).trim();
-            }
-
-            const subTexts = textPart
-                .split(/[;；、]/)
-                .map(s => s.trim())
-                .filter(Boolean);
-
-            if (subTexts.length === 0) {
-                results.push({ text: textPart, pos: posPart });
-            } else {
-                subTexts.forEach(t => {
-                    results.push({ text: t, pos: posPart });
-                });
-            }
-        });
-
-        return results;
-    }
-
-    function renderPracticeOptions() {
-        refreshTags();
-        const select = document.getElementById('practice-scope');
-        select.innerHTML = '<option value="all">全部單字夾</option>';
-        state.unitTags.forEach(tag => select.innerHTML += `<option value="${tag}">${tag}</option>`);
-    }
-
-    function renderPracticeWordSelection() {
-        const scope = document.getElementById('practice-scope').value;
-        const container = document.getElementById('practice-word-selection');
-        const countLabel = document.getElementById('selection-count');
-        container.innerHTML = '';
-
-        let pool = (scope === 'all')
-            ? [...state.words]
-            : state.words.filter(w => w.tags && w.tags.includes(scope));
-
-        pool.sort((a,b) => a.english.localeCompare(b.english));
-
-        if(pool.length === 0) {
-            container.innerHTML = '<div class="text-gray-400 text-center py-4">此資料夾沒有單字</div>';
-            countLabel.innerText = '已選 0 個單字';
-            return;
-        }
-
-        pool.forEach((word) => {
-            const div = document.createElement('div');
-            div.className = "flex items-center p-2 border-b border-gray-100 last:border-0 hover:bg-white transition";
-            div.innerHTML = `
-                <input type="checkbox" class="practice-checkbox w-5 h-5 text-indigo-600 rounded mr-3" checked data-english="${word.english}">
-                <div class="flex-1 min-w-0">
-                    <div class="font-bold text-gray-800 truncate">${word.english}</div>
-                    <div class="text-xs text-gray-500 truncate">${word.meaning}</div>
-                </div>
-            `;
-            container.appendChild(div);
-        });
-        updateSelectionCount();
-        document.querySelectorAll('.practice-checkbox').forEach(cb => cb.addEventListener('change', updateSelectionCount));
-    }
-
-    function updateSelectionCount() {
-        const checkboxes = document.querySelectorAll('.practice-checkbox:checked');
-        document.getElementById('selection-count').innerText = `已選 ${checkboxes.length} 個單字`;
-    }
-
-    function toggleAllPracticeWords(checked) {
-        document.querySelectorAll('.practice-checkbox').forEach(cb => cb.checked = checked);
-        updateSelectionCount();
-    }
-
-    function startGame(mode) {
-        const checkboxes = document.querySelectorAll('.practice-checkbox:checked');
-        const selectedEnglishes = Array.from(checkboxes).map(cb => cb.dataset.english);
-        let pool = state.words.filter(w => selectedEnglishes.includes(w.english));
-
-        if (pool.length === 0) return alert("請至少勾選一個單字！");
-
-        if (mode.startsWith('choice') && pool.length < 5) {
-            if (state.words.length >= 5) alert("勾選單字不足 5 個，干擾選項將來自其他單元。");
-            else return alert("系統單字總量不足 5 個，無法進行選擇題！");
-        }
-
-        state.game.mode = mode;
-        state.game.currentWords = pool.sort(() => Math.random() - 0.5);
-        state.game.index = 0;
-        state.game.wrongWords = new Set();
-
-        if (mode === 'spelling') { showView('game-spelling'); }
-        else { showView('game-choice'); }
-
-        if (mode === 'spelling') loadSpellingWord();
-        else loadChoiceQuestion();
-    }
-
-    function quitGameAndSave() { endGame(true); }
-    function quitGame() { navigateTo('practice'); }
-
-    function loadSpellingWord() {
-        const word = state.game.currentWords[state.game.index];
-        const total = state.game.currentWords.length;
-        document.getElementById('spelling-progress-text').innerText = `${state.game.index + 1} / ${total}`;
-        document.getElementById('spelling-progress-bar').style.width = `${((state.game.index+1)/total)*100}%`;
-
-        const defArea = document.getElementById('spelling-definition-area');
-        defArea.innerHTML = parseMeaning(word.meaning).map(p => `
-            <div class="flex flex-col items-center mb-3">
-                <div class="text-2xl font-extrabold text-gray-800 text-center">${p.text}</div>
-                <div class="mt-1 px-4 py-1 bg-indigo-50 text-indigo-500 rounded-full text-sm font-bold border border-indigo-100">${p.pos||"(?)"}</div>
-            </div>`).join('');
-
-        const eng = word.english;
-        let hint = eng.length > 2 ? eng[0] + "_".repeat(eng.length-2) + eng[eng.length-1] : eng[0] + "_".repeat(eng.length-1);
-        document.getElementById('spelling-hint').innerText = hint.split('').join(' ');
-        document.getElementById('spelling-input').value = '';
-        document.getElementById('spelling-feedback').innerText = '';
-    }
-
-    function checkSpellingAnswer() {
-        const input = document.getElementById('spelling-input');
-        const correct = state.game.currentWords[state.game.index].english.toLowerCase();
-        if (input.value.trim().toLowerCase() === correct) {
-            document.getElementById('spelling-feedback').className = "mt-4 text-green-500 font-bold";
-            document.getElementById('spelling-feedback').innerText = "正確！✨";
-            setTimeout(nextQuestion, 600);
-        } else handleWrongAnswer(input.parentElement);
-    }
-
-    function skipSpellingWord() {
-        const word = state.game.currentWords[state.game.index];
-        state.game.wrongWords.add(word);
-        document.getElementById('spelling-input').value = word.english;
-        document.getElementById('spelling-feedback').className = "mt-4 text-orange-500 font-bold";
-        document.getElementById('spelling-feedback').innerText = `答案：${word.english}`;
-        setTimeout(nextQuestion, 1500);
-    }
-
-    function loadChoiceQuestion() {
-        const word = state.game.currentWords[state.game.index];
-        const total = state.game.currentWords.length;
-        document.getElementById('choice-progress-text').innerText = `${state.game.index + 1} / ${total}`;
-        document.getElementById('choice-progress-bar').style.width = `${((state.game.index+1)/total)*100}%`;
-        document.getElementById('choice-feedback').innerText = '';
-
-        const isEnToCh = state.game.mode === 'choice-en-ch';
-        const questionEl = document.getElementById('choice-question');
-        questionEl.innerText = isEnToCh ? word.english : formatMeaning(word.meaning);
-
-        let options = [word];
-        let pool = state.game.currentWords.length >= 5 ? state.game.currentWords : state.words;
-
-        while (options.length < 5) {
-            const randomWord = pool[Math.floor(Math.random() * pool.length)];
-            if (!options.includes(randomWord)) options.push(randomWord);
-        }
-        options.sort(() => Math.random() - 0.5);
-
-        const optionsContainer = document.getElementById('choice-options');
-        optionsContainer.innerHTML = '';
-
-        options.forEach(opt => {
-            const btn = document.createElement('button');
-            btn.className = "choice-btn w-full bg-white border-2 border-indigo-100 text-gray-700 font-bold py-4 rounded-xl text-lg shadow-sm hover:border-indigo-300";
-            btn.innerText = isEnToCh ? formatMeaning(opt.meaning) : opt.english;
-
-            btn.onclick = () => {
-                const allBtns = document.querySelectorAll('.choice-btn');
-                allBtns.forEach(b => b.disabled = true);
-
-                if (opt === word) {
-                    btn.classList.add('choice-correct');
-                    document.getElementById('choice-feedback').className = "mt-4 text-green-500 font-bold";
-                    document.getElementById('choice-feedback').innerText = "答對囉！🎉";
-                    setTimeout(nextQuestion, 800);
-                } else {
-                    btn.classList.add('choice-wrong');
-                    allBtns.forEach(b => {
-                        if ((isEnToCh && b.innerText === formatMeaning(word.meaning)) ||
-                            (!isEnToCh && b.innerText === word.english)) {
-                            b.classList.add('choice-correct');
-                        }
-                    });
-                    state.game.wrongWords.add(word);
-                    document.getElementById('choice-feedback').className = "mt-4 text-red-500 font-bold";
-                    document.getElementById('choice-feedback').innerText = "答錯囉！";
-                    setTimeout(nextQuestion, 1500);
-                }
-            };
-            optionsContainer.appendChild(btn);
-        });
-    }
-
-    function formatMeaning(raw) {
-        const firstBlock = raw.split('/')[0].trim();
-        const idx = firstBlock.lastIndexOf('(');
-
-        let text = firstBlock;
-        let pos = '';
-
-        if (idx !== -1) {
-            text = firstBlock.substring(0, idx).trim();
-            pos = firstBlock.substring(idx).trim();
-        }
-
-        const shortText = text.length > 15 ? text.substring(0, 15) + "..." : text;
-
-        return pos ? `${shortText} ${pos}` : shortText;
-    }
-
-    function handleWrongAnswer(element) {
-        const fbId = state.game.mode.startsWith('choice') ? 'choice-feedback' : 'spelling-feedback';
-        document.getElementById(fbId).className = "mt-4 text-red-500 font-bold";
-        document.getElementById(fbId).innerText = "拼錯囉！";
-        element.classList.add('shake');
-        setTimeout(() => element.classList.remove('shake'), 400);
-        state.game.wrongWords.add(state.game.currentWords[state.game.index]);
-    }
-
-    function nextQuestion() {
-        state.game.index++;
-        if (state.game.index < state.game.currentWords.length) {
-            if (state.game.mode === 'spelling') loadSpellingWord();
-            else loadChoiceQuestion();
-        } else {
-            endGame(false);
-        }
-    }
-
-    function endGame(isAborted = false) {
-        document.getElementById('view-game-spelling').classList.add('hidden');
-        document.getElementById('view-game-choice').classList.add('hidden');
-        document.getElementById('view-game-result').classList.remove('hidden');
-
-        const list = document.getElementById('result-skipped-items');
-        const stat = document.getElementById('result-stat');
-        const title = document.getElementById('result-title');
-        const icon = document.getElementById('result-icon');
-
-        if (isAborted) {
-            title.innerText = "練習中斷";
-            icon.innerText = "⏸️";
-        } else {
-            title.innerText = "練習完成！";
-            icon.innerText = "🎉";
-        }
-
-        const wrongs = Array.from(state.game.wrongWords);
-        stat.innerText = `答錯/跳過: ${wrongs.length} 題`;
-        state.game.reviewSelection = [];
-
-        if (wrongs.length === 0) {
-            list.innerHTML = `<li class="p-4 text-center text-green-600 font-bold bg-green-50 rounded-xl">👏 完美！沒有錯誤單字。</li>`;
-        } else {
-            list.innerHTML = wrongs.map((w, idx) => {
-                state.game.reviewSelection.push(w);
-                const isAlreadyWrong = w.tags && w.tags.includes("錯題區");
-                return `
-                <li class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm flex items-center gap-3">
-                    <input type="checkbox" id="review-chk-${idx}" class="w-6 h-6 text-indigo-600 rounded flex-none" checked onchange="toggleReviewItem(${idx})">
-                    <div class="flex flex-col flex-1 min-w-0">
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <span class="text-indigo-600 font-black text-lg break-all">${w.english}</span>
-                            ${isAlreadyWrong ? '<span class="text-xs bg-red-100 text-red-500 px-1 rounded-flex-none">已在錯題區</span>' : ''}
-                        </div>
-                        <span class="text-gray-500 text-sm truncate">${w.meaning}</span>
-                    </div>
-                </li>
-            `}).join('');
-        }
-
-        const saveSelect = document.getElementById('save-target-folder');
-        saveSelect.innerHTML = '<option value="NEW_FOLDER_OPTION" class="text-indigo-600 font-bold">+ 新增資料夾...</option>';
-        state.unitTags.forEach(tag => {
-            const isWrong = tag === "錯題區";
-            saveSelect.innerHTML += `<option value="${tag}" ${isWrong ? 'selected' : ''}>${tag}</option>`;
-        });
-    }
-
-    window.toggleReviewItem = function(idx) {
-        const wrongs = Array.from(state.game.wrongWords);
-        const word = wrongs[idx];
-        const checkbox = document.getElementById(`review-chk-${idx}`);
-        if (checkbox.checked) {
-            if(!state.game.reviewSelection.includes(word)) state.game.reviewSelection.push(word);
-        } else {
-            state.game.reviewSelection = state.game.reviewSelection.filter(w => w !== word);
-        }
-    };
-
-    function onSaveTargetFolderChange(selectEl) {
-        if (selectEl.value !== 'NEW_FOLDER_OPTION') return;
-        // 還原 select 到「錯題區」，待用戶在 modal 建立新資料夾後再切換
-        selectEl.value = selectEl.querySelector('option[value="錯題區"]')
-            ? '錯題區'
-            : (selectEl.options[1] ? selectEl.options[1].value : selectEl.options[0].value);
-        state._pendingResultFolder = true;
-        document.getElementById('input-new-folder-name').value = '';
-        document.getElementById('new-folder-modal').classList.remove('hidden');
-    }
-
-    function saveWrongWords() {
-        if (state.game.reviewSelection.length === 0) return alert("未選擇任何單字");
-
-        const targetFolder = document.getElementById('save-target-folder').value;
-        if (!targetFolder || targetFolder === 'NEW_FOLDER_OPTION') {
-            return alert("請先選擇或建立資料夾");
-        }
-
-        // reviewSelection 的物件引用可能因 mergeDuplicateWords 而過期，
-        // 改為用英文單字在 state.words 中查找當前物件再加 tag
-        const englishSet = new Set(state.game.reviewSelection.map(w => w.english.toLowerCase()));
-        let count = 0;
-        state.words.forEach(word => {
-            if (!englishSet.has(word.english.toLowerCase())) return;
-            if (!word.tags) word.tags = [];
-            if (!word.tags.includes(targetFolder)) {
-                word.tags.push(targetFolder);
-                count++;
-            }
-        });
-
-        saveDataLocally();
-        alert(`已將 ${count} 個單字加入「${targetFolder}」！`);
-        navigateTo('practice');
-    }
-
-    // 設定 Modal 相關
-    window.openSettingsModal = function() {
-        const modal = document.getElementById('settings-modal');
-        if (!modal) return;
-
-        const bgmEnabledEl = document.getElementById('settings-bgm-enabled');
-        const bgmVolumeEl = document.getElementById('settings-bgm-volume');
-        const bgmVolumeLabel = document.getElementById('settings-bgm-volume-value');
-        const speechVolumeEl = document.getElementById('settings-speech-volume');
-        const speechVolumeLabel = document.getElementById('settings-speech-volume-value');
-        const bgmSelectEl = document.getElementById('settings-bgm-select');
-
-        if (bgmSelectEl && !bgmSelectEl.options.length) {
-            BGM_TRACKS.forEach(track => {
-                const opt = document.createElement('option');
-                opt.value = track.id;
-                opt.textContent = track.name;
-                bgmSelectEl.appendChild(opt);
-            });
-        }
-
-        if (bgmEnabledEl) bgmEnabledEl.checked = !!state.settings.bgmEnabled;
-
-        if (bgmVolumeEl) {
-            const v = Math.round(clamp01(state.settings.bgmVolume) * 100);
-            bgmVolumeEl.value = v;
-            if (bgmVolumeLabel) bgmVolumeLabel.textContent = v + '%';
-        }
-
-        if (speechVolumeEl) {
-            const v = Math.round(clamp01(state.settings.speechVolume) * 100);
-            speechVolumeEl.value = v;
-            if (speechVolumeLabel) speechVolumeLabel.textContent = v + '%';
-        }
-
-        if (bgmSelectEl) {
-            bgmSelectEl.value = state.settings.selectedBgmId;
-        }
-
-        modal.classList.remove('hidden');
-    };
-
-    window.closeSettingsModal = function() {
-        const modal = document.getElementById('settings-modal');
-        if (modal) modal.classList.add('hidden');
-        saveSettingsFromUI();
-    };
-
-    function saveSettingsFromUI() {
-        const bgmEnabledEl = document.getElementById('settings-bgm-enabled');
-        const bgmVolumeEl = document.getElementById('settings-bgm-volume');
-        const speechVolumeEl = document.getElementById('settings-speech-volume');
-        const bgmSelectEl = document.getElementById('settings-bgm-select');
-
-        if (bgmEnabledEl) state.settings.bgmEnabled = !!bgmEnabledEl.checked;
-        if (bgmVolumeEl) state.settings.bgmVolume = clamp01((parseInt(bgmVolumeEl.value, 10) || 0) / 100);
-        if (speechVolumeEl) state.settings.speechVolume = clamp01((parseInt(speechVolumeEl.value, 10) || 0) / 100);
-        if (bgmSelectEl && bgmSelectEl.value) state.settings.selectedBgmId = bgmSelectEl.value;
-
-        applyBgmSettingsToElement();
-        saveDataLocally();
-    }
-
-    window.updateBgmVolumeFromSlider = function(value) {
-        const v = Math.max(0, Math.min(100, parseInt(value, 10) || 0));
-        const label = document.getElementById('settings-bgm-volume-value');
-        if (label) label.textContent = v + '%';
-        state.settings.bgmVolume = clamp01(v / 100);
-
-        if (state.audio && state.audio.bgmElement) {
-            const audio = state.audio.bgmElement;
-            if (bgmDucking.isDucking) {
-                audio.volume = clamp01(state.settings.bgmVolume * bgmDucking.ratio);
-            } else {
-                audio.volume = clamp01(state.settings.bgmVolume);
-            }
-        }
-    };
-
-    window.updateSpeechVolumeFromSlider = function(value) {
-        const v = Math.max(0, Math.min(100, parseInt(value, 10) || 0));
-        const label = document.getElementById('settings-speech-volume-value');
-        if (label) label.textContent = v + '%';
-        state.settings.speechVolume = clamp01(v / 100);
-    };
-
-    window.toggleBgmEnabledFromCheckbox = function(checked) {
-        state.settings.bgmEnabled = !!checked;
-        applyBgmSettingsToElement();
-        saveDataLocally();
-    };
-
-    window.changeBgmTrackFromSelect = function(trackId) {
-        state.settings.selectedBgmId = trackId;
-        if (!state.audio || !state.audio.bgmElement) return;
-        const audio = state.audio.bgmElement;
-        const track = getCurrentBgmTrack();
-        if (track) {
-            const wasPlaying = !audio.paused;
-            audio.src = track.url;
-            if (state.settings.bgmEnabled && wasPlaying) {
-                audio.play().catch(() => {});
-            }
-        }
-        saveDataLocally();
-    };
-
-    window.onload = () => {
-        initSystem();
-        setupAudioSystem(); // 初始化背景音樂（依設定決定是否播放）
-        setupBgmAutoplayUnlock(); // 由使用者第一次互動解鎖自動播放限制
-
-        const params = new URL(window.location).searchParams;
-        const page = params.get('page') || 'home';
-        showView(page);
-        try {
-            history.replaceState({ viewId: page }, '', window.location);
-        } catch (e) {
-            console.log("History API not supported or restricted:", e);
-        }
-    };
-</script>
-
-<!-- Firebase + Firestore + Auth 模組腳本 -->
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-    import {
-        getAuth,
-        onAuthStateChanged,
-        GoogleAuthProvider,
-        signInWithPopup,
-        signOut
-    } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
-    import {
-        getFirestore,
-        doc,
-        getDoc,
-        setDoc
-    } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyB2Q10x0JxoAGQt4IiwGr9rwyIm7M1xjbA",
-        authDomain: "wordking-434f7.firebaseapp.com",
-        projectId: "wordking-434f7",
-        storageBucket: "wordking-434f7.firebasestorage.app",
-        messagingSenderId: "340952543206",
-        appId: "1:340952543206:web:5388cff593ebee0d61b027"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const provider = new GoogleAuthProvider();
-
-    function updateAuthUI(user) {
-        const loginBtn = document.getElementById('btn-login');
-        const logoutBtn = document.getElementById('btn-logout');
-        const syncBtn = document.getElementById('btn-sync');
-        const userSpan = document.getElementById('user-email');
-
-        if (!loginBtn || !logoutBtn || !syncBtn || !userSpan) return;
-
-        if (user) {
-            loginBtn.classList.add('hidden');
-            logoutBtn.classList.remove('hidden');
-            syncBtn.classList.remove('hidden');
-            userSpan.classList.remove('hidden');
-            userSpan.textContent = user.email || user.displayName || '已登入';
-        } else {
-            loginBtn.classList.remove('hidden');
-            logoutBtn.classList.add('hidden');
-            syncBtn.classList.add('hidden');
-            userSpan.classList.add('hidden');
-            userSpan.textContent = '';
-        }
-    }
-
-    function mergeWords(baseWords, cloudWords) {
-        const map = new Map();
-
-        (baseWords || []).forEach(w => {
-            if (w && w.english) {
-                map.set(w.english.toLowerCase(), { ...w });
-            }
-        });
-
-        (cloudWords || []).forEach(w => {
-            if (!w || !w.english) return;
-            const key = w.english.toLowerCase();
-            if (map.has(key)) {
-                const base = map.get(key);
-                const baseTags = Array.isArray(base.tags) ? base.tags : [];
-                const cloudTags = Array.isArray(w.tags) ? w.tags : [];
-                const mergedTags = Array.from(new Set([...baseTags, ...cloudTags]));
-
-                map.set(key, {
-                    ...base,
-                    tags: mergedTags
-                });
-            } else {
-                map.set(key, { ...w });
-            }
-        });
-
-        return Array.from(map.values());
-    }
-
-    async function saveToCloud(user) {
-        if (!window.state) return;
-
-        const payload = {
-            words: window.state.words || [],
-            folders: window.state.folders || [],
-            settings: window.state.settings || undefined
-        };
-
-        const ref = doc(db, 'users', user.uid);
-        await setDoc(ref, payload, { merge: true });
-    }
-
-    async function loadFromCloud(user) {
-        const ref = doc(db, 'users', user.uid);
-        const snap = await getDoc(ref);
-
-        if (!snap.exists()) {
-            await saveToCloud(user);
-            return;
-        }
-
-        const data = snap.data();
-        const cloudWords = data.words || [];
-        const cloudFolders = data.folders || [];
-        const cloudSettings = data.settings || null;
-
-        const baseWords =
-            (Array.isArray(window.defaultWordDatabase) && window.defaultWordDatabase.length > 0)
-                ? window.defaultWordDatabase
-                : (window.state?.words || []);
-
-        const mergedWords = mergeWords(baseWords, cloudWords);
-
-        if (window.state) {
-            window.state.words = mergedWords;
-            window.state.folders = Array.from(new Set(["錯題區", ...(cloudFolders || [])]));
-
-            if (cloudSettings && typeof window.hydrateSettings === 'function') {
-                window.state.settings = window.hydrateSettings(cloudSettings);
-            }
-
-            if (typeof window.saveDataLocally === 'function') {
-                window.saveDataLocally();
-            }
-
-            if (typeof window.refreshTags === 'function') {
-                window.refreshTags();
-            }
-
-            if (typeof window.applyBgmSettingsToElement === 'function') {
-                window.applyBgmSettingsToElement();
-            }
-
-            const libView = document.getElementById('view-library');
-            const pracView = document.getElementById('view-practice');
-
-            if (libView && !libView.classList.contains('hidden') && typeof window.renderLibrary === 'function') {
-                window.renderLibrary();
-            }
-            if (pracView && !pracView.classList.contains('hidden')
-                && typeof window.renderPracticeOptions === 'function'
-                && typeof window.renderPracticeWordSelection === 'function') {
-                window.renderPracticeOptions();
-                window.renderPracticeWordSelection();
-            }
-        }
-    }
-
-    window.firebaseLogin = async () => {
-        try {
-            await signInWithPopup(auth, provider);
-        } catch (err) {
-            console.error(err);
-            alert('登入失敗：' + (err.message || err));
-        }
-    };
-
-    window.firebaseLogout = async () => {
-        try {
-            await signOut(auth);
-        } catch (err) {
-            console.error(err);
-            alert('登出失敗：' + (err.message || err));
-        }
-    };
-
-    window.syncCloudNow = async () => {
-        const user = auth.currentUser;
-        if (!user) {
-            alert('請先登入');
-            return;
-        }
-        try {
-            await saveToCloud(user);
-            alert('已將目前資料同步到雲端');
-        } catch (err) {
-            console.error(err);
-            alert('同步失敗：' + (err.message || err));
-        }
-    };
-
-    window.autoSyncToCloud = async () => {
-        const user = auth.currentUser;
-        if (!user) return;
-        try {
-            await saveToCloud(user);
-        } catch (err) {
-            console.error('自動同步失敗', err);
-        }
-    };
-
-    onAuthStateChanged(auth, async user => {
-        updateAuthUI(user);
-        if (user) {
-            try {
-                await loadFromCloud(user);
-                console.log('已從雲端載入個人資料');
-            } catch (err) {
-                console.error('載入雲端資料失敗', err);
-            }
-        }
-    });
-</script>
-
-<div id="root" style="display: none;"></div>
+<script type="module" src="./assets/app.js"></script>
 </body>
 </html>
