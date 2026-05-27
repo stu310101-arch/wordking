@@ -26,10 +26,10 @@ const firebaseConfig = {
 };
 
 const BGM_TRACKS = [
-    { id: 'bgm_new_dora', name: '新哆啦A夢主題曲', url: './新哆啦A夢主題曲.mp3' },
-    { id: 'bgm_old_dora', name: '舊版哆啦A夢主題曲', url: './舊版哆啦A夢主題曲.mp3' },
-    { id: 'bgm_summer', name: "On Summer's Day", url: "./On Summer's Day.mp3" },
-    { id: 'bgm_columbina', name: 'Genshin Impact - Columbina To Where She Flies', url: './Genshin Impact - Columbina To Where She Flies.mp3' },
+    { id: 'bgm_new_dora', name: '新哆啦A夢主題曲', url: './background music/新哆啦A夢主題曲.mp3' },
+    { id: 'bgm_old_dora', name: '舊版哆啦A夢主題曲', url: './background music/舊版哆啦A夢主題曲.mp3' },
+    { id: 'bgm_summer', name: "On Summer's Day", url: "./background music/On Summer's Day.mp3" },
+    { id: 'bgm_columbina', name: 'Genshin Impact - Columbina To Where She Flies', url: './background music/Genshin Impact - Columbina To Where She Flies.mp3' },
     { id: 'bgm_demo', name: '線上測試音樂', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' }
 ];
 
