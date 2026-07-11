@@ -8,13 +8,31 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
 import {
     getFirestore,
+    collection,
     doc,
     getDoc,
-    setDoc
+    getDocs,
+    writeBatch,
+    deleteField
 } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
 const LESSON_MANIFEST_URL = './data/lessons/manifest.json';
 const WRONG_FOLDER = '錯題區';
+const REVIEW_FOLDER_LABEL = '待複習';
+const UNFILED_FOLDER = '未分類';
+const SYNC_TIMEOUT_MS = 15000;
+
+const PART_OF_SPEECH_OPTIONS = {
+    noun: { label: '名詞', short: '(n.)' },
+    verb: { label: '動詞', short: '(v.)' },
+    adjective: { label: '形容詞', short: '(a.)' },
+    adverb: { label: '副詞', short: '(adv.)' },
+    pronoun: { label: '代名詞', short: '(pron.)' },
+    preposition: { label: '介系詞', short: '(prep.)' },
+    conjunction: { label: '連接詞', short: '(conj.)' },
+    interjection: { label: '感嘆詞', short: '(interj.)' },
+    other: { label: '其他', short: '(其他)' }
+};
 
 const firebaseConfig = {
     apiKey: "AIzaSyB2Q10x0JxoAGQt4IiwGr9rwyIm7M1xjbA",
@@ -37,7 +55,9 @@ const DEFAULT_SETTINGS = {
     bgmEnabled: true,
     bgmVolume: 0.5,
     speechVolume: 1.0,
-    selectedBgmId: 'bgm_new_dora'
+    selectedBgmId: 'bgm_new_dora',
+    lessonFolderNames: {},
+    deletedLessonIds: []
 };
 
 const bgmDucking = {
@@ -46,9 +66,18 @@ const bgmDucking = {
 };
 
 let defaultWordDatabase = [];
+let defaultWordMap = new Map();
+let defaultWordEnglishMap = new Map();
 let currentUser = null;
 let authReady = false;
 let isCloudLoading = false;
+let cloudLoadGeneration = 0;
+let isSyncing = false;
+let isLoggingIn = false;
+let isLoggingOut = false;
+let isFolderDeleting = false;
+
+const modalReturnFocus = new WeakMap();
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -58,9 +87,9 @@ const provider = new GoogleAuthProvider();
 const state = {
     words: [],
     categories: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(''),
-    unitTags: [WRONG_FOLDER],
+    folderIds: [WRONG_FOLDER],
     folders: [WRONG_FOLDER],
-    lessonTags: [],
+    lessonFolderIds: [],
     settings: { ...DEFAULT_SETTINGS },
     audio: {
         bgmElement: null
@@ -80,18 +109,85 @@ const state = {
     isEditing: false,
     editingWordIndex: -1,
     targetFolderAction: '',
-    pendingDeleteType: null,
-    pendingResultFolder: false
+    pendingDeleteType: null
 };
 
 window.state = state;
 
+function safeDocId(value) {
+    const raw = String(value || '').trim();
+    return encodeURIComponent(raw || `id-${Date.now()}`).replace(/\./g, '%2E');
+}
+
+function createDefaultWordId(lessonId, english) {
+    return safeDocId(`${lessonId}::${String(english || '').trim().toLowerCase()}`);
+}
+
+function createCustomWordId() {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+        return `custom_${window.crypto.randomUUID()}`;
+    }
+    return `custom_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function normalizeLegacyTags(tags) {
+    return Array.from(new Set(
+        (Array.isArray(tags) ? tags : [])
+            .filter(tag => typeof tag === 'string' && tag.trim())
+            .map(tag => tag.trim())
+    ));
+}
+
+function normalizePartOfSpeech(value) {
+    return typeof value === 'string' && Object.prototype.hasOwnProperty.call(PART_OF_SPEECH_OPTIONS, value)
+        ? value
+        : '';
+}
+
+function getPartOfSpeechShort(value) {
+    const normalized = normalizePartOfSpeech(value);
+    return normalized ? PART_OF_SPEECH_OPTIONS[normalized].short : '';
+}
+
+function normalizeFolderId(value) {
+    const folderId = typeof value === 'string' ? value.trim() : '';
+    if (!folderId || folderId === WRONG_FOLDER || folderId === UNFILED_FOLDER) return '';
+    if (/^[A-Z]$/i.test(folderId)) return '';
+    return folderId;
+}
+
+function getLegacyFolderData(word = {}) {
+    const tags = normalizeLegacyTags(word.tags);
+    const legacyFolderIds = Array.isArray(word.folderIds) ? word.folderIds : [];
+    const explicitFolderId = typeof word.folderId === 'string' ? word.folderId.trim() : '';
+    const folderId = [explicitFolderId, ...legacyFolderIds, ...tags]
+        .map(normalizeFolderId)
+        .find(Boolean) || '';
+    const isWrong = typeof word.isWrong === 'boolean'
+        ? word.isWrong
+        : explicitFolderId === WRONG_FOLDER || tags.includes(WRONG_FOLDER) || legacyFolderIds.includes(WRONG_FOLDER);
+    return { folderId, isWrong };
+}
+
+function cloneWord(word = {}) {
+    const folderData = getLegacyFolderData(word);
+    const cloned = {
+        english: word.english || '',
+        meaning: word.meaning || '',
+        partOfSpeech: normalizePartOfSpeech(word.partOfSpeech),
+        folderId: folderData.folderId,
+        isWrong: folderData.isWrong
+    };
+    if (word.id) cloned.id = word.id;
+    if (word.defaultId) cloned.defaultId = word.defaultId;
+    if (word.source === 'custom' || word.source === 'default') cloned.source = word.source;
+    if (word.createdAt) cloned.createdAt = word.createdAt;
+    if (word.updatedAt) cloned.updatedAt = word.updatedAt;
+    return cloned;
+}
+
 function cloneWords(words) {
-    return (words || []).map(w => ({
-        english: w.english || '',
-        meaning: w.meaning || '',
-        tags: Array.isArray(w.tags) ? [...w.tags] : []
-    }));
+    return (words || []).map(cloneWord);
 }
 
 function clamp01(value) {
@@ -100,19 +196,155 @@ function clamp01(value) {
     return Math.max(0, Math.min(1, n));
 }
 
+function cloneSettings(settings = {}) {
+    const hydrated = hydrateSettings(settings);
+    return {
+        ...hydrated,
+        lessonFolderNames: { ...(hydrated.lessonFolderNames || {}) },
+        deletedLessonIds: Array.isArray(hydrated.deletedLessonIds) ? [...hydrated.deletedLessonIds] : []
+    };
+}
+
+function snapshotUserState(source = state) {
+    return {
+        words: cloneWords(source.words),
+        folders: Array.isArray(source.folders) ? [...source.folders] : [],
+        settings: cloneSettings(source.settings)
+    };
+}
+
+function restoreUserState(snapshot) {
+    state.words = cloneWords(snapshot.words);
+    state.folders = Array.isArray(snapshot.folders) ? [...snapshot.folders] : [];
+    state.settings = cloneSettings(snapshot.settings);
+}
+
+function applyUserData(data) {
+    state.words = cloneWords(data.words);
+    state.settings = cloneSettings(data.settings);
+    state.folders = normalizeFolders(data.folders || [], state.words, state.settings);
+    clearPracticeSession();
+    refreshFolders();
+}
+
 function hydrateSettings(saved) {
-    const base = { ...DEFAULT_SETTINGS };
+    const base = {
+        ...DEFAULT_SETTINGS,
+        lessonFolderNames: {},
+        deletedLessonIds: []
+    };
     if (saved && typeof saved === 'object') {
         if (typeof saved.bgmEnabled === 'boolean') base.bgmEnabled = saved.bgmEnabled;
         if (typeof saved.bgmVolume === 'number') base.bgmVolume = clamp01(saved.bgmVolume);
         if (typeof saved.speechVolume === 'number') base.speechVolume = clamp01(saved.speechVolume);
         if (typeof saved.selectedBgmId === 'string') base.selectedBgmId = saved.selectedBgmId;
+        if (saved.lessonFolderNames && typeof saved.lessonFolderNames === 'object' && !Array.isArray(saved.lessonFolderNames)) {
+            Object.entries(saved.lessonFolderNames).forEach(([lessonId, displayName]) => {
+                if (typeof lessonId === 'string' && typeof displayName === 'string' && displayName.trim()) {
+                    base.lessonFolderNames[lessonId] = displayName.trim();
+                }
+            });
+        }
+        if (Array.isArray(saved.deletedLessonIds)) {
+            base.deletedLessonIds = Array.from(new Set(saved.deletedLessonIds.filter(id => typeof id === 'string' && id.trim())));
+        }
     }
     return base;
 }
 
+function isLessonFolder(folderId) {
+    return state.lessonFolderIds.includes(folderId);
+}
+
+function getActiveLessonFolderIds(settings = state.settings) {
+    const deleted = new Set((settings && settings.deletedLessonIds) || []);
+    return state.lessonFolderIds.filter(folderId => !deleted.has(folderId));
+}
+
+function getFolderDisplayName(folderId, settings = state.settings) {
+    if (folderId === WRONG_FOLDER) return REVIEW_FOLDER_LABEL;
+    if (folderId === UNFILED_FOLDER) return UNFILED_FOLDER;
+    return (settings && settings.lessonFolderNames && settings.lessonFolderNames[folderId]) || folderId;
+}
+
+function folderNameExists(name, exceptFolderId = '') {
+    if (!name) return false;
+    if (state.categories.includes(name.toUpperCase())) return true;
+    return (state.folders || []).some(folderId => {
+        if (folderId === exceptFolderId) return false;
+        return folderId === name || getFolderDisplayName(folderId) === name;
+    });
+}
+
+function validateFolderName(value, exceptFolderId = '') {
+    const name = typeof value === 'string' ? value.trim() : '';
+    if (!name) return { valid: false, message: '請輸入資料夾名稱。' };
+    if (state.categories.includes(name.toUpperCase())) {
+        return { valid: false, message: '資料夾名稱不能使用 A–Z 字母索引。' };
+    }
+    if (name === WRONG_FOLDER || name === UNFILED_FOLDER) {
+        return { valid: false, message: '這是系統保留名稱，請改用其他資料夾名稱。' };
+    }
+    if (folderNameExists(name, exceptFolderId)) {
+        return { valid: false, message: '這個資料夾名稱已存在。' };
+    }
+    return { valid: true, name };
+}
+
+function getDefaultWords() {
+    return cloneWords(defaultWordDatabase);
+}
+
 function getCurrentBgmTrack() {
     return BGM_TRACKS.find(t => t.id === state.settings.selectedBgmId) || BGM_TRACKS[0] || null;
+}
+
+function validateLessonWord(rawWord, lessonId, index, fileName) {
+    if (!rawWord || typeof rawWord !== 'object') {
+        console.warn(`Skipped invalid word object in ${fileName} at index ${index}`);
+        return null;
+    }
+
+    const english = typeof rawWord.english === 'string' ? rawWord.english.trim() : '';
+    if (!english) {
+        console.warn(`Skipped word with empty english in ${fileName} at index ${index}`);
+        return null;
+    }
+
+    const meaning = typeof rawWord.meaning === 'string' ? rawWord.meaning : '';
+    const partOfSpeech = normalizePartOfSpeech(rawWord.partOfSpeech);
+    const rawTags = Array.isArray(rawWord.tags) ? rawWord.tags : [lessonId];
+    const folderId = normalizeLegacyTags(rawTags).find(tag => tag !== WRONG_FOLDER) || lessonId;
+
+    const defaultId = createDefaultWordId(lessonId, english);
+    return {
+        id: defaultId,
+        defaultId,
+        source: 'default',
+        english,
+        meaning,
+        partOfSpeech,
+        folderId,
+        isWrong: false
+    };
+}
+
+function validateLessonData(rawLesson, manifestItem) {
+    const fileName = manifestItem && manifestItem.file ? manifestItem.file : 'unknown lesson file';
+    if (!rawLesson || typeof rawLesson !== 'object') {
+        throw new Error(`${fileName} is not a lesson object`);
+    }
+
+    const id = typeof rawLesson.id === 'string' && rawLesson.id.trim()
+        ? rawLesson.id.trim()
+        : (typeof manifestItem.id === 'string' ? manifestItem.id.trim() : '');
+    if (!id) throw new Error(`${fileName} has no lesson id`);
+    if (!Array.isArray(rawLesson.words)) throw new Error(`${fileName} words must be an array`);
+
+    const words = rawLesson.words
+        .map((word, index) => validateLessonWord(word, id, index, fileName))
+        .filter(Boolean);
+    return { id, words };
 }
 
 async function loadDefaultWordDatabase() {
@@ -120,43 +352,69 @@ async function loadDefaultWordDatabase() {
     if (!manifestRes.ok) throw new Error('無法載入單字課程清單');
     const manifest = await manifestRes.json();
     const lessonFiles = Array.isArray(manifest.lessons) ? manifest.lessons : [];
-    const lessons = await Promise.all(lessonFiles.map(async lesson => {
-        const res = await fetch(`./data/lessons/${lesson.file}`, { cache: 'no-cache' });
-        if (!res.ok) throw new Error(`無法載入 ${lesson.file}`);
+    const results = await Promise.allSettled(lessonFiles.map(async lesson => {
+        if (!lesson || typeof lesson.file !== 'string' || !lesson.file.trim()) {
+            throw new Error('Lesson manifest entry is missing file');
+        }
+        const res = await fetch(`./data/lessons/${encodeURIComponent(lesson.file)}`, { cache: 'no-cache' });
+        if (!res.ok) throw new Error(`Failed to fetch ${lesson.file}: ${res.status}`);
         const data = await res.json();
-        return {
-            id: data.id || lesson.id,
-            words: Array.isArray(data.words) ? data.words : []
-        };
+        return validateLessonData(data, lesson);
     }));
 
-    state.lessonTags = lessons.map(l => l.id).filter(Boolean);
+    const lessons = [];
+    results.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+            lessons.push(result.value);
+        } else {
+            const file = lessonFiles[index] && lessonFiles[index].file ? lessonFiles[index].file : `lesson #${index + 1}`;
+            console.warn(`Skipped lesson ${file}:`, result.reason);
+        }
+    });
+
+    state.lessonFolderIds = lessons.map(l => l.id).filter(Boolean);
     defaultWordDatabase = lessons.flatMap(l => cloneWords(l.words));
+    defaultWordMap = new Map(defaultWordDatabase.map(word => [word.defaultId, cloneWord(word)]));
+    defaultWordEnglishMap = new Map(defaultWordDatabase.map(word => [word.english.toLowerCase(), cloneWord(word)]));
     window.defaultWordDatabase = defaultWordDatabase;
 }
 
-function resetToDefaultState() {
-    state.words = cloneWords(defaultWordDatabase);
-    state.folders = Array.from(new Set([WRONG_FOLDER, ...state.lessonTags]));
-    state.settings = { ...DEFAULT_SETTINGS };
-    refreshTags();
+function clearPracticeSession() {
+    state.game.mode = '';
+    state.game.currentWords = [];
+    state.game.index = 0;
+    state.game.wrongWords = new Set();
+    state.game.reviewSelection = [];
+    state.game.answeredHistory = [];
+    state.game.viewingHistoryIndex = null;
+    state.game.currentChoiceOptions = [];
+    state.game.currentHadMistake = false;
+    state.game.spellingDrafts = {};
 }
 
-function splitTagForSeries(tag) {
-    const m = String(tag).match(/^(\D+)(.*)$/);
-    if (!m) return { prefix: tag, numbers: [] };
+function resetToDefaultState() {
+    state.settings = cloneSettings(DEFAULT_SETTINGS);
+    state.words = getDefaultWords();
+    state.folders = normalizeFolders([], state.words, state.settings);
+    clearPracticeSession();
+    refreshFolders();
+}
+
+function splitFolderNameForSeries(folderName) {
+    const m = String(folderName).match(/^(\D+)(.*)$/);
+    if (!m) return { prefix: folderName, numbers: [] };
     const prefix = m[1].trim();
     const rest = m[2];
     const nums = rest ? rest.match(/\d+/g) : null;
     return { prefix, numbers: nums ? nums.map(n => parseInt(n, 10)) : [] };
 }
 
-function compareTagsBySeries(a, b) {
+function compareFoldersBySeries(a, b) {
     if (a === WRONG_FOLDER && b !== WRONG_FOLDER) return 1;
     if (b === WRONG_FOLDER && a !== WRONG_FOLDER) return -1;
 
-    const sa = splitTagForSeries(a);
-    const sb = splitTagForSeries(b);
+    const sa = splitFolderNameForSeries(a);
+    const sb = splitFolderNameForSeries(b);
     if (sa.prefix !== sb.prefix) return sa.prefix.localeCompare(sb.prefix, 'zh-Hant');
 
     const len = Math.max(sa.numbers.length, sb.numbers.length);
@@ -168,90 +426,142 @@ function compareTagsBySeries(a, b) {
     return a.localeCompare(b, 'zh-Hant');
 }
 
-function refreshTags() {
-    const tagsSet = new Set(state.folders || []);
+function refreshFolders() {
+    const deleted = new Set((state.settings && state.settings.deletedLessonIds) || []);
+    const folderSet = new Set((state.folders || []).filter(folderId =>
+        folderId && folderId !== UNFILED_FOLDER && !deleted.has(folderId)
+    ));
+    let hasUnfiledWords = false;
     state.words.forEach(w => {
-        if (Array.isArray(w.tags)) w.tags.forEach(t => tagsSet.add(t));
+        if (w.folderId && !deleted.has(w.folderId)) folderSet.add(w.folderId);
+        else if (!w.folderId) hasUnfiledWords = true;
     });
-    if (!tagsSet.has(WRONG_FOLDER)) tagsSet.add(WRONG_FOLDER);
-    state.unitTags = Array.from(tagsSet).sort(compareTagsBySeries);
+    if (hasUnfiledWords) folderSet.add(UNFILED_FOLDER);
+    folderSet.add(WRONG_FOLDER);
+    state.folderIds = Array.from(folderSet).sort(compareFoldersBySeries);
 
     const datalist = document.getElementById('folder-list');
     if (datalist) {
         datalist.replaceChildren();
-        state.unitTags.forEach(tag => {
+        state.folderIds.forEach(folderId => {
             const option = document.createElement('option');
-            option.value = tag;
+            option.value = folderId;
             datalist.appendChild(option);
         });
     }
 }
 
-function mergeMeaningStrings(oldMeaning, newMeaning) {
-    const splitParts = str =>
-        (str || '')
-            .split('/')
-            .map(s => s.trim())
-            .filter(Boolean);
+function sameSettings(a, b) {
+    return JSON.stringify(cloneSettings(a)) === JSON.stringify(cloneSettings(b));
+}
 
-    const seen = new Set();
-    const merged = [];
-    splitParts(oldMeaning).concat(splitParts(newMeaning)).forEach(part => {
-        if (!seen.has(part)) {
-            seen.add(part);
-            merged.push(part);
+function sameCustomWordData(a, b) {
+    return !!a && !!b &&
+        (a.english || '') === (b.english || '') &&
+        (a.meaning || '') === (b.meaning || '') &&
+        normalizePartOfSpeech(a.partOfSpeech) === normalizePartOfSpeech(b.partOfSpeech) &&
+        (a.folderId || '') === (b.folderId || '') &&
+        !!a.isWrong === !!b.isWrong;
+}
+
+function getDefaultOverrideFields(word, baseWord) {
+    if (!word || !baseWord) return {};
+    const override = {};
+    if ((word.english || '') !== (baseWord.english || '')) override.english = word.english || '';
+    if ((word.meaning || '') !== (baseWord.meaning || '')) override.meaning = word.meaning || '';
+    if (normalizePartOfSpeech(word.partOfSpeech) !== normalizePartOfSpeech(baseWord.partOfSpeech)) {
+        override.partOfSpeech = normalizePartOfSpeech(word.partOfSpeech);
+    }
+    if ((word.folderId || '') !== (baseWord.folderId || '')) override.folderId = word.folderId || '';
+    if (!!word.isWrong !== !!baseWord.isWrong) override.isWrong = !!word.isWrong;
+    return override;
+}
+
+function sameOverride(a = {}, b = {}) {
+    const aKeys = Object.keys(a).filter(key => key !== 'updatedAt').sort();
+    const bKeys = Object.keys(b).filter(key => key !== 'updatedAt').sort();
+    if (aKeys.length !== bKeys.length) return false;
+    return aKeys.every(key => a[key] === b[key]);
+}
+
+function ensureWordIdentities(words) {
+    return cloneWords(words).map(word => {
+        if (word.defaultId && defaultWordMap.has(word.defaultId)) {
+            return { ...word, id: word.defaultId, source: 'default' };
+        }
+        if (word.source === 'default' && word.id && defaultWordMap.has(word.id)) {
+            return { ...word, defaultId: word.id, source: 'default' };
+        }
+        if (word.source === 'custom' || word.id) {
+            return { ...word, id: word.id || createCustomWordId(), source: 'custom' };
+        }
+        const defaultMatch = defaultWordEnglishMap.get((word.english || '').toLowerCase());
+        if (defaultMatch && sameCustomWordData(word, defaultMatch)) {
+            return { ...word, id: defaultMatch.defaultId, defaultId: defaultMatch.defaultId, source: 'default' };
+        }
+        return { ...word, id: createCustomWordId(), source: 'custom' };
+    });
+}
+
+function getCustomFolderNames(folders = []) {
+    return Array.from(new Set(
+        (folders || [])
+            .map(normalizeFolderId)
+            .filter(name =>
+                name &&
+                !state.lessonFolderIds.includes(name)
+            )
+    ));
+}
+
+function mapWordsForStorage(words = []) {
+    const custom = new Map();
+    const defaults = new Map();
+    ensureWordIdentities(words).forEach(word => {
+        if (word.source === 'default' && word.defaultId) {
+            defaults.set(word.defaultId, word);
+        } else if (word.source === 'custom' && word.id) {
+            custom.set(word.id, word);
         }
     });
-    return merged.join(' / ');
+    return { custom, defaults };
 }
 
-function mergeDuplicateWords(words) {
-    const map = new Map();
-    (words || []).forEach(w => {
-        if (!w || !w.english) return;
-        const key = w.english.toLowerCase();
-        const incomingTags = Array.isArray(w.tags) ? w.tags : [];
-        if (!map.has(key)) {
-            map.set(key, {
-                english: w.english,
-                meaning: w.meaning || '',
-                tags: Array.from(new Set(incomingTags))
-            });
-        } else {
-            const exists = map.get(key);
-            exists.meaning = mergeMeaningStrings(exists.meaning, w.meaning);
-            exists.tags = Array.from(new Set([...(exists.tags || []), ...incomingTags]));
-            map.set(key, exists);
-        }
-    });
-    return Array.from(map.values());
-}
-
-function mergeDefaultAndCloudWords(defaultWords, cloudWords) {
-    const map = new Map();
-    cloneWords(defaultWords).forEach(w => map.set(w.english.toLowerCase(), w));
-    cloneWords(cloudWords).forEach(w => {
-        if (!w.english) return;
-        const key = w.english.toLowerCase();
-        const base = map.get(key) || {};
-        map.set(key, {
-            english: w.english || base.english || '',
-            meaning: w.meaning || base.meaning || '',
-            tags: Array.isArray(w.tags) ? [...w.tags] : (Array.isArray(base.tags) ? [...base.tags] : [])
-        });
-    });
-    return mergeDuplicateWords(Array.from(map.values()));
-}
-
-function normalizeFolders(folders, words) {
-    const tags = new Set([WRONG_FOLDER, ...state.lessonTags]);
+function normalizeFolders(folders, words, settings = state.settings) {
+    const folderIds = new Set([WRONG_FOLDER, ...getActiveLessonFolderIds(settings)]);
     (folders || []).forEach(f => {
-        if (f) tags.add(f);
+        const normalizedFolderId = normalizeFolderId(f);
+        if (normalizedFolderId) folderIds.add(normalizedFolderId);
     });
+    let hasUnfiledWords = false;
     (words || []).forEach(w => {
-        if (Array.isArray(w.tags)) w.tags.forEach(t => tags.add(t));
+        if (w.folderId) folderIds.add(w.folderId);
+        else hasUnfiledWords = true;
     });
-    return Array.from(tags);
+    const deleted = new Set((settings && settings.deletedLessonIds) || []);
+    deleted.forEach(folderId => folderIds.delete(folderId));
+    if (hasUnfiledWords) folderIds.add(UNFILED_FOLDER);
+    folderIds.add(WRONG_FOLDER);
+    return Array.from(folderIds);
+}
+
+function applyFolderDeletion(words, folderName, deleteWords) {
+    return cloneWords(words).reduce((kept, word) => {
+        if (word.folderId !== folderName) {
+            kept.push(word);
+            return kept;
+        }
+        if (deleteWords) return kept;
+        kept.push({ ...word, folderId: '' });
+        return kept;
+    }, []);
+}
+
+function renameFolderInWords(words, oldName, newName) {
+    return cloneWords(words).map(word => ({
+        ...word,
+        folderId: word.folderId === oldName ? newName : word.folderId
+    }));
 }
 
 function getUserRef(user = currentUser) {
@@ -259,37 +569,282 @@ function getUserRef(user = currentUser) {
     return doc(db, 'users', user.uid);
 }
 
-function getCloudPayload() {
-    state.words = mergeDuplicateWords(state.words);
-    return {
-        words: cloneWords(state.words),
-        folders: Array.from(new Set(state.folders || [])),
-        settings: state.settings || undefined,
-        updatedAt: new Date().toISOString()
-    };
+function getUserSubDocRef(user, collectionName, docId) {
+    return doc(db, 'users', user.uid, collectionName, docId);
 }
 
-async function saveToCloud(user = currentUser) {
-    const ref = getUserRef(user);
-    if (!ref) return false;
-    await setDoc(ref, getCloudPayload(), { merge: true });
+function getSettingsRef(user) {
+    return doc(db, 'users', user.uid, 'settings', 'main');
+}
+
+async function readUserCollection(user, collectionName) {
+    const snap = await getDocs(collection(db, 'users', user.uid, collectionName));
+    return snap.docs.map(item => ({ id: item.id, ...(item.data() || {}) }));
+}
+
+function normalizeUserData(data = {}) {
+    const settings = hydrateSettings(data.settings || null);
+    const deleted = new Set(settings.deletedLessonIds || []);
+    const baseWords = new Map(getDefaultWords().map(word => [word.defaultId, {
+        ...cloneWord(word),
+        folderId: deleted.has(word.folderId) ? '' : word.folderId
+    }]));
+    const customWords = [];
+
+    cloneWords(data.words || []).forEach(word => {
+        if (deleted.has(word.folderId)) word.folderId = '';
+        const matchedDefault = defaultWordEnglishMap.get((word.english || '').toLowerCase());
+        if (matchedDefault && baseWords.has(matchedDefault.defaultId)) {
+            baseWords.set(matchedDefault.defaultId, {
+                ...matchedDefault,
+                ...word,
+                id: matchedDefault.defaultId,
+                defaultId: matchedDefault.defaultId,
+                source: 'default'
+            });
+        } else {
+            customWords.push({
+                ...word,
+                id: word.id || createCustomWordId(),
+                source: 'custom'
+            });
+        }
+    });
+
+    const words = [...baseWords.values(), ...customWords];
+    const folders = normalizeFolders(data.folders || [], words, settings);
+    return { words, folders, settings };
+}
+
+function buildUserDataFromDiffs(diffData = {}) {
+    const settings = cloneSettings(diffData.settings || DEFAULT_SETTINGS);
+    const deletedLessonIds = new Set(settings.deletedLessonIds || []);
+    const deletedDefaults = new Set(diffData.deletedDefaultIds || []);
+    const overrides = new Map((diffData.wordOverrides || []).map(item => [item.id, item]));
+    const defaultWords = getDefaultWords()
+        .filter(word => !deletedDefaults.has(word.defaultId))
+        .map(word => {
+            const override = overrides.get(word.defaultId) || {};
+            const hasLegacyTags = Object.prototype.hasOwnProperty.call(override, 'tags');
+            const legacyData = hasLegacyTags ? getLegacyFolderData(override) : null;
+            const folderId = Object.prototype.hasOwnProperty.call(override, 'folderId')
+                ? String(override.folderId || '')
+                : (legacyData ? legacyData.folderId : (deletedLessonIds.has(word.folderId) ? '' : word.folderId));
+            const isWrong = Object.prototype.hasOwnProperty.call(override, 'isWrong')
+                ? !!override.isWrong
+                : (legacyData ? legacyData.isWrong : !!word.isWrong);
+            const partOfSpeech = Object.prototype.hasOwnProperty.call(override, 'partOfSpeech')
+                ? normalizePartOfSpeech(override.partOfSpeech)
+                : normalizePartOfSpeech(word.partOfSpeech);
+            return cloneWord({
+                ...word,
+                english: Object.prototype.hasOwnProperty.call(override, 'english') ? override.english : word.english,
+                meaning: Object.prototype.hasOwnProperty.call(override, 'meaning') ? override.meaning : word.meaning,
+                partOfSpeech,
+                folderId,
+                isWrong,
+                id: word.defaultId,
+                defaultId: word.defaultId,
+                source: 'default'
+            });
+        });
+    const customWords = (diffData.customWords || []).map(word => cloneWord({
+        ...word,
+        id: word.id,
+        source: 'custom'
+    }));
+    const folderNames = (diffData.folders || [])
+        .map(folder => typeof folder.name === 'string' ? folder.name : folder.id)
+        .filter(Boolean);
+    const words = [...defaultWords, ...customWords];
+    const folders = normalizeFolders(folderNames, words, settings);
+    return { words, folders, settings };
+}
+
+function createDefaultUserData(settings = DEFAULT_SETTINGS) {
+    const nextSettings = cloneSettings(settings);
+    const words = getDefaultWords();
+    const folders = normalizeFolders([], words, nextSettings);
+    return { words, folders, settings: nextSettings };
+}
+
+function collectDiffOperations(previous, next, user, { cleanupLegacy = false } = {}) {
+    const operations = [];
+    const now = new Date().toISOString();
+    const before = {
+        ...previous,
+        words: ensureWordIdentities(previous.words || []),
+        folders: normalizeFolders(previous.folders || [], previous.words || [], previous.settings)
+    };
+    const after = {
+        ...next,
+        words: ensureWordIdentities(next.words || []),
+        folders: normalizeFolders(next.folders || [], next.words || [], next.settings)
+    };
+
+    if (!sameSettings(before.settings, after.settings)) {
+        operations.push(batch => batch.set(getSettingsRef(user), {
+            ...cloneSettings(after.settings),
+            updatedAt: now
+        }, { merge: true }));
+    }
+
+    const beforeFolders = new Set(getCustomFolderNames(before.folders));
+    const afterFolders = new Set(getCustomFolderNames(after.folders));
+    beforeFolders.forEach(folderName => {
+        if (!afterFolders.has(folderName)) {
+            operations.push(batch => batch.delete(getUserSubDocRef(user, 'folders', safeDocId(folderName))));
+        }
+    });
+    afterFolders.forEach(folderName => {
+        if (!beforeFolders.has(folderName)) {
+            operations.push(batch => batch.set(getUserSubDocRef(user, 'folders', safeDocId(folderName)), {
+                name: folderName,
+                createdAt: now,
+                updatedAt: now
+            }, { merge: true }));
+        }
+    });
+
+    const beforeWords = mapWordsForStorage(before.words);
+    const afterWords = mapWordsForStorage(after.words);
+
+    beforeWords.custom.forEach((word, wordId) => {
+        if (!afterWords.custom.has(wordId)) {
+            operations.push(batch => batch.delete(getUserSubDocRef(user, 'customWords', wordId)));
+        }
+    });
+    afterWords.custom.forEach((word, wordId) => {
+        const previousWord = beforeWords.custom.get(wordId);
+        if (!sameCustomWordData(previousWord, word)) {
+            operations.push(batch => batch.set(getUserSubDocRef(user, 'customWords', wordId), {
+                english: word.english || '',
+                meaning: word.meaning || '',
+                partOfSpeech: normalizePartOfSpeech(word.partOfSpeech),
+                folderId: word.folderId || '',
+                isWrong: !!word.isWrong,
+                createdAt: word.createdAt || now,
+                updatedAt: now
+            }));
+        }
+    });
+
+    defaultWordMap.forEach((baseWord, defaultId) => {
+        const previousWord = beforeWords.defaults.get(defaultId);
+        const nextWord = afterWords.defaults.get(defaultId);
+
+        if (previousWord && !nextWord) {
+            operations.push(batch => batch.set(getUserSubDocRef(user, 'deletedDefaults', defaultId), {
+                deleted: true,
+                updatedAt: now
+            }, { merge: true }));
+            operations.push(batch => batch.delete(getUserSubDocRef(user, 'wordOverrides', defaultId)));
+        } else if (!previousWord && nextWord) {
+            operations.push(batch => batch.delete(getUserSubDocRef(user, 'deletedDefaults', defaultId)));
+        }
+
+        if (!nextWord) return;
+        const previousOverride = previousWord ? getDefaultOverrideFields(previousWord, baseWord) : {};
+        const nextOverride = getDefaultOverrideFields(nextWord, baseWord);
+        if (sameOverride(previousOverride, nextOverride)) return;
+
+        if (!Object.keys(nextOverride).length) {
+            operations.push(batch => batch.delete(getUserSubDocRef(user, 'wordOverrides', defaultId)));
+        } else {
+            operations.push(batch => batch.set(getUserSubDocRef(user, 'wordOverrides', defaultId), {
+                ...nextOverride,
+                updatedAt: now
+            }));
+        }
+    });
+
+    if (cleanupLegacy) {
+        operations.push(batch => batch.set(getUserRef(user), {
+            words: deleteField(),
+            folders: deleteField(),
+            settings: deleteField(),
+            schemaVersion: 2,
+            migratedToDiffStorageAt: now,
+            updatedAt: now
+        }, { merge: true }));
+    }
+
+    return operations;
+}
+
+async function commitBatchOperations(operations) {
+    const chunkSize = 450;
+    for (let i = 0; i < operations.length; i += chunkSize) {
+        const batch = writeBatch(db);
+        operations.slice(i, i + chunkSize).forEach(apply => apply(batch));
+        await batch.commit();
+    }
+}
+
+async function saveDiffChangesToCloud(previous, next, user = currentUser, options = {}) {
+    if (!user) return false;
+    const operations = collectDiffOperations(previous, next, user, options);
+    if (operations.length) await commitBatchOperations(operations);
     return true;
+}
+
+async function loadUserDiffData(user) {
+    const [
+        settingsSnap,
+        customWords,
+        wordOverrides,
+        deletedDefaults,
+        folders,
+        legacySnap
+    ] = await Promise.all([
+        getDoc(getSettingsRef(user)),
+        readUserCollection(user, 'customWords'),
+        readUserCollection(user, 'wordOverrides'),
+        readUserCollection(user, 'deletedDefaults'),
+        readUserCollection(user, 'folders'),
+        getDoc(getUserRef(user))
+    ]);
+
+    const hasDiffData = settingsSnap.exists() ||
+        customWords.length ||
+        wordOverrides.length ||
+        deletedDefaults.length ||
+        folders.length;
+
+    if (!hasDiffData && legacySnap.exists()) {
+        const legacyData = legacySnap.data() || {};
+        if (Array.isArray(legacyData.words) || Array.isArray(legacyData.folders) || legacyData.settings) {
+            const migratedData = normalizeUserData(legacyData);
+            await saveDiffChangesToCloud(createDefaultUserData(), migratedData, user, { cleanupLegacy: true });
+            return migratedData;
+        }
+    }
+
+    return buildUserDataFromDiffs({
+        settings: settingsSnap.exists() ? settingsSnap.data() : null,
+        customWords,
+        wordOverrides,
+        deletedDefaultIds: deletedDefaults
+            .filter(item => item.deleted !== false)
+            .map(item => item.id),
+        folders
+    });
 }
 
 function requireLoginForChange() {
     if (currentUser) return true;
-    alert('請先登入 Google 帳號，才能新增、編輯、儲存錯題或同步個人資料。');
+    alert('請先登入 Google 帳號，才能新增、編輯、儲存待複習狀態或同步個人資料。');
     return false;
 }
 
 async function persistUserData({ requireAuth = true } = {}) {
-    if (isCloudLoading) return true;
+    if (isCloudLoading) return false;
     if (!currentUser) {
         if (requireAuth) requireLoginForChange();
         return false;
     }
     try {
-        await saveToCloud(currentUser);
+        await saveDiffChangesToCloud(createDefaultUserData(), snapshotUserState(), currentUser);
         return true;
     } catch (err) {
         console.error('雲端儲存失敗', err);
@@ -298,24 +853,55 @@ async function persistUserData({ requireAuth = true } = {}) {
     }
 }
 
-async function loadFromCloud(user) {
-    isCloudLoading = true;
-    try {
-        const ref = getUserRef(user);
-        const snap = await getDoc(ref);
-        if (!snap.exists()) {
-            resetToDefaultState();
-            await saveToCloud(user);
-            return;
+async function commitUserMutation(mutator, { requireAuth = true, afterRollback = null } = {}) {
+    if (isCloudLoading) {
+        alert('雲端資料仍在載入，請稍候再試。');
+        return false;
+    }
+    if (!currentUser) {
+        if (requireAuth) {
+            requireLoginForChange();
+            return false;
         }
+        mutator(state);
+        state.words = ensureWordIdentities(state.words);
+        state.folders = normalizeFolders(state.folders, state.words, state.settings);
+        refreshFolders();
+        return true;
+    }
 
-        const data = snap.data() || {};
-        state.words = mergeDefaultAndCloudWords(defaultWordDatabase, data.words || []);
-        state.folders = normalizeFolders(data.folders || [], state.words);
-        state.settings = hydrateSettings(data.settings || null);
-        refreshTags();
+    const previous = snapshotUserState();
+    try {
+        mutator(state);
+        state.words = ensureWordIdentities(state.words);
+        state.folders = normalizeFolders(state.folders, state.words, state.settings);
+        refreshFolders();
+        await saveDiffChangesToCloud(previous, snapshotUserState(), currentUser);
+        return true;
+    } catch (err) {
+        restoreUserState(previous);
+        refreshFolders();
+        console.error('使用者資料儲存失敗，已還原本機狀態', err);
+        alert('資料儲存失敗，已還原剛剛的變更：' + (err.message || err));
+        if (typeof afterRollback === 'function') afterRollback();
+        rerenderVisibleView();
+        return false;
+    }
+}
+
+async function loadFromCloud(user, generation = ++cloudLoadGeneration) {
+    isCloudLoading = true;
+    updateAuthUI(currentUser);
+    try {
+        const data = await loadUserDiffData(user);
+        if (generation !== cloudLoadGeneration || !currentUser || currentUser.uid !== user.uid) return false;
+        applyUserData(data);
+        return true;
     } finally {
-        isCloudLoading = false;
+        if (generation === cloudLoadGeneration) {
+            isCloudLoading = false;
+            updateAuthUI(currentUser);
+        }
     }
 }
 
@@ -396,6 +982,160 @@ function speakWord(text) {
     window.speechSynthesis.speak(utterance);
 }
 
+function getWordKey(word = {}) {
+    return word.id || word.defaultId || `english:${String(word.english || '').toLowerCase()}`;
+}
+
+function wordIsInFolder(word, folderId) {
+    if (folderId === WRONG_FOLDER) return !!word.isWrong;
+    if (folderId === UNFILED_FOLDER) return !word.folderId;
+    return word.folderId === folderId;
+}
+
+function setElementVisible(element, visible) {
+    if (!element) return;
+    element.classList.toggle('hidden', !visible);
+    element.hidden = !visible;
+    element.toggleAttribute('hidden', !visible);
+    element.toggleAttribute('inert', !visible);
+    element.setAttribute('aria-hidden', String(!visible));
+    if ('inert' in element) element.inert = !visible;
+}
+
+function updateAppLoading(message) {
+    const loadingMessage = document.getElementById('app-loading-message');
+    if (loadingMessage) loadingMessage.textContent = message;
+}
+
+function finishAppLoading() {
+    const loading = document.getElementById('app-loading');
+    document.body.setAttribute('aria-busy', 'false');
+    if (!loading) return;
+    loading.classList.add('is-ready');
+    loading.setAttribute('aria-hidden', 'true');
+    setTimeout(() => loading.remove(), 200);
+}
+
+function failAppLoading(message) {
+    const loading = document.getElementById('app-loading');
+    const title = document.getElementById('app-loading-title');
+    document.body.setAttribute('aria-busy', 'false');
+    if (!loading) {
+        const fallback = document.createElement('main');
+        fallback.className = 'p-6 text-center text-red-600 font-bold';
+        fallback.textContent = message;
+        document.body.replaceChildren(fallback);
+        return;
+    }
+    loading.classList.add('is-error');
+    loading.setAttribute('role', 'alert');
+    if (title) title.textContent = '載入失敗';
+    updateAppLoading(message);
+}
+
+function getFocusableElements(container) {
+    return Array.from(container.querySelectorAll(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
+    )).filter(element => !element.hidden && element.getClientRects().length > 0);
+}
+
+function openModal(modalOrId, initialFocusSelector = '') {
+    const modal = typeof modalOrId === 'string' ? document.getElementById(modalOrId) : modalOrId;
+    if (!modal) return;
+    const trigger = document.activeElement;
+    if (trigger && trigger !== document.body && !modal.contains(trigger)) {
+        modalReturnFocus.set(modal, trigger);
+    }
+    setElementVisible(modal, true);
+    requestAnimationFrame(() => {
+        const preferred = initialFocusSelector ? modal.querySelector(initialFocusSelector) : null;
+        const target = preferred || getFocusableElements(modal)[0];
+        if (target) target.focus();
+    });
+}
+
+function closeModal(modalOrId, { restoreFocus = true } = {}) {
+    const modal = typeof modalOrId === 'string' ? document.getElementById(modalOrId) : modalOrId;
+    if (!modal || modal.dataset.busy === 'true') return false;
+    setElementVisible(modal, false);
+    if (restoreFocus) {
+        const trigger = modalReturnFocus.get(modal);
+        if (trigger && trigger.isConnected && typeof trigger.focus === 'function') {
+            requestAnimationFrame(() => trigger.focus());
+        }
+    }
+    modalReturnFocus.delete(modal);
+    return true;
+}
+
+function closeRenameModal() {
+    closeModal('rename-modal');
+}
+
+function closeConfirmModal() {
+    if (!closeModal('confirm-modal')) return;
+    state.pendingDeleteType = null;
+}
+
+function closeNewFolderModal() {
+    closeModal('new-folder-modal');
+}
+
+function getOpenModal() {
+    return Array.from(document.querySelectorAll('[role="dialog"]'))
+        .reverse()
+        .find(modal => !modal.hidden && !modal.classList.contains('hidden')) || null;
+}
+
+function requestCloseModal(modal) {
+    if (!modal || modal.dataset.busy === 'true') return;
+    if (modal.id === 'add-modal') closeAddModal();
+    else if (modal.id === 'folder-action-modal') closeActionModal();
+    else if (modal.id === 'rename-modal') closeRenameModal();
+    else if (modal.id === 'confirm-modal') closeConfirmModal();
+    else if (modal.id === 'new-folder-modal') closeNewFolderModal();
+    else if (modal.id === 'settings-modal') void closeSettingsModal();
+}
+
+function handleModalKeydown(event) {
+    const modal = getOpenModal();
+    if (!modal) return;
+    if (event.key === 'Escape') {
+        event.preventDefault();
+        requestCloseModal(modal);
+        return;
+    }
+    if (event.key !== 'Tab') return;
+    const focusable = getFocusableElements(modal);
+    if (!focusable.length) {
+        event.preventDefault();
+        modal.focus();
+        return;
+    }
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (!modal.contains(document.activeElement)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+    } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+    }
+}
+
+function initializeModalAccessibility() {
+    document.querySelectorAll('[id$="-modal"]').forEach(modal => {
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.tabIndex = -1;
+        if (modal.classList.contains('hidden')) setElementVisible(modal, false);
+    });
+    document.addEventListener('keydown', handleModalKeydown);
+}
+
 function navigateTo(viewId) {
     showView(viewId);
     try {
@@ -416,9 +1156,9 @@ window.onpopstate = event => {
 };
 
 function showView(viewId) {
-    document.querySelectorAll('main > div').forEach(div => div.classList.add('hidden'));
+    document.querySelectorAll('main > div').forEach(div => setElementVisible(div, false));
     const target = document.getElementById(`view-${viewId}`);
-    if (target) target.classList.remove('hidden');
+    if (target) setElementVisible(target, true);
 
     if (viewId === 'library') renderLibrary();
     if (viewId === 'practice') {
@@ -441,6 +1181,10 @@ function showView(viewId) {
     document.title = titleMap[viewId] || '單字王 - 核心系統';
 }
 
+function findWordCardById(cards, wordId) {
+    return Array.from(cards || []).find(card => card.dataset.wordId === wordId) || null;
+}
+
 function searchWord() {
     const input = document.getElementById('search-input');
     const query = input.value.trim().toLowerCase();
@@ -456,23 +1200,14 @@ function searchWord() {
         return;
     }
 
-    const targetTag =
-        (foundWord.tags && foundWord.tags.find(t => !state.categories.includes(t))) ||
-        (foundWord.tags && foundWord.tags[0]);
-    if (!targetTag) {
-        alert('找到單字，但它目前沒有資料夾標籤。');
-        return;
-    }
+    const targetFolderId = foundWord.folderId || UNFILED_FOLDER;
+    const targetWordId = getWordKey(foundWord);
 
     navigateTo('library');
     showView('word-list');
-    renderWordList(targetTag);
+    renderWordList(targetFolderId);
     setTimeout(() => {
-        const cards = document.querySelectorAll('.word-card');
-        let targetCard = null;
-        cards.forEach(card => {
-            if (card.innerText.toLowerCase().includes(query)) targetCard = card;
-        });
+        const targetCard = findWordCardById(document.querySelectorAll('.word-card'), targetWordId);
         if (targetCard) {
             targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
             targetCard.classList.add('highlight-card');
@@ -492,11 +1227,11 @@ function updateEditUI() {
     const btn = document.getElementById('btn-edit-folders');
     if (!hint || !btn) return;
     if (state.isEditing) {
-        hint.classList.remove('hidden');
+        setElementVisible(hint, true);
         btn.classList.replace('bg-orange-500', 'bg-gray-500');
         btn.innerText = '完成編輯';
     } else {
-        hint.classList.add('hidden');
+        setElementVisible(hint, false);
         btn.classList.replace('bg-gray-500', 'bg-orange-500');
         btn.innerText = '管理資料夾';
     }
@@ -505,41 +1240,31 @@ function updateEditUI() {
 function openNewFolderModal() {
     if (!requireLoginForChange()) return;
     document.getElementById('input-new-folder-name').value = '';
-    document.getElementById('new-folder-modal').classList.remove('hidden');
+    openModal('new-folder-modal', '#input-new-folder-name');
 }
 
 async function confirmNewFolder() {
     if (!requireLoginForChange()) return;
-    const name = document.getElementById('input-new-folder-name').value.trim();
-    if (!name) return;
-    if (state.folders.includes(name) || state.categories.includes(name)) {
-        alert('這個資料夾名稱已存在。');
+    const validation = validateFolderName(document.getElementById('input-new-folder-name').value);
+    if (!validation.valid) {
+        alert(validation.message);
         return;
     }
+    const name = validation.name;
 
-    state.folders.push(name);
-    document.getElementById('new-folder-modal').classList.add('hidden');
+    const ok = await commitUserMutation(draft => {
+        if (!draft.folders.includes(name)) draft.folders.push(name);
+        draft.folders = normalizeFolders(draft.folders, draft.words, draft.settings);
+    });
+    if (!ok) return;
 
-    if (state.pendingResultFolder) {
-        state.pendingResultFolder = false;
-        const saveSelect = document.getElementById('save-target-folder');
-        if (saveSelect) {
-            const opt = new Option(name, name);
-            saveSelect.appendChild(opt);
-            saveSelect.value = name;
-        }
-        await persistUserData();
-        return;
-    }
-
-    refreshTags();
-    await persistUserData();
+    closeModal('new-folder-modal');
     renderLibrary();
 }
 
 function handleFolderClick(name) {
     if (state.isEditing) {
-        if (name === WRONG_FOLDER || state.categories.includes(name)) {
+        if (name === WRONG_FOLDER || name === UNFILED_FOLDER || state.categories.includes(name)) {
             alert('系統資料夾不能編輯。');
             return;
         }
@@ -554,19 +1279,22 @@ function handleFolderClick(name) {
 
 function openActionModal(folderName) {
     state.targetFolderAction = folderName;
-    document.getElementById('action-folder-name').innerText = folderName;
-    document.getElementById('folder-action-modal').classList.remove('hidden');
+    document.getElementById('action-folder-name').innerText = getFolderDisplayName(folderName);
+    openModal('folder-action-modal');
 }
 
-function closeActionModal() {
-    document.getElementById('folder-action-modal').classList.add('hidden');
+function closeActionModal(options = {}) {
+    closeModal('folder-action-modal', options);
 }
 
 function prepareRenameFolder() {
     if (!requireLoginForChange()) return;
-    closeActionModal();
-    document.getElementById('input-rename-folder').value = state.targetFolderAction;
-    document.getElementById('rename-modal').classList.remove('hidden');
+    const actionModal = document.getElementById('folder-action-modal');
+    const originalTrigger = actionModal ? modalReturnFocus.get(actionModal) : null;
+    closeActionModal({ restoreFocus: false });
+    document.getElementById('input-rename-folder').value = getFolderDisplayName(state.targetFolderAction);
+    openModal('rename-modal', '#input-rename-folder');
+    if (originalTrigger) modalReturnFocus.set(document.getElementById('rename-modal'), originalTrigger);
 }
 
 async function executeRename() {
@@ -574,178 +1302,300 @@ async function executeRename() {
     const oldName = state.targetFolderAction;
     const newName = document.getElementById('input-rename-folder').value.trim();
 
-    if (newName && newName !== oldName) {
-        if (state.folders.includes(newName) || state.categories.includes(newName)) {
-            alert('這個名稱已存在。');
-            return;
-        }
-        state.words.forEach(w => {
-            if (Array.isArray(w.tags) && w.tags.includes(oldName)) {
-                w.tags = w.tags.map(t => t === oldName ? newName : t);
-            }
-        });
-        state.folders = state.folders.map(f => f === oldName ? newName : f);
-        refreshTags();
-        await persistUserData();
-        renderLibrary();
+    if (newName === getFolderDisplayName(oldName)) {
+        closeModal('rename-modal');
+        state.targetFolderAction = '';
+        return;
     }
-    document.getElementById('rename-modal').classList.add('hidden');
+    const validation = validateFolderName(newName, oldName);
+    if (!validation.valid) {
+        alert(validation.message);
+        return;
+    }
+    const validatedName = validation.name;
+
+    const isDefaultLesson = isLessonFolder(oldName);
+    const ok = await commitUserMutation(draft => {
+        draft.settings = cloneSettings(draft.settings);
+        if (isDefaultLesson) {
+            draft.settings.lessonFolderNames[oldName] = validatedName;
+            if (!draft.folders.includes(oldName)) draft.folders.push(oldName);
+        } else {
+            draft.words = renameFolderInWords(draft.words, oldName, validatedName);
+            draft.folders = draft.folders.map(f => f === oldName ? validatedName : f);
+        }
+        draft.folders = normalizeFolders(draft.folders, draft.words, draft.settings);
+    });
+    if (!ok) return;
+    renderLibrary();
+    closeModal('rename-modal');
     state.targetFolderAction = '';
+}
+
+function getFolderDeleteConfirmation(folderId, deleteAll) {
+    const wordCount = state.words.filter(word => word.folderId === folderId).length;
+    const folderDisplayName = getFolderDisplayName(folderId);
+    if (deleteAll) {
+        return {
+            title: `永久刪除「${folderDisplayName}」？`,
+            description: `將永久刪除：\n• 「${folderDisplayName}」資料夾\n• ${wordCount} 個單字\n\n被刪除的單字也會從待複習與目前練習資料中移除。\n\n此操作無法復原。`,
+            submitLabel: `刪除資料夾與 ${wordCount} 個單字`,
+            wordCount
+        };
+    }
+    return {
+        title: `刪除「${folderDisplayName}」資料夾？`,
+        description: `此資料夾中的 ${wordCount} 個單字將保留，並移至「${UNFILED_FOLDER}」。`,
+        submitLabel: '刪除資料夾',
+        wordCount
+    };
 }
 
 function prepareDeleteFolder(deleteAll) {
     if (!requireLoginForChange()) return;
-    closeActionModal();
+    const actionModal = document.getElementById('folder-action-modal');
+    const originalTrigger = actionModal ? modalReturnFocus.get(actionModal) : null;
+    closeActionModal({ restoreFocus: false });
     state.pendingDeleteType = deleteAll ? 'all' : 'keep';
 
-    const title = document.getElementById('confirm-title');
-    const desc = document.getElementById('confirm-desc');
-    if (deleteAll) {
-        title.innerText = '刪除資料夾與單字？';
-        desc.innerText = '這會刪除這個資料夾，以及只存在於此資料夾中的單字。';
-    } else {
-        title.innerText = '刪除資料夾？';
-        desc.innerText = '單字會保留，但會移除這個資料夾標籤。';
-    }
-    document.getElementById('confirm-modal').classList.remove('hidden');
+    const confirmation = getFolderDeleteConfirmation(state.targetFolderAction, deleteAll);
+    document.getElementById('confirm-title').innerText = confirmation.title;
+    document.getElementById('confirm-desc').innerText = confirmation.description;
+    const submit = document.getElementById('confirm-submit');
+    if (submit) submit.textContent = confirmation.submitLabel;
+    openModal('confirm-modal', '#confirm-cancel');
+    if (originalTrigger) modalReturnFocus.set(document.getElementById('confirm-modal'), originalTrigger);
+}
+
+function purgeDeletedWordReferences(deletedWordKeys) {
+    if (!deletedWordKeys.size) return;
+    const keepWord = word => word && !deletedWordKeys.has(getWordKey(word));
+    state.game.currentWords = state.game.currentWords.filter(keepWord);
+    state.game.wrongWords = new Set(Array.from(state.game.wrongWords).filter(keepWord));
+    state.game.reviewSelection = state.game.reviewSelection.filter(keepWord);
+    state.game.answeredHistory = state.game.answeredHistory.filter(entry => entry && keepWord(entry.word));
+    state.game.viewingHistoryIndex = null;
+    state.game.currentChoiceOptions = [];
+    state.game.spellingDrafts = {};
+    if (!state.game.currentWords.length) state.game.index = 0;
+    else state.game.index = Math.min(state.game.index, state.game.currentWords.length - 1);
 }
 
 async function executeDelete() {
-    if (!requireLoginForChange()) return;
+    if (isFolderDeleting || !requireLoginForChange()) return;
     const oldName = state.targetFolderAction;
     const type = state.pendingDeleteType;
-
-    if (type === 'keep') {
-        state.words.forEach(w => {
-            if (Array.isArray(w.tags)) w.tags = w.tags.filter(t => t !== oldName);
-        });
-    } else if (type === 'all') {
-        state.words = state.words.filter(w => !Array.isArray(w.tags) || !w.tags.includes(oldName));
+    const deleteWords = type === 'all';
+    if (!oldName || !type) return;
+    const isDefaultLesson = isLessonFolder(oldName);
+    const deletedWordKeys = new Set(
+        deleteWords
+            ? state.words.filter(word => word.folderId === oldName).map(getWordKey)
+            : []
+    );
+    const modal = document.getElementById('confirm-modal');
+    const cancel = document.getElementById('confirm-cancel');
+    const submit = document.getElementById('confirm-submit');
+    const originalSubmitText = submit ? submit.textContent : '';
+    isFolderDeleting = true;
+    if (modal) modal.dataset.busy = 'true';
+    if (cancel) cancel.disabled = true;
+    if (submit) {
+        submit.disabled = true;
+        submit.textContent = '刪除中...';
     }
 
-    state.folders = state.folders.filter(f => f !== oldName);
-    refreshTags();
-    await persistUserData();
-    renderLibrary();
-
-    document.getElementById('confirm-modal').classList.add('hidden');
-    state.targetFolderAction = '';
-    state.pendingDeleteType = null;
+    try {
+        const ok = await commitUserMutation(draft => {
+            draft.words = applyFolderDeletion(draft.words, oldName, deleteWords);
+            draft.folders = draft.folders.filter(f => f !== oldName);
+            draft.settings = cloneSettings(draft.settings);
+            if (isDefaultLesson && !draft.settings.deletedLessonIds.includes(oldName)) {
+                draft.settings.deletedLessonIds.push(oldName);
+                delete draft.settings.lessonFolderNames[oldName];
+            }
+            draft.folders = normalizeFolders(draft.folders, draft.words, draft.settings);
+        });
+        if (!ok) return;
+        if (deleteWords) purgeDeletedWordReferences(deletedWordKeys);
+        renderLibrary();
+        if (modal) modal.dataset.busy = 'false';
+        closeModal(modal);
+        state.targetFolderAction = '';
+        state.pendingDeleteType = null;
+    } finally {
+        isFolderDeleting = false;
+        if (modal) modal.dataset.busy = 'false';
+        if (cancel) cancel.disabled = false;
+        if (submit) {
+            submit.disabled = false;
+            submit.textContent = originalSubmitText;
+        }
+    }
 }
 
 function openAddModal(idx = -1) {
     if (!requireLoginForChange()) return;
     state.editingWordIndex = idx;
     const modal = document.getElementById('add-modal');
-    const tagInput = document.getElementById('new-tag');
+    const tagInput = document.getElementById('new-folder-name');
+    const partOfSpeechInput = document.getElementById('new-part-of-speech');
     document.getElementById('modal-title').innerText = idx >= 0 ? '編輯單字' : '新增單字';
 
     if (idx >= 0) {
         const w = state.words[idx];
         document.getElementById('new-word').value = w.english;
         document.getElementById('new-meaning').value = w.meaning;
-        renderTagCheckboxes(Array.isArray(w.tags) ? w.tags : []);
+        if (partOfSpeechInput) partOfSpeechInput.value = normalizePartOfSpeech(w.partOfSpeech);
+        renderFolderSelection(w.folderId || '', !!w.isWrong);
     } else {
         document.getElementById('new-word').value = '';
         document.getElementById('new-meaning').value = '';
-        let preSelected = [];
-        const current = document.getElementById('list-title')?.innerText;
-        if (current && !state.categories.includes(current) && current !== '全部') {
-            preSelected = [current];
+        if (partOfSpeechInput) partOfSpeechInput.value = '';
+        let preSelectedFolderId = '';
+        const currentTitle = document.getElementById('list-title');
+        const current = currentTitle?.dataset.folderId || currentTitle?.innerText;
+        if (current && !state.categories.includes(current) && current !== '全部' && current !== WRONG_FOLDER && current !== UNFILED_FOLDER) {
+            preSelectedFolderId = current;
         }
-        renderTagCheckboxes(preSelected);
+        renderFolderSelection(preSelectedFolderId, current === WRONG_FOLDER);
     }
     if (tagInput) tagInput.value = '';
-    modal.classList.remove('hidden');
+    openModal(modal, '#new-word');
 }
 
 function closeAddModal() {
-    document.getElementById('add-modal').classList.add('hidden');
+    closeModal('add-modal');
     state.editingWordIndex = -1;
 }
 
-function renderTagCheckboxes(selectedTags = []) {
-    const container = document.getElementById('tag-checkbox-container');
+function renderFolderSelection(selectedFolderId = '', isWrong = false) {
+    const container = document.getElementById('folder-selection-container');
     if (!container) return;
     container.replaceChildren();
 
-    if (!state.unitTags.length) {
+    const normalFolderIds = state.folderIds.filter(folderId => folderId !== WRONG_FOLDER);
+    if (!normalFolderIds.length) {
         const empty = document.createElement('div');
         empty.className = 'text-xs text-gray-400';
         empty.textContent = '目前沒有資料夾，請先建立。';
         container.appendChild(empty);
-        return;
     }
 
-    state.unitTags.forEach(tag => {
+    normalFolderIds.forEach((folderId, index) => {
         const label = document.createElement('label');
         label.className = 'inline-flex items-center space-x-2 mr-3 mb-1';
 
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.className = 'tag-checkbox w-4 h-4 text-indigo-600 rounded';
-        checkbox.value = tag;
-        checkbox.id = 'tag-chk-' + tag.replace(/\s+/g, '_');
-        checkbox.checked = selectedTags.includes(tag);
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = 'word-folder';
+        radio.className = 'folder-radio w-4 h-4 text-indigo-600';
+        radio.value = folderId === UNFILED_FOLDER ? '' : folderId;
+        radio.id = `folder-radio-${index}`;
+        radio.checked = folderId === UNFILED_FOLDER ? !selectedFolderId : selectedFolderId === folderId;
 
         const span = document.createElement('span');
         span.className = 'text-sm text-gray-700';
-        span.textContent = tag;
+        span.textContent = getFolderDisplayName(folderId);
 
-        label.append(checkbox, span);
+        label.append(radio, span);
         container.appendChild(label);
     });
+
+    const wrongLabel = document.createElement('label');
+    wrongLabel.className = 'flex items-center space-x-2 mt-2 pt-2 border-t border-gray-200';
+    const wrongCheckbox = document.createElement('input');
+    wrongCheckbox.type = 'checkbox';
+    wrongCheckbox.id = 'wrong-checkbox';
+    wrongCheckbox.className = 'w-4 h-4 text-red-500 rounded';
+    wrongCheckbox.checked = isWrong;
+    const wrongText = document.createElement('span');
+    wrongText.className = 'text-sm text-red-500 font-bold';
+    wrongText.textContent = '加入待複習';
+    wrongLabel.append(wrongCheckbox, wrongText);
+    container.appendChild(wrongLabel);
 }
 
 async function saveNewWord() {
     if (!requireLoginForChange()) return;
     const eng = document.getElementById('new-word').value.trim();
     const mean = document.getElementById('new-meaning').value.trim();
-    const tagInputEl = document.getElementById('new-tag');
+    const partOfSpeech = normalizePartOfSpeech(document.getElementById('new-part-of-speech')?.value);
+    const tagInputEl = document.getElementById('new-folder-name');
     if (!eng || !mean) {
         alert('請輸入英文與中文意思。');
         return;
     }
 
-    const selectedFromCheckbox = Array.from(document.querySelectorAll('.tag-checkbox:checked')).map(cb => cb.value);
-    const extraTags = tagInputEl && tagInputEl.value.trim()
-        ? tagInputEl.value.trim().split(/[,，]/).map(t => t.trim()).filter(Boolean)
-        : [];
-    const tags = Array.from(new Set([...selectedFromCheckbox, ...extraTags]));
-    tags.forEach(t => {
-        if (!state.folders.includes(t)) state.folders.push(t);
-    });
-
-    const data = { english: eng, meaning: mean, tags };
-    if (state.editingWordIndex >= 0) {
-        state.words[state.editingWordIndex] = data;
-    } else {
-        state.words.push(data);
+    const selectedFolder = document.querySelector('.folder-radio:checked');
+    const newFolderName = tagInputEl ? tagInputEl.value.trim() : '';
+    if (/[,，]/.test(newFolderName)) {
+        alert('一個單字只能選擇一個資料夾，請只輸入一個資料夾名稱。');
+        return;
     }
+    let validatedNewFolderName = '';
+    if (newFolderName) {
+        const validation = validateFolderName(newFolderName);
+        if (!validation.valid) {
+            alert(validation.message);
+            return;
+        }
+        validatedNewFolderName = validation.name;
+    }
+    const folderId = validatedNewFolderName || (selectedFolder ? selectedFolder.value : '');
+    const isWrong = !!document.getElementById('wrong-checkbox')?.checked;
 
-    refreshTags();
-    await persistUserData();
+    const editingIndex = state.editingWordIndex;
+    const previousWord = editingIndex >= 0 ? cloneWord(state.words[editingIndex]) : null;
+    const previousEnglish = previousWord ? previousWord.english : '';
+    const data = previousWord
+        ? { ...previousWord, english: eng, meaning: mean, partOfSpeech, folderId, isWrong }
+        : {
+            id: createCustomWordId(),
+            source: 'custom',
+            english: eng,
+            meaning: mean,
+            partOfSpeech,
+            folderId,
+            isWrong,
+            createdAt: new Date().toISOString()
+        };
+    const ok = await commitUserMutation(draft => {
+        if (folderId && !draft.folders.includes(folderId)) draft.folders.push(folderId);
+        if (editingIndex >= 0) {
+            const targetIndex = previousWord && previousWord.id
+                ? draft.words.findIndex(w => w.id === previousWord.id)
+                : draft.words.findIndex(w => w.english.toLowerCase() === previousEnglish.toLowerCase());
+            if (targetIndex >= 0) draft.words[targetIndex] = data;
+            else draft.words.push(data);
+        } else {
+            draft.words.push(data);
+        }
+        draft.folders = normalizeFolders(draft.folders, draft.words, draft.settings);
+    });
+    if (!ok) return;
     closeAddModal();
 
     if (!document.getElementById('view-word-list').classList.contains('hidden')) {
-        renderWordList(document.getElementById('list-title').innerText);
+        const listTitle = document.getElementById('list-title');
+        renderWordList(listTitle.dataset.folderId || listTitle.innerText);
     } else {
         renderLibrary();
     }
 }
 
 function renderLibrary() {
-    refreshTags();
+    refreshFolders();
     const grid = document.getElementById('category-grid');
     grid.replaceChildren();
     grid.classList.toggle('editing-mode', state.isEditing);
 
     if (state.words.length === 0 && state.folders.length <= 1) {
-        document.getElementById('empty-library-hint').classList.remove('hidden');
+        setElementVisible(document.getElementById('empty-library-hint'), true);
         return;
     }
 
-    document.getElementById('empty-library-hint').classList.add('hidden');
+    setElementVisible(document.getElementById('empty-library-hint'), false);
     if (!state.isEditing) {
         state.categories.forEach(cat => {
             if (state.words.some(w => w.english.toUpperCase().startsWith(cat))) {
@@ -754,11 +1604,12 @@ function renderLibrary() {
         });
     }
 
-    state.unitTags.forEach(tag => {
-        const isSystem = tag === WRONG_FOLDER;
-        const count = state.words.filter(w => Array.isArray(w.tags) && w.tags.includes(tag)).length;
-        const style = isSystem ? 'bg-red-500 text-white font-bold' : 'bg-indigo-600 text-white font-bold';
-        grid.appendChild(createCatBtn(`${tag} (${count})`, style, !isSystem, tag));
+    state.folderIds.forEach(folderId => {
+        const isWrongFolder = folderId === WRONG_FOLDER;
+        const isSystem = isWrongFolder || folderId === UNFILED_FOLDER;
+        const count = state.words.filter(word => wordIsInFolder(word, folderId)).length;
+        const style = isWrongFolder ? 'bg-red-500 text-white font-bold' : 'bg-indigo-600 text-white font-bold';
+        grid.appendChild(createCatBtn(`${getFolderDisplayName(folderId)} (${count})`, style, !isSystem, folderId));
     });
 }
 
@@ -783,7 +1634,9 @@ function createCatBtn(name, cls, editable, oriName) {
 
 function renderWordList(name) {
     showView('word-list');
-    document.getElementById('list-title').innerText = name;
+    const listTitle = document.getElementById('list-title');
+    listTitle.innerText = getFolderDisplayName(name);
+    listTitle.dataset.folderId = name;
     const container = document.getElementById('words-container');
     container.replaceChildren();
 
@@ -791,14 +1644,25 @@ function renderWordList(name) {
     if (name.length === 1 && state.categories.includes(name)) {
         filtered = filtered.filter(w => w.english.toUpperCase().startsWith(name));
     } else {
-        filtered = filtered.filter(w => Array.isArray(w.tags) && w.tags.includes(name));
+        filtered = filtered.filter(w => wordIsInFolder(w, name));
     }
     filtered.sort((a, b) => a.english.localeCompare(b.english));
 
     if (!filtered.length) {
         const empty = document.createElement('div');
-        empty.className = 'text-center text-gray-400 py-10 w-full';
-        empty.textContent = '無單字';
+        empty.className = 'text-center py-10 w-full';
+        const title = document.createElement('p');
+        title.className = 'text-lg font-bold text-gray-600';
+        title.textContent = '這個資料夾還沒有單字';
+        const description = document.createElement('p');
+        description.className = 'text-sm text-gray-400 mt-2';
+        description.textContent = '新增第一個單字，開始建立你的單字庫。';
+        const addButton = document.createElement('button');
+        addButton.type = 'button';
+        addButton.className = 'mt-4 bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold shadow-md active:scale-95 transition';
+        addButton.textContent = '＋ 新增單字';
+        addButton.addEventListener('click', () => openAddModal());
+        empty.append(title, description, addButton);
         container.appendChild(empty);
         return;
     }
@@ -809,6 +1673,7 @@ function renderWordList(name) {
 function createWordCard(w) {
     const card = document.createElement('div');
     card.className = 'word-card w-full';
+    card.dataset.wordId = getWordKey(w);
 
     const inner = document.createElement('div');
     inner.className = 'word-card-inner';
@@ -826,10 +1691,10 @@ function createWordCard(w) {
     });
     front.appendChild(editBtn);
 
-    if (Array.isArray(w.tags) && w.tags.includes(WRONG_FOLDER)) {
+    if (w.isWrong) {
         const badge = document.createElement('span');
         badge.className = 'absolute top-3 right-3 text-xs bg-red-100 text-red-500 px-2 py-1 rounded-full font-bold';
-        badge.textContent = '錯題';
+        badge.textContent = REVIEW_FOLDER_LABEL;
         front.appendChild(badge);
     }
 
@@ -845,7 +1710,7 @@ function createWordCard(w) {
 
     const back = document.createElement('div');
     back.className = 'word-card-back p-6 bg-indigo-50 border-2 border-indigo-200 flex flex-col rounded-2xl';
-    parseMeaning(w.meaning).forEach(part => {
+    parseMeaning(w.meaning, w.partOfSpeech).forEach(part => {
         const block = document.createElement('div');
         block.className = 'mb-3 text-indigo-800 font-bold text-lg';
         block.appendChild(document.createTextNode(part.text));
@@ -862,9 +1727,10 @@ function createWordCard(w) {
     return card;
 }
 
-function parseMeaning(raw) {
+function parseMeaning(raw, partOfSpeech = '') {
     const results = [];
     if (!raw) return results;
+    const structuredPos = getPartOfSpeechShort(partOfSpeech);
 
     raw.split('/').map(b => b.trim()).filter(Boolean).forEach(block => {
         const idx = block.lastIndexOf('(');
@@ -876,19 +1742,26 @@ function parseMeaning(raw) {
         }
         const subTexts = textPart.split(/[;；]/).map(s => s.trim()).filter(Boolean);
         if (!subTexts.length) {
-            results.push({ text: textPart, pos: posPart });
+            results.push({ text: textPart, pos: posPart || structuredPos });
         } else {
-            subTexts.forEach(t => results.push({ text: t, pos: posPart }));
+            subTexts.forEach(t => results.push({ text: t, pos: posPart || structuredPos }));
         }
     });
     return results;
 }
 
+function getMeaningWithPartOfSpeech(word) {
+    const meaning = String(word && word.meaning ? word.meaning : '');
+    const structuredPos = getPartOfSpeechShort(word && word.partOfSpeech);
+    if (!structuredPos || /\([^)]*\)/.test(meaning)) return meaning;
+    return `${meaning} ${structuredPos}`;
+}
+
 function renderPracticeOptions() {
-    refreshTags();
+    refreshFolders();
     const select = document.getElementById('practice-scope');
     select.replaceChildren(new Option('全部單字夾', 'all'));
-    state.unitTags.forEach(tag => select.appendChild(new Option(tag, tag)));
+    state.folderIds.forEach(folderId => select.appendChild(new Option(getFolderDisplayName(folderId), folderId)));
 }
 
 function renderPracticeWordSelection() {
@@ -899,7 +1772,7 @@ function renderPracticeWordSelection() {
 
     const pool = (scope === 'all')
         ? [...state.words]
-        : state.words.filter(w => Array.isArray(w.tags) && w.tags.includes(scope));
+        : state.words.filter(w => wordIsInFolder(w, scope));
     pool.sort((a, b) => a.english.localeCompare(b.english));
 
     if (!pool.length) {
@@ -908,6 +1781,7 @@ function renderPracticeWordSelection() {
         empty.textContent = '此資料夾沒有單字';
         container.appendChild(empty);
         countLabel.innerText = '已選 0 個單字';
+        updatePracticeStartButtons(0);
         return;
     }
 
@@ -919,7 +1793,7 @@ function renderPracticeWordSelection() {
         checkbox.type = 'checkbox';
         checkbox.className = 'practice-checkbox w-5 h-5 text-indigo-600 rounded mr-3';
         checkbox.checked = true;
-        checkbox.dataset.english = word.english;
+        checkbox.dataset.wordId = getWordKey(word);
         checkbox.addEventListener('change', updateSelectionCount);
 
         const info = document.createElement('div');
@@ -929,7 +1803,7 @@ function renderPracticeWordSelection() {
         en.textContent = word.english;
         const mean = document.createElement('div');
         mean.className = 'text-xs text-gray-500 truncate';
-        mean.textContent = word.meaning;
+        mean.textContent = getMeaningWithPartOfSpeech(word);
         info.append(en, mean);
         div.append(checkbox, info);
         container.appendChild(div);
@@ -940,6 +1814,15 @@ function renderPracticeWordSelection() {
 function updateSelectionCount() {
     const checkboxes = document.querySelectorAll('.practice-checkbox:checked');
     document.getElementById('selection-count').innerText = `已選 ${checkboxes.length} 個單字`;
+    updatePracticeStartButtons(checkboxes.length);
+}
+
+function updatePracticeStartButtons(selectedCount) {
+    const disabled = selectedCount <= 0;
+    document.querySelectorAll('#view-practice [data-start-mode]').forEach(button => {
+        button.disabled = disabled;
+        button.setAttribute('aria-disabled', String(disabled));
+    });
 }
 
 function toggleAllPracticeWords(checked) {
@@ -959,10 +1842,11 @@ function shuffleArray(items) {
 }
 
 function startGame(mode) {
-    const selectedEnglishes = new Set(Array.from(document.querySelectorAll('.practice-checkbox:checked')).map(cb => cb.dataset.english));
-    const pool = state.words.filter(w => selectedEnglishes.has(w.english));
+    const selectedWordIds = new Set(
+        Array.from(document.querySelectorAll('.practice-checkbox:checked')).map(cb => cb.dataset.wordId)
+    );
+    const pool = state.words.filter(word => selectedWordIds.has(getWordKey(word)));
     if (!pool.length) {
-        alert('請至少選擇一個單字。');
         return;
     }
 
@@ -991,6 +1875,10 @@ function startGame(mode) {
 }
 
 function quitGameAndSave() {
+    if (!state.game.currentWords.length) {
+        showView('practice');
+        return;
+    }
     endGame(true);
 }
 
@@ -1020,6 +1908,7 @@ function setGameplayInputsEnabled(enabled) {
 }
 
 function setProgressForIndex(prefix, index, total, isReview = false) {
+    if (!Number.isFinite(total) || total <= 0) return;
     const text = document.getElementById(`${prefix}-progress-text`);
     const bar = document.getElementById(`${prefix}-progress-bar`);
     if (text) text.innerText = `${index + 1} / ${total}${isReview ? '（查看）' : ''}`;
@@ -1034,7 +1923,12 @@ function updateHistoryControls() {
         btn.disabled = target < 0;
     });
     document.querySelectorAll('[data-game-nav="current"]').forEach(btn => {
-        btn.disabled = viewing === null;
+        const isViewingHistory = viewing !== null;
+        btn.disabled = !isViewingHistory;
+        btn.textContent = `回到第 ${state.game.index + 1} 題`;
+        btn.classList.toggle('invisible', !isViewingHistory);
+        btn.toggleAttribute('inert', !isViewingHistory);
+        btn.setAttribute('aria-hidden', String(!isViewingHistory));
     });
     document.querySelectorAll('[data-game-nav="next"]').forEach(btn => {
         btn.disabled = viewing === null || viewing + 1 >= history.length;
@@ -1050,6 +1944,7 @@ function createAnswerRecord({ word, result, userAnswer = '', choices = [] }) {
         userAnswer,
         correctAnswer: word.english,
         meaning: word.meaning,
+        partOfSpeech: normalizePartOfSpeech(word.partOfSpeech),
         choices: choices.map(choice => ({
             text: choice.text,
             isCorrect: !!choice.isCorrect,
@@ -1065,13 +1960,17 @@ function recordAnsweredQuestion(record) {
 function loadSpellingWord() {
     const word = getCurrentWord();
     const total = state.game.currentWords.length;
+    if (!word || total <= 0) {
+        showView('practice');
+        return;
+    }
     state.game.viewingHistoryIndex = null;
     state.game.currentHadMistake = false;
     setProgressForIndex('spelling', state.game.index, total);
 
     const defArea = document.getElementById('spelling-definition-area');
     defArea.replaceChildren();
-    parseMeaning(word.meaning).forEach(part => {
+    parseMeaning(word.meaning, word.partOfSpeech).forEach(part => {
         const wrap = document.createElement('div');
         wrap.className = 'flex flex-col items-center mb-3';
         const text = document.createElement('div');
@@ -1137,12 +2036,16 @@ function skipSpellingWord() {
 function loadChoiceQuestion() {
     const word = getCurrentWord();
     const total = state.game.currentWords.length;
+    if (!word || total <= 0) {
+        showView('practice');
+        return;
+    }
     state.game.viewingHistoryIndex = null;
     setProgressForIndex('choice', state.game.index, total);
     document.getElementById('choice-feedback').innerText = '';
 
     const isEnToCh = state.game.mode === 'choice-en-ch';
-    document.getElementById('choice-question').innerText = isEnToCh ? word.english : formatMeaning(word.meaning);
+    document.getElementById('choice-question').innerText = isEnToCh ? word.english : formatMeaning(word.meaning, word.partOfSpeech);
 
     const options = [word];
     const pool = state.game.currentWords.length >= 5 ? state.game.currentWords : state.words;
@@ -1162,7 +2065,7 @@ function renderChoiceOptions(word, options, isEnToCh) {
     options.forEach(opt => {
         const btn = document.createElement('button');
         btn.className = 'choice-btn w-full bg-white border-2 border-indigo-100 text-gray-700 font-bold py-4 rounded-xl text-lg shadow-sm hover:border-indigo-300';
-        btn.innerText = isEnToCh ? formatMeaning(opt.meaning) : opt.english;
+        btn.innerText = isEnToCh ? formatMeaning(opt.meaning, opt.partOfSpeech) : opt.english;
         btn.addEventListener('click', () => {
             const allBtns = document.querySelectorAll('.choice-btn');
             allBtns.forEach(b => {
@@ -1179,7 +2082,7 @@ function renderChoiceOptions(word, options, isEnToCh) {
                     result: 'correct',
                     userAnswer: btn.innerText,
                     choices: options.map(choice => ({
-                        text: isEnToCh ? formatMeaning(choice.meaning) : choice.english,
+                        text: isEnToCh ? formatMeaning(choice.meaning, choice.partOfSpeech) : choice.english,
                         isCorrect: choice === word,
                         isSelected: choice === opt
                     }))
@@ -1188,7 +2091,7 @@ function renderChoiceOptions(word, options, isEnToCh) {
             } else {
                 btn.classList.add('choice-wrong');
                 allBtns.forEach(b => {
-                    if ((isEnToCh && b.innerText === formatMeaning(word.meaning)) ||
+                    if ((isEnToCh && b.innerText === formatMeaning(word.meaning, word.partOfSpeech)) ||
                         (!isEnToCh && b.innerText === word.english)) {
                         b.classList.add('choice-correct');
                     }
@@ -1202,7 +2105,7 @@ function renderChoiceOptions(word, options, isEnToCh) {
                     result: 'wrong',
                     userAnswer: btn.innerText,
                     choices: options.map(choice => ({
-                        text: isEnToCh ? formatMeaning(choice.meaning) : choice.english,
+                        text: isEnToCh ? formatMeaning(choice.meaning, choice.partOfSpeech) : choice.english,
                         isCorrect: choice === word,
                         isSelected: choice === opt
                     }))
@@ -1225,7 +2128,7 @@ function showHistoryEntry(entryIndex) {
         setProgressForIndex('spelling', entry.index, state.game.currentWords.length, true);
         const defArea = document.getElementById('spelling-definition-area');
         defArea.replaceChildren();
-        parseMeaning(entry.meaning).forEach(part => {
+        parseMeaning(entry.meaning, entry.partOfSpeech).forEach(part => {
             const wrap = document.createElement('div');
             wrap.className = 'flex flex-col items-center mb-3';
             const text = document.createElement('div');
@@ -1249,7 +2152,9 @@ function showHistoryEntry(entryIndex) {
         showView('game-choice');
         setProgressForIndex('choice', entry.index, state.game.currentWords.length, true);
         const isEnToCh = entry.mode === 'choice-en-ch';
-        document.getElementById('choice-question').innerText = isEnToCh ? entry.word.english : formatMeaning(entry.word.meaning);
+        document.getElementById('choice-question').innerText = isEnToCh
+            ? entry.word.english
+            : formatMeaning(entry.word.meaning, entry.word.partOfSpeech);
         const container = document.getElementById('choice-options');
         container.replaceChildren();
         entry.choices.forEach(choice => {
@@ -1295,7 +2200,7 @@ function showCurrentQuestion() {
     setProgressForIndex('choice', state.game.index, state.game.currentWords.length);
     document.getElementById('choice-question').innerText = state.game.mode === 'choice-en-ch'
         ? word.english
-        : formatMeaning(word.meaning);
+        : formatMeaning(word.meaning, word.partOfSpeech);
     document.getElementById('choice-feedback').innerText = '';
     renderChoiceOptions(word, state.game.currentChoiceOptions, state.game.mode === 'choice-en-ch');
     setGameplayInputsEnabled(true);
@@ -1316,7 +2221,7 @@ function navigateHistory(direction) {
     showHistoryEntry(target);
 }
 
-function formatMeaning(raw) {
+function formatMeaning(raw, partOfSpeech = '') {
     const firstBlock = String(raw || '').split('/')[0].trim();
     const idx = firstBlock.lastIndexOf('(');
     let text = firstBlock;
@@ -1325,6 +2230,7 @@ function formatMeaning(raw) {
         text = firstBlock.substring(0, idx).trim();
         pos = firstBlock.substring(idx).trim();
     }
+    if (!pos) pos = getPartOfSpeechShort(partOfSpeech);
     const shortText = text.length > 15 ? text.substring(0, 15) + '...' : text;
     return pos ? `${shortText} ${pos}` : shortText;
 }
@@ -1353,9 +2259,13 @@ function nextQuestion() {
 }
 
 function endGame(isAborted = false) {
-    document.getElementById('view-game-spelling').classList.add('hidden');
-    document.getElementById('view-game-choice').classList.add('hidden');
-    document.getElementById('view-game-result').classList.remove('hidden');
+    if (!state.game.currentWords.length) {
+        showView('practice');
+        return;
+    }
+    setElementVisible(document.getElementById('view-game-spelling'), false);
+    setElementVisible(document.getElementById('view-game-choice'), false);
+    setElementVisible(document.getElementById('view-game-result'), true);
 
     document.getElementById('result-title').innerText = isAborted ? '練習已結算' : '練習完成！';
     document.getElementById('result-icon').innerText = isAborted ? '📌' : '🎉';
@@ -1377,14 +2287,8 @@ function endGame(isAborted = false) {
             list.appendChild(createReviewItem(w, idx));
         });
     }
-
-    const saveSelect = document.getElementById('save-target-folder');
-    saveSelect.replaceChildren(new Option('+ 新增資料夾...', 'NEW_FOLDER_OPTION'));
-    state.unitTags.forEach(tag => {
-        const option = new Option(tag, tag);
-        if (tag === WRONG_FOLDER) option.selected = true;
-        saveSelect.appendChild(option);
-    });
+    const saveReviewButton = document.getElementById('btn-save-review');
+    if (saveReviewButton) saveReviewButton.disabled = wrongs.length === 0;
 }
 
 function createReviewItem(w, idx) {
@@ -1410,122 +2314,22 @@ function createReviewItem(w, idx) {
     en.textContent = w.english;
     row.appendChild(en);
 
-    if (Array.isArray(w.tags) && w.tags.includes(WRONG_FOLDER)) {
+    if (w.isWrong) {
         const badge = document.createElement('span');
         badge.dataset.reviewFolderBadge = 'wrong';
         badge.className = 'text-xs bg-red-100 text-red-500 px-1 rounded flex-none';
-        badge.textContent = '已在錯題區';
+        badge.textContent = '已在待複習';
         row.appendChild(badge);
     }
 
     const mean = document.createElement('span');
     mean.className = 'text-gray-500 text-sm truncate';
-    mean.textContent = w.meaning;
+    mean.textContent = getMeaningWithPartOfSpeech(w);
     wrap.append(row, mean);
 
-    const removeBtn = document.createElement('button');
-    removeBtn.type = 'button';
-    removeBtn.className = 'w-8 h-8 rounded-full bg-red-50 text-red-500 font-black flex-none border border-red-100';
-    removeBtn.textContent = '×';
-    configureReviewFolderButton(removeBtn, w);
-
-    const folderPanel = document.createElement('div');
-    folderPanel.className = 'hidden mt-3 border-t border-gray-100 pt-3';
-    folderPanel.dataset.folderPanel = String(idx);
-
-    removeBtn.addEventListener('click', () => {
-        if (removeBtn.disabled) return;
-        renderReviewFolderPanel(folderPanel, w, removeBtn, row);
-        folderPanel.classList.toggle('hidden');
-    });
-
-    rowWrap.append(checkbox, wrap, removeBtn);
-    li.append(rowWrap, folderPanel);
+    rowWrap.append(checkbox, wrap);
+    li.append(rowWrap);
     return li;
-}
-
-function configureReviewFolderButton(button, word) {
-    const tags = Array.isArray(word.tags) ? word.tags : [];
-    const hasWrongFolder = tags.includes(WRONG_FOLDER);
-    button.disabled = !hasWrongFolder;
-    button.classList.toggle('opacity-30', tags.length === 0);
-    button.classList.toggle('opacity-40', tags.length > 0 && !hasWrongFolder);
-    button.classList.toggle('cursor-not-allowed', !hasWrongFolder);
-    button.title = tags.length === 0
-        ? '這個單字目前沒有任何資料夾'
-        : (hasWrongFolder ? '查看並移除這個單字所在資料夾' : '只有已在錯題區的單字可從這裡移除資料夾');
-}
-
-function findWordByEnglish(english) {
-    return state.words.find(word => word.english.toLowerCase() === english.toLowerCase());
-}
-
-function renderReviewFolderPanel(panel, reviewWord, button, badgeRow) {
-    const word = findWordByEnglish(reviewWord.english) || reviewWord;
-    const tags = Array.isArray(word.tags) ? [...word.tags] : [];
-    panel.replaceChildren();
-
-    const title = document.createElement('div');
-    title.className = 'text-xs font-bold text-gray-500 mb-2';
-    title.textContent = '這個單字目前所在資料夾';
-    panel.appendChild(title);
-
-    if (!tags.length) {
-        const empty = document.createElement('div');
-        empty.className = 'text-sm text-gray-400';
-        empty.textContent = '目前沒有任何資料夾。';
-        panel.appendChild(empty);
-        configureReviewFolderButton(button, word);
-        return;
-    }
-
-    tags.forEach(tag => {
-        const label = document.createElement('label');
-        label.className = 'flex items-center justify-between gap-3 py-2 text-sm text-gray-700';
-
-        const span = document.createElement('span');
-        span.className = 'font-bold break-all';
-        span.textContent = tag;
-
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.checked = true;
-        checkbox.className = 'w-5 h-5 text-red-500 rounded flex-none';
-        checkbox.addEventListener('change', async () => {
-            if (checkbox.checked) return;
-            const folderName = tag === WRONG_FOLDER ? '錯題區' : `「${tag}」資料夾`;
-            const ok = confirm(`是否將「${word.english}」移除${folderName}？`);
-            if (!ok) {
-                checkbox.checked = true;
-                return;
-            }
-            if (!requireLoginForChange()) {
-                checkbox.checked = true;
-                return;
-            }
-            word.tags = (word.tags || []).filter(t => t !== tag);
-            reviewWord.tags = Array.isArray(reviewWord.tags) ? reviewWord.tags.filter(t => t !== tag) : [];
-            refreshTags();
-            await persistUserData();
-            refreshReviewFolderBadge(badgeRow, word);
-            configureReviewFolderButton(button, word);
-            renderReviewFolderPanel(panel, word, button, badgeRow);
-        });
-
-        label.append(span, checkbox);
-        panel.appendChild(label);
-    });
-}
-
-function refreshReviewFolderBadge(row, word) {
-    row.querySelectorAll('[data-review-folder-badge]').forEach(el => el.remove());
-    if (Array.isArray(word.tags) && word.tags.includes(WRONG_FOLDER)) {
-        const badge = document.createElement('span');
-        badge.dataset.reviewFolderBadge = 'wrong';
-        badge.className = 'text-xs bg-red-100 text-red-500 px-1 rounded flex-none';
-        badge.textContent = '已在錯題區';
-        row.appendChild(badge);
-    }
 }
 
 function toggleReviewItem(idx) {
@@ -1541,47 +2345,34 @@ function toggleReviewItem(idx) {
     }
 }
 
-function onSaveTargetFolderChange(selectEl) {
-    if (selectEl.value !== 'NEW_FOLDER_OPTION') return;
-    if (!requireLoginForChange()) {
-        selectEl.value = WRONG_FOLDER;
-        return;
-    }
-    selectEl.value = selectEl.querySelector(`option[value="${WRONG_FOLDER}"]`)
-        ? WRONG_FOLDER
-        : (selectEl.options[1] ? selectEl.options[1].value : selectEl.options[0].value);
-    state.pendingResultFolder = true;
-    document.getElementById('input-new-folder-name').value = '';
-    document.getElementById('new-folder-modal').classList.remove('hidden');
-}
-
-async function saveWrongWords() {
+async function saveReviewWords() {
     if (!requireLoginForChange()) return;
     if (!state.game.reviewSelection.length) {
         alert('請至少選擇一個單字。');
         return;
     }
 
-    const targetFolder = document.getElementById('save-target-folder').value;
-    if (!targetFolder || targetFolder === 'NEW_FOLDER_OPTION') {
-        alert('請選擇要儲存的資料夾。');
-        return;
-    }
-
-    const englishSet = new Set(state.game.reviewSelection.map(w => w.english.toLowerCase()));
-    let count = 0;
-    state.words.forEach(word => {
-        if (!englishSet.has(word.english.toLowerCase())) return;
-        if (!Array.isArray(word.tags)) word.tags = [];
-        if (!word.tags.includes(targetFolder)) {
-            word.tags.push(targetFolder);
-            count++;
-        }
+    const selectedWordIds = new Set(state.game.reviewSelection.map(getWordKey));
+    const alreadyApplied = new Set(state.words
+        .filter(word => selectedWordIds.has(getWordKey(word)) && word.isWrong)
+        .map(getWordKey));
+    const ok = await commitUserMutation(draft => {
+        draft.words.forEach(word => {
+            if (!selectedWordIds.has(getWordKey(word))) return;
+            word.isWrong = true;
+        });
+        draft.folders = normalizeFolders(draft.folders, draft.words, draft.settings);
     });
+    if (!ok) return;
+    const count = state.words.filter(word =>
+        selectedWordIds.has(getWordKey(word)) &&
+        word.isWrong &&
+        !alreadyApplied.has(getWordKey(word))
+    ).length;
 
-    refreshTags();
-    await persistUserData();
-    alert(`已將 ${count} 個單字加入「${targetFolder}」。`);
+    alert(count > 0
+        ? `已將 ${count} 個單字加入待複習。`
+        : '所選單字已在待複習中。');
     navigateTo('practice');
 }
 
@@ -1611,13 +2402,19 @@ function openSettingsModal() {
         if (speechVolumeLabel) speechVolumeLabel.textContent = v + '%';
     }
     if (bgmSelectEl) bgmSelectEl.value = state.settings.selectedBgmId;
-    modal.classList.remove('hidden');
+    openModal(modal, '#settings-bgm-enabled');
 }
 
 async function closeSettingsModal() {
     const modal = document.getElementById('settings-modal');
-    if (modal) modal.classList.add('hidden');
-    await saveSettingsFromUI();
+    if (!modal || modal.dataset.busy === 'true') return;
+    modal.dataset.busy = 'true';
+    try {
+        await saveSettingsFromUI();
+    } finally {
+        modal.dataset.busy = 'false';
+        closeModal(modal);
+    }
 }
 
 async function saveSettingsFromUI() {
@@ -1626,13 +2423,20 @@ async function saveSettingsFromUI() {
     const speechVolumeEl = document.getElementById('settings-speech-volume');
     const bgmSelectEl = document.getElementById('settings-bgm-select');
 
-    if (bgmEnabledEl) state.settings.bgmEnabled = !!bgmEnabledEl.checked;
-    if (bgmVolumeEl) state.settings.bgmVolume = clamp01((parseInt(bgmVolumeEl.value, 10) || 0) / 100);
-    if (speechVolumeEl) state.settings.speechVolume = clamp01((parseInt(speechVolumeEl.value, 10) || 0) / 100);
-    if (bgmSelectEl && bgmSelectEl.value) state.settings.selectedBgmId = bgmSelectEl.value;
+    const nextSettings = cloneSettings(state.settings);
+    if (bgmEnabledEl) nextSettings.bgmEnabled = !!bgmEnabledEl.checked;
+    if (bgmVolumeEl) nextSettings.bgmVolume = clamp01((parseInt(bgmVolumeEl.value, 10) || 0) / 100);
+    if (speechVolumeEl) nextSettings.speechVolume = clamp01((parseInt(speechVolumeEl.value, 10) || 0) / 100);
+    if (bgmSelectEl && bgmSelectEl.value) nextSettings.selectedBgmId = bgmSelectEl.value;
 
-    applyBgmSettingsToElement();
-    await persistUserData({ requireAuth: false });
+    const ok = await commitUserMutation(draft => {
+        draft.settings = cloneSettings(nextSettings);
+        draft.folders = normalizeFolders(draft.folders, draft.words, draft.settings);
+    }, {
+        requireAuth: false,
+        afterRollback: applyBgmSettingsToElement
+    });
+    if (ok) applyBgmSettingsToElement();
 }
 
 function updateBgmVolumeFromSlider(value) {
@@ -1657,13 +2461,31 @@ function updateSpeechVolumeFromSlider(value) {
 }
 
 async function toggleBgmEnabledFromCheckbox(checked) {
-    state.settings.bgmEnabled = !!checked;
+    const nextSettings = cloneSettings(state.settings);
+    nextSettings.bgmEnabled = !!checked;
+    const ok = await commitUserMutation(draft => {
+        draft.settings = cloneSettings(nextSettings);
+    }, {
+        requireAuth: false,
+        afterRollback: applyBgmSettingsToElement
+    });
     applyBgmSettingsToElement();
-    await persistUserData({ requireAuth: false });
+    if (!ok) openSettingsModal();
 }
 
 async function changeBgmTrackFromSelect(trackId) {
-    state.settings.selectedBgmId = trackId;
+    const nextSettings = cloneSettings(state.settings);
+    nextSettings.selectedBgmId = trackId;
+    const ok = await commitUserMutation(draft => {
+        draft.settings = cloneSettings(nextSettings);
+    }, {
+        requireAuth: false,
+        afterRollback: applyBgmSettingsToElement
+    });
+    if (!ok) {
+        openSettingsModal();
+        return;
+    }
     const audio = state.audio && state.audio.bgmElement;
     const track = getCurrentBgmTrack();
     if (audio && track) {
@@ -1671,14 +2493,19 @@ async function changeBgmTrackFromSelect(trackId) {
         audio.src = track.url;
         if (state.settings.bgmEnabled && wasPlaying) audio.play().catch(() => {});
     }
-    await persistUserData({ requireAuth: false });
 }
 
 async function confirmReset() {
     if (!requireLoginForChange()) return;
-    if (!confirm('確定要重置全部雲端個人資料？這會清除新增單字、錯題標籤、資料夾與設定。')) return;
-    resetToDefaultState();
-    await persistUserData();
+    if (!confirm('確定要重置全部雲端個人資料？這會清除新增單字、待複習狀態、資料夾與設定。')) return;
+    const ok = await commitUserMutation(draft => {
+        const resetSettings = cloneSettings(DEFAULT_SETTINGS);
+        draft.settings = resetSettings;
+        draft.words = getDefaultWords();
+        draft.folders = normalizeFolders([], draft.words, resetSettings);
+    });
+    if (!ok) return;
+    clearPracticeSession();
     applyBgmSettingsToElement();
     showView(new URL(window.location).searchParams.get('page') || 'home');
 }
@@ -1688,52 +2515,110 @@ function updateAuthUI(user) {
     const logoutBtn = document.getElementById('btn-logout');
     const syncBtn = document.getElementById('btn-sync');
     const userSpan = document.getElementById('user-email');
+    const homeSyncStatus = document.getElementById('home-sync-status');
+    if (homeSyncStatus) {
+        homeSyncStatus.textContent = user
+            ? '你的自訂單字、資料夾與待複習狀態會自動同步至雲端。'
+            : '登入後即可新增單字，並同步你的資料夾與待複習狀態。';
+    }
     if (!loginBtn || !logoutBtn || !syncBtn || !userSpan) return;
 
     if (user) {
-        loginBtn.classList.add('hidden');
-        logoutBtn.classList.remove('hidden');
-        syncBtn.classList.remove('hidden');
-        userSpan.classList.remove('hidden');
+        setElementVisible(loginBtn, false);
+        setElementVisible(logoutBtn, true);
+        setElementVisible(syncBtn, true);
+        setElementVisible(userSpan, true);
         userSpan.textContent = user.email || user.displayName || '已登入';
+        logoutBtn.disabled = isLoggingOut || isSyncing || isCloudLoading;
+        logoutBtn.textContent = isLoggingOut ? '登出中...' : '登出';
+        syncBtn.disabled = isSyncing || isLoggingOut || isCloudLoading;
+        syncBtn.textContent = isSyncing ? '☁ 同步中...' : (isCloudLoading ? '☁ 載入中...' : '☁ 同步');
     } else {
-        loginBtn.classList.remove('hidden');
-        logoutBtn.classList.add('hidden');
-        syncBtn.classList.add('hidden');
-        userSpan.classList.add('hidden');
+        setElementVisible(loginBtn, true);
+        setElementVisible(logoutBtn, false);
+        setElementVisible(syncBtn, false);
+        setElementVisible(userSpan, false);
         userSpan.textContent = '';
+        loginBtn.disabled = isLoggingIn || isLoggingOut;
+        loginBtn.textContent = isLoggingIn ? '登入中...' : '登入';
     }
 }
 
 async function firebaseLogin() {
+    if (currentUser || auth.currentUser || isLoggingIn || isLoggingOut) return;
+    isLoggingIn = true;
+    updateAuthUI(null);
+    let popupCompleted = false;
     try {
         await signInWithPopup(auth, provider);
+        popupCompleted = true;
     } catch (err) {
         console.error(err);
         alert('登入失敗：' + (err.message || err));
+    } finally {
+        if (!popupCompleted) isLoggingIn = false;
+        updateAuthUI(currentUser);
     }
 }
 
 async function firebaseLogout() {
+    if (!currentUser || isLoggingOut || isLoggingIn || isSyncing || isCloudLoading) return;
+    isLoggingOut = true;
+    updateAuthUI(currentUser);
+    let logoutCompleted = false;
     try {
         await signOut(auth);
+        logoutCompleted = true;
     } catch (err) {
         console.error(err);
         alert('登出失敗：' + (err.message || err));
+    } finally {
+        if (!logoutCompleted) isLoggingOut = false;
+        updateAuthUI(currentUser);
     }
 }
 
+function withTimeout(promise, timeoutMs, timeoutMessage) {
+    let timeoutId;
+    const timeout = new Promise((resolve, reject) => {
+        timeoutId = setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs);
+    });
+    return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
+}
+
 async function syncCloudNow() {
+    if (isSyncing || isLoggingOut || isLoggingIn) return;
     if (!requireLoginForChange()) return;
-    const ok = await persistUserData();
-    if (ok) alert('已同步到雲端。');
+    if (isCloudLoading) {
+        alert('雲端資料仍在載入，請稍候再同步。');
+        return;
+    }
+    isSyncing = true;
+    updateAuthUI(currentUser);
+    try {
+        const ok = await withTimeout(
+            persistUserData(),
+            SYNC_TIMEOUT_MS,
+            '同步逾時，請確認網路後再試。'
+        );
+        if (ok) alert('已同步到雲端。');
+    } catch (err) {
+        console.error('手動同步失敗', err);
+        alert(err.message || '同步失敗，請稍後再試。');
+    } finally {
+        isSyncing = false;
+        updateAuthUI(currentUser);
+    }
 }
 
 function rerenderVisibleView() {
     const visible = Array.from(document.querySelectorAll('main > div')).find(div => !div.classList.contains('hidden'));
     if (!visible) return;
     if (visible.id === 'view-library') renderLibrary();
-    if (visible.id === 'view-word-list') renderWordList(document.getElementById('list-title').innerText);
+    if (visible.id === 'view-word-list') {
+        const listTitle = document.getElementById('list-title');
+        renderWordList(listTitle.dataset.folderId || listTitle.innerText);
+    }
     if (visible.id === 'view-practice') {
         renderPracticeOptions();
         renderPracticeWordSelection();
@@ -1764,12 +2649,12 @@ function bindStaticEvents() {
     homeCards[0]?.addEventListener('click', () => navigateTo('library'));
     homeCards[1]?.addEventListener('click', () => navigateTo('practice'));
 
-    document.querySelectorAll('button').forEach(btn => {
-        if (btn.textContent.includes('返回')) btn.addEventListener('click', () => history.back());
-    });
+    document.getElementById('btn-library-back')?.addEventListener('click', () => navigateTo('home'));
+    document.getElementById('btn-word-list-back')?.addEventListener('click', () => navigateTo('library'));
 
     document.getElementById('btn-edit-folders')?.addEventListener('click', toggleEditMode);
-    document.querySelector('#view-library button.bg-indigo-600.w-10')?.addEventListener('click', () => openAddModal());
+    document.getElementById('btn-add-word')?.addEventListener('click', () => openAddModal());
+    document.getElementById('btn-empty-add-word')?.addEventListener('click', () => openAddModal());
 
     const editHintButtons = document.querySelectorAll('#edit-hint button');
     editHintButtons[0]?.addEventListener('click', openNewFolderModal);
@@ -1780,10 +2665,9 @@ function bindStaticEvents() {
     selectionButtons[0]?.addEventListener('click', () => toggleAllPracticeWords(true));
     selectionButtons[1]?.addEventListener('click', () => toggleAllPracticeWords(false));
 
-    const startButtons = document.querySelectorAll('#view-practice .border-t button');
-    startButtons[0]?.addEventListener('click', () => startGame('spelling'));
-    startButtons[1]?.addEventListener('click', () => startGame('choice-en-ch'));
-    startButtons[2]?.addEventListener('click', () => startGame('choice-ch-en'));
+    document.querySelectorAll('#view-practice [data-start-mode]').forEach(button => {
+        button.addEventListener('click', () => startGame(button.dataset.startMode));
+    });
 
     document.querySelectorAll('#view-game-spelling button, #view-game-choice button').forEach(btn => {
         if (btn.textContent.includes('離開並結算')) btn.addEventListener('click', quitGameAndSave);
@@ -1798,9 +2682,8 @@ function bindStaticEvents() {
     spellingButtons[0]?.addEventListener('click', checkSpellingAnswer);
     spellingButtons[1]?.addEventListener('click', skipSpellingWord);
 
-    document.getElementById('save-target-folder')?.addEventListener('change', event => onSaveTargetFolderChange(event.currentTarget));
-    document.querySelector('#save-target-folder + button')?.addEventListener('click', saveWrongWords);
-    document.querySelector('#view-game-result > div > button:last-child')?.addEventListener('click', () => navigateTo('practice'));
+    document.getElementById('btn-save-review')?.addEventListener('click', saveReviewWords);
+    document.getElementById('btn-result-return')?.addEventListener('click', () => navigateTo('practice'));
 
     const addButtons = document.querySelectorAll('#add-modal .grid button');
     addButtons[0]?.addEventListener('click', closeAddModal);
@@ -1813,15 +2696,15 @@ function bindStaticEvents() {
     actionButtons[3]?.addEventListener('click', closeActionModal);
 
     const renameButtons = document.querySelectorAll('#rename-modal .grid button');
-    renameButtons[0]?.addEventListener('click', () => document.getElementById('rename-modal').classList.add('hidden'));
+    renameButtons[0]?.addEventListener('click', closeRenameModal);
     renameButtons[1]?.addEventListener('click', executeRename);
 
     const confirmButtons = document.querySelectorAll('#confirm-modal .grid button');
-    confirmButtons[0]?.addEventListener('click', () => document.getElementById('confirm-modal').classList.add('hidden'));
+    confirmButtons[0]?.addEventListener('click', closeConfirmModal);
     confirmButtons[1]?.addEventListener('click', executeDelete);
 
     const newFolderButtons = document.querySelectorAll('#new-folder-modal .grid button');
-    newFolderButtons[0]?.addEventListener('click', () => document.getElementById('new-folder-modal').classList.add('hidden'));
+    newFolderButtons[0]?.addEventListener('click', closeNewFolderModal);
     newFolderButtons[1]?.addEventListener('click', confirmNewFolder);
 
     document.getElementById('settings-bgm-enabled')?.addEventListener('change', event => toggleBgmEnabledFromCheckbox(event.currentTarget.checked));
@@ -1833,8 +2716,10 @@ function bindStaticEvents() {
 
 async function bootstrap() {
     try {
+        updateAppLoading('正在載入單字資料，請稍等。');
         await loadDefaultWordDatabase();
         resetToDefaultState();
+        initializeModalAccessibility();
         bindStaticEvents();
         setupAudioSystem();
         setupBgmAutoplayUnlock();
@@ -1842,27 +2727,37 @@ async function bootstrap() {
         const page = new URL(window.location).searchParams.get('page') || 'home';
         showView(page);
         history.replaceState({ viewId: page }, '', window.location);
+        updateAppLoading('正在確認登入與同步資料，請稍等。');
 
         onAuthStateChanged(auth, async user => {
+            const generation = ++cloudLoadGeneration;
             authReady = true;
             currentUser = user;
+            if (user) isLoggingIn = false;
+            else isLoggingOut = false;
             updateAuthUI(user);
             if (user) {
                 try {
-                    await loadFromCloud(user);
+                    await loadFromCloud(user, generation);
+                    if (generation !== cloudLoadGeneration) return;
                     applyBgmSettingsToElement();
                 } catch (err) {
+                    if (generation !== cloudLoadGeneration) return;
                     console.error('載入雲端資料失敗', err);
                     alert('載入雲端資料失敗：' + (err.message || err));
                 }
             } else {
+                isCloudLoading = false;
                 resetToDefaultState();
             }
+            if (generation !== cloudLoadGeneration) return;
+            updateAuthUI(currentUser);
             rerenderVisibleView();
+            finishAppLoading();
         });
     } catch (err) {
         console.error(err);
-        document.body.innerHTML = '<main class="p-6 text-center text-red-600 font-bold">單字資料載入失敗，請確認 data/lessons JSON 檔案存在。</main>';
+        failAppLoading('單字資料載入失敗，請重新整理或稍後再試。');
     }
 }
 
