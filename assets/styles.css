@@ -113,4 +113,20 @@ html, body {
             border-color: #ef4444 !important;
             opacity: 0.6;
         }
-    
+
+        #search-suggestions {
+            max-height: 320px;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .search-suggestion-option {
+            height: 64px;
+            min-height: 64px;
+        }
+
+        .search-suggestion-option[aria-selected="true"] {
+            background-color: #eef2ff;
+            box-shadow: inset 3px 0 0 #4f46e5;
+        }

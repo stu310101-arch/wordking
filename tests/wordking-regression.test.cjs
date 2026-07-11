@@ -3,6 +3,200 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
+class FakeClassList {
+    constructor(owner) {
+        this.owner = owner;
+    }
+
+    values() {
+        return new Set(String(this.owner.className || '').split(/\s+/).filter(Boolean));
+    }
+
+    write(values) {
+        this.owner.className = Array.from(values).join(' ');
+    }
+
+    add(...tokens) {
+        const values = this.values();
+        tokens.forEach(token => values.add(token));
+        this.write(values);
+    }
+
+    remove(...tokens) {
+        const values = this.values();
+        tokens.forEach(token => values.delete(token));
+        this.write(values);
+    }
+
+    contains(token) {
+        return this.values().has(token);
+    }
+
+    toggle(token, force) {
+        const values = this.values();
+        const enabled = force === undefined ? !values.has(token) : !!force;
+        if (enabled) values.add(token);
+        else values.delete(token);
+        this.write(values);
+        return enabled;
+    }
+
+    replace(oldToken, newToken) {
+        const values = this.values();
+        if (!values.delete(oldToken)) return false;
+        values.add(newToken);
+        this.write(values);
+        return true;
+    }
+}
+
+class FakeTextNode {
+    constructor(text) {
+        this.nodeType = 3;
+        this.textContent = String(text ?? '');
+        this.parentElement = null;
+    }
+}
+
+class FakeElement {
+    constructor(tagName = 'div') {
+        this.nodeType = 1;
+        this.tagName = String(tagName).toUpperCase();
+        this.children = [];
+        this.attributes = new Map();
+        this.className = '';
+        this.classList = new FakeClassList(this);
+        this.dataset = {};
+        this.style = {};
+        this.hidden = false;
+        this.inert = false;
+        this.id = '';
+        this.value = '';
+        this.scrollTop = 0;
+        this.clientHeight = 320;
+        this.offsetTop = 0;
+        this.offsetHeight = 64;
+        this.parentElement = null;
+        this.listeners = new Map();
+        this._textContent = '';
+        this.rect = { left: 120, right: 248, width: 128, top: 0, bottom: 32, height: 32 };
+    }
+
+    set textContent(value) {
+        this._textContent = String(value ?? '');
+        this.children = [];
+    }
+
+    get textContent() {
+        return this._textContent + this.children.map(child => child.textContent || '').join('');
+    }
+
+    appendChild(child) {
+        child.parentElement = this;
+        if (this.id === 'search-suggestions' && child.getAttribute?.('role') === 'option') {
+            const optionCount = this.children.filter(item => item.getAttribute?.('role') === 'option').length;
+            child.offsetTop = optionCount * 64;
+            child.offsetHeight = 64;
+        }
+        this.children.push(child);
+        return child;
+    }
+
+    append(...children) {
+        children.forEach(child => this.appendChild(child));
+    }
+
+    replaceChildren(...children) {
+        this._textContent = '';
+        this.children = [];
+        this.append(...children);
+    }
+
+    setAttribute(name, value) {
+        this.attributes.set(name, String(value));
+    }
+
+    getAttribute(name) {
+        return this.attributes.has(name) ? this.attributes.get(name) : null;
+    }
+
+    removeAttribute(name) {
+        this.attributes.delete(name);
+    }
+
+    toggleAttribute(name, force) {
+        if (force) this.attributes.set(name, '');
+        else this.attributes.delete(name);
+    }
+
+    addEventListener(type, listener) {
+        if (!this.listeners.has(type)) this.listeners.set(type, []);
+        this.listeners.get(type).push(listener);
+    }
+
+    dispatch(type, event = {}) {
+        (this.listeners.get(type) || []).forEach(listener => listener({ target: this, ...event }));
+    }
+
+    click() {
+        this.dispatch('click');
+    }
+
+    querySelectorAll(selector) {
+        const matches = [];
+        const visit = element => {
+            if (!(element instanceof FakeElement)) return;
+            if (selector === '[role="option"]' && element.getAttribute('role') === 'option') {
+                matches.push(element);
+            }
+            element.children.forEach(visit);
+        };
+        this.children.forEach(visit);
+        return matches;
+    }
+
+    contains(target) {
+        if (target === this) return true;
+        return this.children.some(child => child instanceof FakeElement && child.contains(target));
+    }
+
+    getBoundingClientRect() {
+        return { ...this.rect };
+    }
+}
+
+function createSearchDom(document, viewportWidth = 390) {
+    const control = new FakeElement('div');
+    control.id = 'search-control';
+    control.rect = { left: 120, right: 248, width: 128, top: 0, bottom: 32, height: 32 };
+    const input = new FakeElement('input');
+    input.id = 'search-input';
+    input.rect = { ...control.rect };
+    const listbox = new FakeElement('div');
+    listbox.id = 'search-suggestions';
+    listbox.className = 'hidden';
+    listbox.hidden = true;
+    listbox.clientHeight = 320;
+    control.append(input, listbox);
+    const elements = new Map([
+        ['search-control', control],
+        ['search-input', input],
+        ['search-suggestions', listbox]
+    ]);
+    document.getElementById = id => elements.get(id) || null;
+    document.documentElement = { clientWidth: viewportWidth };
+    document.createElement = tagName => new FakeElement(tagName);
+    document.createTextNode = text => new FakeTextNode(text);
+    return { control, input, listbox, elements };
+}
+
+function serializeFakeNode(node) {
+    if (node instanceof FakeTextNode) return node.textContent;
+    const content = node._textContent + node.children.map(serializeFakeNode).join('');
+    if (node.tagName === 'MARK') return `<mark>${content}</mark>`;
+    return content;
+}
+
 function loadWordKing() {
     const appPath = path.join(__dirname, '..', 'assets', 'app.js');
     let source = fs.readFileSync(appPath, 'utf8');
@@ -10,6 +204,8 @@ function loadWordKing() {
     source += `
         const __originalSaveDiffChangesToCloud = saveDiffChangesToCloud;
         const __originalLoadUserDiffData = loadUserDiffData;
+        const __originalNavigateToWord = navigateToWord;
+        const __originalUpdateSearchSuggestions = updateSearchSuggestions;
         globalThis.__wordKingTest = {
             state,
             WRONG_FOLDER,
@@ -19,6 +215,25 @@ function loadWordKing() {
             wordIsInFolder,
             validateFolderName,
             findWordCardById,
+            normalizeSearchQuery,
+            normalizeEnglishSearchText,
+            findOrderedMatchIndexes,
+            getChineseMatchScore,
+            findSearchMatches,
+            appendHighlightedSubstring,
+            appendHighlightedIndexes,
+            createSearchSuggestionOption,
+            updateSearchSuggestions,
+            refreshSearchSuggestionsForCurrentData,
+            closeSearchSuggestions,
+            updateActiveSearchSuggestion,
+            selectSearchSuggestion,
+            handleSearchInput,
+            handleSearchCompositionStart,
+            handleSearchCompositionEnd,
+            handleSearchOutsidePointerDown,
+            handleSearchKeydown,
+            applyUserData,
             confirmNewFolder,
             saveNewWord,
             executeRename,
@@ -49,6 +264,23 @@ function loadWordKing() {
             },
             setSaver(saver) {
                 saveDiffChangesToCloud = saver;
+            },
+            setWordNavigator(navigator) {
+                navigateToWord = navigator;
+            },
+            setSearchUpdater(updater) {
+                updateSearchSuggestions = updater;
+            },
+            restoreSearchDependencies() {
+                navigateToWord = __originalNavigateToWord;
+                updateSearchSuggestions = __originalUpdateSearchSuggestions;
+            },
+            getSearchState() {
+                return {
+                    suggestions: [...searchSuggestions],
+                    activeIndex: activeSearchSuggestionIndex,
+                    isComposing: isSearchComposing
+                };
             },
             setCloudLoader(loader) {
                 loadUserDiffData = loader;
@@ -89,6 +321,12 @@ function loadWordKing() {
                 executeTransaction = (database, updateFunction) => runTransaction(database, updateFunction);
                 subscribeToSnapshot = (reference, onNext, onError) => onSnapshot(reference, onNext, onError);
                 waitBeforeRetry = delay => new Promise(resolve => setTimeout(resolve, delay));
+                navigateToWord = __originalNavigateToWord;
+                updateSearchSuggestions = __originalUpdateSearchSuggestions;
+                searchSuggestions = [];
+                activeSearchSuggestionIndex = -1;
+                isSearchComposing = false;
+                searchSuggestionRenderId = 0;
                 state.words = [];
                 state.folders = [WRONG_FOLDER];
                 state.folderIds = [WRONG_FOLDER];
@@ -112,13 +350,18 @@ function loadWordKing() {
             addEventListener() {},
             getElementById() { return null; },
             querySelector() { return null; },
-            querySelectorAll() { return []; }
+            querySelectorAll() { return []; },
+            createElement: tagName => new FakeElement(tagName),
+            createTextNode: text => new FakeTextNode(text),
+            documentElement: { clientWidth: 390 }
         },
         window: {
             crypto: { randomUUID: () => 'test-uuid' },
             speechSynthesis: {},
             location: 'http://127.0.0.1:8000/?page=home',
-            scrollTo() {}
+            scrollTo() {},
+            addEventListener() {},
+            innerWidth: 390
         },
         history: { pushState() {} },
         location: {},
@@ -181,6 +424,10 @@ function applyOperations(operations) {
 async function run() {
     const { api, alerts, document } = loadWordKing();
     const results = [];
+    const recordSearch = (number, label, assertion) => {
+        assertion();
+        results.push(`SEARCH ${number} - ${label}`);
+    };
 
     // BUG 1: the current product contract is one normal folder per word.
     {
@@ -714,8 +961,380 @@ async function run() {
         assert.match(html, /<link rel="stylesheet" href="\.\/assets\/tailwind\.css">/);
         assert.match(html, /id="btn-search"[^>]*aria-label="搜尋單字"/);
         assert.match(html, /id="btn-home-brand"[^>]*type="button"/);
+        assert.match(html, /id="search-input"[\s\S]{0,300}role="combobox"/);
+        assert.match(html, /aria-controls="search-suggestions"/);
+        assert.match(html, /id="search-suggestions"[\s\S]{0,200}role="listbox"/);
         assert.match(tailwindCss, /\.bg-indigo-600/);
         results.push('A11Y - semantic controls and compiled Tailwind');
+    }
+
+    // SEARCH 1-53: live matching, highlighting, listbox behavior, IME, and refresh hooks.
+    {
+        const makeWord = (id, english, meaning, folderId = 'Search') => ({
+            id,
+            source: 'custom',
+            english,
+            meaning,
+            folderId,
+            isWrong: false
+        });
+        const englishWords = [
+            makeWord('adorable', 'adorable', '可愛的'),
+            makeWord('adore', 'adore', '喜愛'),
+            makeWord('apoint', 'apoint', '指定'),
+            makeWord('apple', 'apple', '蘋果'),
+            makeWord('asset', 'asset', '資產')
+        ];
+        const chineseWords = [
+            makeWord('science', 'science', '科學'),
+            makeWord('science-fair', 'science fair', '科展'),
+            makeWord('technology', 'technology', '科技'),
+            makeWord('science-exhibition', 'science exhibition', '科學展'),
+            makeWord('apple-company', 'apple company', '蘋果公司'),
+            makeWord('company', 'company', '公司')
+        ];
+        const englishResults = query => Array.from(
+            api.findSearchMatches(query, englishWords),
+            candidate => candidate.word.english
+        );
+        const chineseResults = query => Array.from(
+            api.findSearchMatches(query, chineseWords),
+            candidate => candidate.word.meaning
+        );
+
+        recordSearch(1, 'ador matches adorable and adore', () => {
+            assert.deepEqual(englishResults('ador'), ['adorable', 'adore']);
+        });
+        recordSearch(2, 'or matches adorable and adore', () => {
+            assert.deepEqual(englishResults('or'), ['adorable', 'adore']);
+        });
+        recordSearch(3, 'ore matches adore', () => {
+            assert.deepEqual(englishResults('ore'), ['adore']);
+        });
+        recordSearch(4, 'ble matches adorable', () => {
+            assert.deepEqual(englishResults('ble'), ['adorable']);
+        });
+        recordSearch(5, 'aor does not use skip matching', () => {
+            assert.deepEqual(englishResults('aor'), []);
+        });
+        recordSearch(6, 'ae does not match adore', () => {
+            assert.deepEqual(englishResults('ae'), []);
+        });
+        recordSearch(7, 'English matching is case insensitive', () => {
+            assert.deepEqual(englishResults('ADOR'), ['adorable', 'adore']);
+        });
+        recordSearch(8, 'OR and or return the same results', () => {
+            assert.deepEqual(englishResults('OR'), englishResults('or'));
+        });
+        recordSearch(9, 'English results use A-Z ordering', () => {
+            assert.deepEqual(englishResults('a'), ['adorable', 'adore', 'apoint', 'apple', 'asset']);
+        });
+        recordSearch(10, 'Second English character narrows immediately', () => {
+            assert.equal(englishResults('a').length, 5);
+            assert.deepEqual(englishResults('ap'), ['apoint', 'apple']);
+        });
+
+        recordSearch(11, 'Single Chinese character matches every ordered result', () => {
+            assert.deepEqual(
+                new Set(chineseResults('科')),
+                new Set(['科學', '科展', '科技', '科學展'])
+            );
+        });
+        recordSearch(12, '科展 narrows to 科展 and 科學展', () => {
+            assert.deepEqual(chineseResults('科展'), ['科展', '科學展']);
+        });
+        recordSearch(13, 'Reversed Chinese order does not match', () => {
+            assert.deepEqual(chineseResults('展科'), []);
+        });
+        recordSearch(14, 'Chinese ordered indexes are exact', () => {
+            assert.deepEqual(Array.from(api.findOrderedMatchIndexes('科學展', '科展')), [0, 2]);
+        });
+        recordSearch(15, '蘋司 matches 蘋果公司', () => {
+            assert.deepEqual(chineseResults('蘋司'), ['蘋果公司']);
+        });
+        recordSearch(16, '公司 matches exact and embedded meanings', () => {
+            assert.deepEqual(chineseResults('公司'), ['公司', '蘋果公司']);
+        });
+        recordSearch(17, 'Exact Chinese result sorts before skipped result', () => {
+            assert.deepEqual(chineseResults('科展'), ['科展', '科學展']);
+        });
+        recordSearch(18, 'Second Chinese character narrows immediately', () => {
+            assert.equal(chineseResults('科').length, 4);
+            assert.deepEqual(chineseResults('科展'), ['科展', '科學展']);
+        });
+
+        createSearchDom(document);
+        const englishHighlight = new FakeElement('span');
+        api.appendHighlightedSubstring(englishHighlight, 'adorable', 2, 2);
+        recordSearch(19, 'English highlight creates one mark for the real substring', () => {
+            assert.equal(englishHighlight.children.filter(child => child.tagName === 'MARK').length, 1);
+        });
+        recordSearch(20, 'English highlight output is ad<mark>or</mark>able', () => {
+            assert.equal(serializeFakeNode(englishHighlight), 'ad<mark>or</mark>able');
+        });
+        const chineseHighlight = new FakeElement('span');
+        api.appendHighlightedIndexes(chineseHighlight, '科學展', [0, 2]);
+        recordSearch(21, 'Chinese highlight creates separate marks', () => {
+            assert.equal(chineseHighlight.children.filter(child => child.tagName === 'MARK').length, 2);
+        });
+        recordSearch(22, 'Skipped Chinese character is not highlighted', () => {
+            assert.equal(serializeFakeNode(chineseHighlight), '<mark>科</mark>學<mark>展</mark>');
+        });
+        const companyHighlight = new FakeElement('span');
+        api.appendHighlightedIndexes(companyHighlight, '蘋果公司', [0, 3]);
+        recordSearch(23, '蘋司 highlights only 蘋 and 司', () => {
+            assert.equal(serializeFakeNode(companyHighlight), '<mark>蘋</mark>果公<mark>司</mark>');
+        });
+
+        const unsafeWord = makeWord(
+            'unsafe',
+            '<script>alert(1)</script>',
+            '<img src=x onerror=alert(1)>',
+            '<b>folder</b>'
+        );
+        const unsafeOption = api.createSearchSuggestionOption({
+            key: 'unsafe',
+            word: unsafeWord,
+            folderName: unsafeWord.folderId,
+            englishMatchStart: 1,
+            englishMatchLength: 6,
+            chineseMatchIndexes: null
+        }, 0, 1);
+        const collectElementTags = root => {
+            const tags = [];
+            const visit = node => {
+                if (!(node instanceof FakeElement)) return;
+                tags.push(node.tagName);
+                node.children.forEach(visit);
+            };
+            visit(root);
+            return tags;
+        };
+        recordSearch(24, 'Script-like user text stays visible as text', () => {
+            assert.equal(unsafeOption.textContent.includes('<script>alert(1)</script>'), true);
+        });
+        recordSearch(25, 'User HTML is never parsed into elements', () => {
+            const tags = collectElementTags(unsafeOption);
+            assert.equal(tags.includes('SCRIPT'), false);
+            assert.equal(tags.includes('IMG'), false);
+            assert.equal(tags.includes('B'), false);
+        });
+        recordSearch(26, 'Suggestion renderer does not use innerHTML', () => {
+            assert.doesNotMatch(String(api.createSearchSuggestionOption), /innerHTML/);
+        });
+
+        const prepareSearch = (words, query, viewportWidth = 390) => {
+            api.reset();
+            api.setDefaults([], []);
+            api.state.words = words.map(word => ({ ...word }));
+            api.state.folders = [api.WRONG_FOLDER, 'Search'];
+            const dom = createSearchDom(document, viewportWidth);
+            dom.input.value = query;
+            api.updateSearchSuggestions();
+            return dom;
+        };
+        const shortDom = prepareSearch(englishWords.slice(0, 3), 'a');
+        recordSearch(27, 'Five or fewer results all render completely', () => {
+            assert.equal(shortDom.listbox.querySelectorAll('[role="option"]').length, 3);
+        });
+
+        const manyWords = [
+            makeWord('alpha', 'alpha', '一'),
+            makeWord('bravo', 'bravo', '二'),
+            makeWord('charlie', 'charlie', '三'),
+            makeWord('delta', 'delta', '四'),
+            makeWord('gamma', 'gamma', '五'),
+            makeWord('kappa', 'kappa', '六'),
+            makeWord('lambda', 'lambda', '七'),
+            makeWord('zeta', 'zeta', '八')
+        ];
+        let manyDom = prepareSearch(manyWords, 'a');
+        recordSearch(28, 'More than five results remain in the DOM', () => {
+            assert.equal(manyDom.listbox.querySelectorAll('[role="option"]').length, 8);
+            assert.equal(api.getSearchState().suggestions.length, 8);
+        });
+        recordSearch(29, 'No five-result slicing is present', () => {
+            const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'app.js'), 'utf8');
+            assert.doesNotMatch(source, /slice\(0,\s*5\)/);
+        });
+        recordSearch(30, 'Long result lists scroll vertically', () => {
+            assert.equal(manyDom.listbox.style.overflowY, 'auto');
+        });
+        recordSearch(31, 'Listbox visual height is exactly five rows', () => {
+            assert.equal(manyDom.listbox.style.maxHeight, '320px');
+        });
+        for (let index = 0; index < 6; index += 1) {
+            api.handleSearchKeydown({ key: 'ArrowDown', isComposing: false, preventDefault() {} });
+        }
+        recordSearch(32, 'ArrowDown to the sixth result scrolls the listbox', () => {
+            assert.equal(api.getSearchState().activeIndex, 5);
+            assert.equal(manyDom.listbox.scrollTop > 0, true);
+        });
+        const manyOptions = manyDom.listbox.querySelectorAll('[role="option"]');
+        recordSearch(33, 'The sixth result remains a clickable button', () => {
+            assert.equal(manyOptions[5].tagName, 'BUTTON');
+            assert.equal(typeof manyOptions[5].click, 'function');
+        });
+        let navigatedWord = null;
+        let navigateCalls = 0;
+        const expectedSixthId = api.getSearchState().suggestions[5].word.id;
+        api.setWordNavigator(word => {
+            navigatedWord = word;
+            navigateCalls += 1;
+            return true;
+        });
+        manyOptions[5].click();
+        recordSearch(34, 'Clicking the sixth result navigates to that word', () => {
+            assert.equal(navigatedWord.id, expectedSixthId);
+        });
+        api.selectSearchSuggestion(0);
+        recordSearch(35, 'Candidate selection reuses navigateToWord', () => {
+            assert.equal(navigateCalls, 2);
+            assert.match(String(api.selectSearchSuggestion), /navigateToWord/);
+        });
+        api.restoreSearchDependencies();
+
+        manyDom = prepareSearch(manyWords, 'a');
+        api.handleSearchKeydown({ key: 'ArrowDown', isComposing: false, preventDefault() {} });
+        recordSearch(36, 'ArrowDown selects the next result', () => {
+            assert.equal(api.getSearchState().activeIndex, 0);
+        });
+        api.handleSearchKeydown({ key: 'ArrowDown', isComposing: false, preventDefault() {} });
+        api.handleSearchKeydown({ key: 'ArrowUp', isComposing: false, preventDefault() {} });
+        recordSearch(37, 'ArrowUp selects the previous result', () => {
+            assert.equal(api.getSearchState().activeIndex, 0);
+        });
+
+        manyDom = prepareSearch(manyWords, 'a');
+        let enteredId = null;
+        api.setWordNavigator(word => {
+            enteredId = word.id;
+            return true;
+        });
+        api.handleSearchKeydown({ key: 'ArrowDown', isComposing: false, preventDefault() {} });
+        api.handleSearchKeydown({ key: 'ArrowDown', isComposing: false, preventDefault() {} });
+        const expectedSecondId = api.getSearchState().suggestions[1].word.id;
+        api.handleSearchKeydown({ key: 'Enter', isComposing: false, preventDefault() {} });
+        recordSearch(38, 'Enter selects the active result', () => {
+            assert.equal(enteredId, expectedSecondId);
+        });
+        api.restoreSearchDependencies();
+
+        manyDom = prepareSearch(manyWords, 'a');
+        let firstEnteredId = null;
+        api.setWordNavigator(word => {
+            firstEnteredId = word.id;
+            return true;
+        });
+        const expectedFirstId = api.getSearchState().suggestions[0].word.id;
+        api.handleSearchKeydown({ key: 'Enter', isComposing: false, preventDefault() {} });
+        recordSearch(39, 'Enter without an active result selects the first result', () => {
+            assert.equal(firstEnteredId, expectedFirstId);
+        });
+        api.restoreSearchDependencies();
+
+        manyDom = prepareSearch(manyWords, 'a');
+        api.handleSearchKeydown({ key: 'Escape', isComposing: false, preventDefault() {} });
+        recordSearch(40, 'Escape closes the listbox', () => {
+            assert.equal(manyDom.listbox.hidden, true);
+        });
+        manyDom = prepareSearch(manyWords, 'a');
+        api.handleSearchOutsidePointerDown({ target: new FakeElement('div') });
+        recordSearch(41, 'Pointer down outside closes the listbox', () => {
+            assert.equal(manyDom.listbox.hidden, true);
+        });
+        manyDom = prepareSearch(manyWords, 'a');
+        manyDom.input.value = '';
+        api.updateSearchSuggestions();
+        recordSearch(42, 'Empty query closes and clears suggestions', () => {
+            assert.equal(manyDom.listbox.hidden, true);
+            assert.equal(api.getSearchState().suggestions.length, 0);
+        });
+        recordSearch(43, 'Auth state changes close suggestions before loading', () => {
+            const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'app.js'), 'utf8');
+            const authStart = source.indexOf('onAuthStateChanged(auth');
+            const authLoad = source.indexOf('authReady = true', authStart);
+            assert.match(source.slice(authStart, authLoad), /closeSearchSuggestions\(\{ clearResults: true \}\)/);
+        });
+
+        manyDom = prepareSearch(manyWords, 'a');
+        recordSearch(44, 'aria-expanded follows listbox visibility', () => {
+            assert.equal(manyDom.input.getAttribute('aria-expanded'), 'true');
+            api.closeSearchSuggestions();
+            assert.equal(manyDom.input.getAttribute('aria-expanded'), 'false');
+        });
+        manyDom = prepareSearch(manyWords, 'a');
+        api.updateActiveSearchSuggestion(1);
+        recordSearch(45, 'aria-activedescendant follows the active option', () => {
+            assert.equal(
+                manyDom.input.getAttribute('aria-activedescendant'),
+                manyDom.listbox.querySelectorAll('[role="option"]')[1].id
+            );
+        });
+        recordSearch(46, 'aria-selected is maintained on every option', () => {
+            const options = manyDom.listbox.querySelectorAll('[role="option"]');
+            assert.equal(options[1].getAttribute('aria-selected'), 'true');
+            assert.equal(options[0].getAttribute('aria-selected'), 'false');
+        });
+
+        api.reset();
+        createSearchDom(document);
+        let compositionUpdates = 0;
+        api.setSearchUpdater(() => { compositionUpdates += 1; });
+        api.handleSearchCompositionStart();
+        api.handleSearchInput();
+        recordSearch(47, 'Composition suppresses suggestion updates', () => {
+            assert.equal(compositionUpdates, 0);
+            assert.equal(api.getSearchState().isComposing, true);
+        });
+        api.handleSearchCompositionEnd();
+        recordSearch(48, 'Composition end refreshes once', () => {
+            assert.equal(compositionUpdates, 1);
+            assert.equal(api.getSearchState().isComposing, false);
+        });
+        api.restoreSearchDependencies();
+
+        const dataDom = prepareSearch([makeWord('alpha', 'alpha', '一')], 'a');
+        await api.commitUserMutation(draft => {
+            draft.words.push(makeWord('beta', 'beta', '二'));
+        }, { requireAuth: false });
+        recordSearch(49, 'Adding a word refreshes suggestions', () => {
+            assert.equal(dataDom.listbox.querySelectorAll('[role="option"]').length, 2);
+        });
+        await api.commitUserMutation(draft => {
+            const alpha = draft.words.find(word => word.id === 'alpha');
+            alpha.english = 'echo';
+        }, { requireAuth: false });
+        recordSearch(50, 'Editing a word refreshes suggestions', () => {
+            assert.equal(dataDom.listbox.querySelectorAll('[role="option"]').length, 1);
+            assert.equal(api.getSearchState().suggestions[0].word.english, 'beta');
+        });
+        await api.commitUserMutation(draft => {
+            draft.words = draft.words.filter(word => word.id !== 'beta');
+        }, { requireAuth: false });
+        recordSearch(51, 'Deleting a word refreshes suggestions', () => {
+            assert.equal(dataDom.listbox.querySelectorAll('[role="option"]').length, 0);
+            assert.equal(dataDom.listbox.textContent.includes('找不到符合的單字'), true);
+        });
+
+        const cloudDom = prepareSearch([], '科');
+        api.applyUserData({
+            words: [makeWord('cloud-science', 'science', '科學')],
+            folders: [api.WRONG_FOLDER, 'Search'],
+            settings: api.state.settings
+        });
+        recordSearch(52, 'Cloud reload refreshes suggestions', () => {
+            assert.equal(cloudDom.listbox.querySelectorAll('[role="option"]').length, 1);
+            assert.equal(api.getSearchState().suggestions[0].word.id, 'cloud-science');
+        });
+        recordSearch(53, 'A word matching both fields is rendered once', () => {
+            const duplicateMatches = api.findSearchMatches('科展', [
+                makeWord('both-fields', '科展', '科展')
+            ]);
+            assert.equal(duplicateMatches.length, 1);
+            assert.equal(duplicateMatches[0].englishMatchStart, 0);
+            assert.deepEqual(Array.from(duplicateMatches[0].chineseMatchIndexes), [0, 1]);
+        });
     }
 
     process.stdout.write(`${JSON.stringify({ passed: results.length, results }, null, 2)}\n`);

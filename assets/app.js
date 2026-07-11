@@ -27,6 +27,9 @@ const ATOMIC_OPERATION_LIMIT = 440;
 const BATCH_CHUNK_SIZE = 440;
 const BATCH_RETRY_LIMIT = 3;
 const SYNC_LOCK_STALE_MS = 2 * 60 * 1000;
+const SEARCH_SUGGESTION_VISIBLE_COUNT = 5;
+const SEARCH_SUGGESTION_ROW_HEIGHT = 64;
+const MAX_SEARCH_SUGGESTIONS = 200;
 
 const PART_OF_SPEECH_OPTIONS = {
     noun: { label: '名詞', short: '(n.)' },
@@ -86,6 +89,10 @@ let cloudRevision = 0;
 let pendingRemoteRevision = 0;
 let activeCloudWrites = 0;
 let unsubscribeUserRevision = null;
+let searchSuggestions = [];
+let activeSearchSuggestionIndex = -1;
+let isSearchComposing = false;
+let searchSuggestionRenderId = 0;
 
 const modalReturnFocus = new WeakMap();
 
@@ -267,6 +274,7 @@ function applyUserData(data) {
     state.folders = normalizeFolders(data.folders || [], state.words, state.settings);
     clearPracticeSession();
     refreshFolders();
+    refreshSearchSuggestionsForCurrentData();
 }
 
 function hydrateSettings(saved) {
@@ -1170,6 +1178,7 @@ async function commitUserMutation(mutator, { requireAuth = true, afterRollback =
         state.words = ensureWordIdentities(state.words);
         state.folders = normalizeFolders(state.folders, state.words, state.settings);
         refreshFolders();
+        refreshSearchSuggestionsForCurrentData();
         return true;
     }
 
@@ -1183,6 +1192,7 @@ async function commitUserMutation(mutator, { requireAuth = true, afterRollback =
         await saveDiffChangesToCloud(previous, snapshotUserState(), mutationUser, {
             expectedRevision: cloudRevision
         });
+        refreshSearchSuggestionsForCurrentData();
         return true;
     } catch (err) {
         let reloaded = false;
@@ -1195,6 +1205,7 @@ async function commitUserMutation(mutator, { requireAuth = true, afterRollback =
         }
         if (!reloaded) restoreUserState(previous);
         refreshFolders();
+        refreshSearchSuggestionsForCurrentData();
         console.error('使用者資料儲存失敗', err);
         if (isCloudConsistencyError(err)) {
             alert(getCloudRecoveryMessage(err, reloaded));
@@ -1523,24 +1534,247 @@ function findWordCardById(cards, wordId) {
     return Array.from(cards || []).find(card => card.dataset.wordId === wordId) || null;
 }
 
-function searchWord() {
-    const input = document.getElementById('search-input');
-    const query = input.value.trim().toLowerCase();
-    if (!query) return;
+function normalizeSearchQuery(query) {
+    return String(query ?? '').trim().normalize('NFKC');
+}
 
-    const foundWord = state.words.find(w =>
-        w.english.toLowerCase() === query ||
-        (w.meaning || '').toLowerCase().includes(query)
-    );
+function normalizeEnglishSearchText(text) {
+    return String(text ?? '').normalize('NFKC').toLocaleLowerCase('en');
+}
 
-    if (!foundWord) {
-        alert('找不到這個單字。');
+function isChineseSearchQuery(query) {
+    return /\p{Script=Han}/u.test(String(query ?? ''));
+}
+
+function findOrderedMatchIndexes(text, query) {
+    const textChars = Array.from(String(text ?? '').normalize('NFKC'));
+    const queryChars = Array.from(String(query ?? '').normalize('NFKC'));
+    if (!queryChars.length) return null;
+
+    const indexes = [];
+    let searchFrom = 0;
+    for (const queryChar of queryChars) {
+        let matchedIndex = -1;
+        for (let index = searchFrom; index < textChars.length; index += 1) {
+            if (textChars[index] === queryChar) {
+                matchedIndex = index;
+                break;
+            }
+        }
+        if (matchedIndex === -1) return null;
+        indexes.push(matchedIndex);
+        searchFrom = matchedIndex + 1;
+    }
+    return indexes;
+}
+
+function getChineseMatchScore(text, query, indexes) {
+    const normalizedText = String(text ?? '').normalize('NFKC');
+    const normalizedQuery = String(query ?? '').normalize('NFKC');
+    const totalGap = indexes.reduce((sum, index, position) => {
+        if (position === 0) return sum;
+        return sum + index - indexes[position - 1] - 1;
+    }, 0);
+    return {
+        exact: normalizedText === normalizedQuery ? 0 : 1,
+        contiguous: normalizedText.includes(normalizedQuery) ? 0 : 1,
+        startIndex: indexes[0] ?? Number.MAX_SAFE_INTEGER,
+        totalGap,
+        length: Array.from(normalizedText).length
+    };
+}
+
+function compareSearchText(a, b, locale) {
+    return String(a ?? '').localeCompare(String(b ?? ''), locale, {
+        sensitivity: 'base',
+        numeric: true
+    });
+}
+
+function compareEnglishSearchCandidates(a, b) {
+    return compareSearchText(a.word.english, b.word.english, 'en') ||
+        compareSearchText(a.word.meaning, b.word.meaning, 'zh-Hant') ||
+        compareSearchText(a.folderName, b.folderName, 'zh-Hant') ||
+        compareSearchText(a.key, b.key, 'en');
+}
+
+function compareChineseSearchCandidates(a, b) {
+    const scoreFields = ['exact', 'contiguous', 'startIndex', 'totalGap', 'length'];
+    for (const field of scoreFields) {
+        const difference = a.chineseScore[field] - b.chineseScore[field];
+        if (difference) return difference;
+    }
+    return compareSearchText(a.word.meaning, b.word.meaning, 'zh-Hant') ||
+        compareSearchText(a.word.english, b.word.english, 'en') ||
+        compareSearchText(a.folderName, b.folderName, 'zh-Hant') ||
+        compareSearchText(a.key, b.key, 'en');
+}
+
+function findSearchMatches(query, words = state.words) {
+    const normalizedQuery = normalizeSearchQuery(query);
+    if (!normalizedQuery) return [];
+    const chineseQuery = isChineseSearchQuery(normalizedQuery);
+    const normalizedEnglishQuery = normalizeEnglishSearchText(normalizedQuery);
+    const matches = [];
+    const matchedKeys = new Set();
+
+    (words || []).forEach(word => {
+        const key = getWordKey(word);
+        if (matchedKeys.has(key)) return;
+
+        let englishMatchStart = -1;
+        let englishMatchLength = 0;
+        let chineseMatchIndexes = null;
+        let chineseScore = null;
+        const normalizedEnglish = normalizeEnglishSearchText(word.english);
+        const matchIndex = normalizedEnglish.indexOf(normalizedEnglishQuery);
+        if (matchIndex !== -1) {
+            englishMatchStart = Array.from(normalizedEnglish.slice(0, matchIndex)).length;
+            englishMatchLength = Array.from(normalizedEnglishQuery).length;
+        }
+
+        if (chineseQuery) {
+            chineseMatchIndexes = findOrderedMatchIndexes(word.meaning, normalizedQuery);
+            if (!chineseMatchIndexes && englishMatchStart === -1) return;
+            chineseScore = chineseMatchIndexes
+                ? getChineseMatchScore(word.meaning, normalizedQuery, chineseMatchIndexes)
+                : {
+                    exact: 2,
+                    contiguous: 2,
+                    startIndex: Number.MAX_SAFE_INTEGER,
+                    totalGap: Number.MAX_SAFE_INTEGER,
+                    length: Number.MAX_SAFE_INTEGER
+                };
+        } else {
+            if (englishMatchStart === -1) return;
+        }
+
+        const folderId = word.folderId || UNFILED_FOLDER;
+        matches.push({
+            key,
+            word,
+            folderId,
+            folderName: getFolderDisplayName(folderId),
+            englishMatchStart,
+            englishMatchLength,
+            chineseMatchIndexes,
+            chineseScore
+        });
+        matchedKeys.add(key);
+    });
+
+    matches.sort(chineseQuery ? compareChineseSearchCandidates : compareEnglishSearchCandidates);
+    return matches;
+}
+
+function appendHighlightedSubstring(container, originalText, matchStart, matchLength) {
+    const chars = Array.from(String(originalText ?? ''));
+    if (matchStart < 0 || matchLength <= 0 || matchStart >= chars.length) {
+        container.appendChild(document.createTextNode(chars.join('')));
         return;
     }
+    const before = chars.slice(0, matchStart).join('');
+    const matched = chars.slice(matchStart, matchStart + matchLength).join('');
+    const after = chars.slice(matchStart + matchLength).join('');
+    if (before) container.appendChild(document.createTextNode(before));
+    const mark = document.createElement('mark');
+    mark.className = 'rounded bg-yellow-200 px-0.5 text-inherit';
+    mark.textContent = matched;
+    container.appendChild(mark);
+    if (after) container.appendChild(document.createTextNode(after));
+}
 
-    const targetFolderId = foundWord.folderId || UNFILED_FOLDER;
-    const targetWordId = getWordKey(foundWord);
+function appendHighlightedIndexes(container, text, matchedIndexes) {
+    const chars = Array.from(String(text ?? ''));
+    const matchedSet = new Set(matchedIndexes || []);
+    chars.forEach((char, index) => {
+        if (!matchedSet.has(index)) {
+            container.appendChild(document.createTextNode(char));
+            return;
+        }
+        const mark = document.createElement('mark');
+        mark.className = 'rounded bg-yellow-200 px-0.5 text-inherit';
+        mark.textContent = char;
+        container.appendChild(mark);
+    });
+}
 
+function getSearchSuggestionElements() {
+    return {
+        control: document.getElementById('search-control'),
+        input: document.getElementById('search-input'),
+        listbox: document.getElementById('search-suggestions')
+    };
+}
+
+function positionSearchSuggestions() {
+    const { control, input, listbox } = getSearchSuggestionElements();
+    if (!control || !input || !listbox || typeof control.getBoundingClientRect !== 'function') return;
+    const controlRect = control.getBoundingClientRect();
+    const inputRect = input.getBoundingClientRect();
+    const viewportWidth = document.documentElement?.clientWidth || window.innerWidth || inputRect.right;
+    const viewportPadding = 8;
+    const availableWidth = Math.max(0, viewportWidth - viewportPadding * 2);
+    const desiredWidth = Math.min(availableWidth, Math.max(inputRect.width, 352));
+    const absoluteLeft = Math.min(
+        Math.max(inputRect.left, viewportPadding),
+        Math.max(viewportPadding, viewportWidth - viewportPadding - desiredWidth)
+    );
+    listbox.style.width = `${desiredWidth}px`;
+    listbox.style.left = `${absoluteLeft - controlRect.left}px`;
+    listbox.style.right = 'auto';
+    listbox.style.maxHeight = `${SEARCH_SUGGESTION_VISIBLE_COUNT * SEARCH_SUGGESTION_ROW_HEIGHT}px`;
+    listbox.style.overflowY = 'auto';
+}
+
+function closeSearchSuggestions({ clearResults = false } = {}) {
+    const { input, listbox } = getSearchSuggestionElements();
+    activeSearchSuggestionIndex = -1;
+    if (input) {
+        input.setAttribute('aria-expanded', 'false');
+        input.removeAttribute('aria-activedescendant');
+    }
+    if (listbox) {
+        setElementVisible(listbox, false);
+        listbox.scrollTop = 0;
+        if (clearResults) listbox.replaceChildren();
+    }
+    if (clearResults) searchSuggestions = [];
+}
+
+function scrollSearchSuggestionIntoView(option, listbox) {
+    if (!option || !listbox) return;
+    const optionTop = option.offsetTop;
+    const optionBottom = optionTop + option.offsetHeight;
+    const visibleTop = listbox.scrollTop;
+    const visibleBottom = visibleTop + listbox.clientHeight;
+    if (optionTop < visibleTop) listbox.scrollTop = optionTop;
+    else if (optionBottom > visibleBottom) listbox.scrollTop = optionBottom - listbox.clientHeight;
+}
+
+function updateActiveSearchSuggestion(index, { scroll = true } = {}) {
+    const { input, listbox } = getSearchSuggestionElements();
+    if (!input || !listbox || !searchSuggestions.length) {
+        activeSearchSuggestionIndex = -1;
+        if (input) input.removeAttribute('aria-activedescendant');
+        return;
+    }
+    activeSearchSuggestionIndex = Math.max(0, Math.min(index, searchSuggestions.length - 1));
+    const options = Array.from(listbox.querySelectorAll('[role="option"]'));
+    options.forEach((option, optionIndex) => {
+        option.setAttribute('aria-selected', String(optionIndex === activeSearchSuggestionIndex));
+    });
+    const activeOption = options[activeSearchSuggestionIndex];
+    if (!activeOption) return;
+    input.setAttribute('aria-activedescendant', activeOption.id);
+    if (scroll) scrollSearchSuggestionIntoView(activeOption, listbox);
+}
+
+function navigateToWord(word) {
+    if (!word) return false;
+    closeSearchSuggestions({ clearResults: true });
+    const targetFolderId = word.folderId || UNFILED_FOLDER;
+    const targetWordId = getWordKey(word);
     navigateTo('library');
     showView('word-list');
     renderWordList(targetFolderId);
@@ -1552,6 +1786,179 @@ function searchWord() {
             setTimeout(() => targetCard.classList.remove('highlight-card'), 1500);
         }
     }, 100);
+    return true;
+}
+
+function selectSearchSuggestion(index) {
+    const candidate = searchSuggestions[index];
+    if (!candidate) return false;
+    return navigateToWord(candidate.word);
+}
+
+function createSearchSuggestionOption(candidate, index, renderId) {
+    const option = document.createElement('button');
+    option.type = 'button';
+    option.id = `search-suggestion-${renderId}-${index}`;
+    option.className = 'search-suggestion-option flex w-full items-center gap-3 border-b border-gray-100 px-3 py-2 text-left last:border-b-0 hover:bg-indigo-50 focus:outline-none';
+    option.setAttribute('role', 'option');
+    option.setAttribute('aria-selected', 'false');
+    option.dataset.searchSuggestionIndex = String(index);
+
+    const textWrap = document.createElement('span');
+    textWrap.className = 'min-w-0 flex-1';
+    const english = document.createElement('span');
+    english.className = 'block truncate text-sm font-bold text-gray-900';
+    if (candidate.englishMatchStart >= 0) {
+        appendHighlightedSubstring(
+            english,
+            candidate.word.english,
+            candidate.englishMatchStart,
+            candidate.englishMatchLength
+        );
+    } else {
+        english.textContent = candidate.word.english || '';
+    }
+    const meaning = document.createElement('span');
+    meaning.className = 'block truncate text-xs text-gray-600';
+    if (candidate.chineseMatchIndexes) {
+        appendHighlightedIndexes(meaning, candidate.word.meaning, candidate.chineseMatchIndexes);
+    } else {
+        meaning.textContent = candidate.word.meaning || '';
+    }
+    textWrap.append(english, meaning);
+
+    const folder = document.createElement('span');
+    folder.className = 'max-w-[7rem] flex-none truncate text-xs text-gray-400';
+    folder.textContent = candidate.folderName;
+    option.append(textWrap, folder);
+    option.addEventListener('mouseenter', () => updateActiveSearchSuggestion(index, { scroll: false }));
+    option.addEventListener('click', () => selectSearchSuggestion(index));
+    return option;
+}
+
+function updateSearchSuggestions() {
+    if (isSearchComposing) return;
+    const { input, listbox } = getSearchSuggestionElements();
+    if (!input || !listbox) return;
+    const query = normalizeSearchQuery(input.value);
+    if (!query || !state.words.length) {
+        closeSearchSuggestions({ clearResults: true });
+        return;
+    }
+
+    const allMatches = findSearchMatches(query);
+    searchSuggestions = allMatches.slice(0, MAX_SEARCH_SUGGESTIONS);
+    activeSearchSuggestionIndex = -1;
+    searchSuggestionRenderId += 1;
+    listbox.replaceChildren();
+    listbox.scrollTop = 0;
+
+    if (!searchSuggestions.length) {
+        const empty = document.createElement('div');
+        empty.className = 'px-4 py-4 text-center text-sm text-gray-500';
+        empty.setAttribute('role', 'status');
+        empty.textContent = '找不到符合的單字';
+        listbox.appendChild(empty);
+    } else {
+        searchSuggestions.forEach((candidate, index) => {
+            listbox.appendChild(createSearchSuggestionOption(candidate, index, searchSuggestionRenderId));
+        });
+        if (allMatches.length > MAX_SEARCH_SUGGESTIONS) {
+            const more = document.createElement('div');
+            more.className = 'border-t border-gray-100 px-3 py-2 text-center text-xs text-gray-500';
+            more.setAttribute('role', 'status');
+            more.textContent = '另有更多符合結果，請繼續輸入以縮小範圍';
+            listbox.appendChild(more);
+        }
+    }
+
+    positionSearchSuggestions();
+    setElementVisible(listbox, true);
+    input.setAttribute('aria-expanded', 'true');
+    input.removeAttribute('aria-activedescendant');
+}
+
+function refreshSearchSuggestionsForCurrentData() {
+    const { input } = getSearchSuggestionElements();
+    if (!input || !normalizeSearchQuery(input.value) || !state.words.length) {
+        closeSearchSuggestions({ clearResults: true });
+        return;
+    }
+    updateSearchSuggestions();
+}
+
+function handleSearchInput() {
+    if (!isSearchComposing) updateSearchSuggestions();
+}
+
+function handleSearchFocus() {
+    const { input } = getSearchSuggestionElements();
+    if (input && normalizeSearchQuery(input.value)) updateSearchSuggestions();
+}
+
+function handleSearchCompositionStart() {
+    isSearchComposing = true;
+}
+
+function handleSearchCompositionEnd() {
+    isSearchComposing = false;
+    updateSearchSuggestions();
+}
+
+function handleSearchOutsidePointerDown(event) {
+    const { control } = getSearchSuggestionElements();
+    if (control && !control.contains(event.target)) closeSearchSuggestions();
+}
+
+function handleSearchKeydown(event) {
+    if (isSearchComposing || event.isComposing) return;
+    const { input, listbox } = getSearchSuggestionElements();
+    if (!input || !listbox) return;
+    const isOpen = !listbox.hidden && !listbox.classList.contains('hidden');
+
+    if (event.key === 'Escape') {
+        if (isOpen) event.preventDefault();
+        closeSearchSuggestions();
+        return;
+    }
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        if (!isOpen) updateSearchSuggestions();
+        if (!searchSuggestions.length) return;
+        event.preventDefault();
+        const direction = event.key === 'ArrowDown' ? 1 : -1;
+        const nextIndex = activeSearchSuggestionIndex === -1
+            ? (direction > 0 ? 0 : searchSuggestions.length - 1)
+            : activeSearchSuggestionIndex + direction;
+        updateActiveSearchSuggestion(nextIndex);
+        return;
+    }
+    if (event.key === 'Enter') {
+        if (isOpen && searchSuggestions.length) {
+            event.preventDefault();
+            selectSearchSuggestion(activeSearchSuggestionIndex >= 0 ? activeSearchSuggestionIndex : 0);
+            return;
+        }
+        searchWord();
+    }
+}
+
+function searchWord() {
+    const input = document.getElementById('search-input');
+    const query = normalizeSearchQuery(input?.value);
+    if (!query) {
+        closeSearchSuggestions({ clearResults: true });
+        return false;
+    }
+    const normalizedEnglishQuery = normalizeEnglishSearchText(query);
+    const exactEnglish = state.words.find(word =>
+        normalizeEnglishSearchText(word.english) === normalizedEnglishQuery
+    );
+    const foundWord = exactEnglish || findSearchMatches(query)[0]?.word;
+    if (!foundWord) {
+        alert('找不到這個單字。');
+        return false;
+    }
+    return navigateToWord(foundWord);
 }
 
 function toggleEditMode() {
@@ -2976,10 +3383,16 @@ function rerenderVisibleView() {
 function bindStaticEvents() {
     document.getElementById('btn-home-brand')?.addEventListener('click', () => navigateTo('home'));
     document.getElementById('btn-settings')?.addEventListener('click', openSettingsModal);
-    document.getElementById('search-input')?.addEventListener('keydown', event => {
-        if (event.key === 'Enter') searchWord();
-    });
+    const searchInput = document.getElementById('search-input');
+    searchInput?.addEventListener('input', handleSearchInput);
+    searchInput?.addEventListener('keydown', handleSearchKeydown);
+    searchInput?.addEventListener('focus', handleSearchFocus);
+    searchInput?.addEventListener('compositionstart', handleSearchCompositionStart);
+    searchInput?.addEventListener('compositionend', handleSearchCompositionEnd);
+    searchInput?.addEventListener('transitionend', positionSearchSuggestions);
     document.getElementById('btn-search')?.addEventListener('click', searchWord);
+    document.addEventListener('pointerdown', handleSearchOutsidePointerDown);
+    window.addEventListener('resize', positionSearchSuggestions);
 
     document.getElementById('btn-login')?.addEventListener('click', firebaseLogin);
     document.getElementById('btn-logout')?.addEventListener('click', firebaseLogout);
@@ -3078,6 +3491,7 @@ async function bootstrap() {
         onAuthStateChanged(auth, async user => {
             const generation = ++cloudLoadGeneration;
             stopUserRevisionListener();
+            closeSearchSuggestions({ clearResults: true });
             authReady = true;
             currentUser = user;
             cloudRevision = 0;

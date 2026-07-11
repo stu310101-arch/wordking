@@ -104,16 +104,28 @@
             <!-- 右側：搜尋 ＋ 登入/登出/同步 -->
             <div class="flex items-center gap-2">
                 <!-- 搜尋框 -->
-                <div class="relative flex items-center">
+                <div id="search-control" class="relative flex items-center">
                     <input
                         type="text"
                         id="search-input"
+                        role="combobox"
+                        aria-autocomplete="list"
+                        aria-controls="search-suggestions"
+                        aria-expanded="false"
                         aria-label="搜尋單字"
+                        autocomplete="off"
                         placeholder="搜尋..."
                         class="w-32 sm:w-48 pl-3 pr-8 py-1 rounded-full text-gray-800 text-sm focus:w-40 sm:focus:w-56 transition-all outline-none">
                     <button id="btn-search" type="button" aria-label="搜尋單字" class="absolute right-2 text-gray-500 hover:text-indigo-600">
                         <span aria-hidden="true">🔍</span>
                     </button>
+                    <div
+                        id="search-suggestions"
+                        role="listbox"
+                        aria-label="搜尋候選"
+                        class="hidden absolute top-full z-[60] mt-2 overflow-y-auto overscroll-contain rounded-lg bg-white text-gray-900 shadow-xl ring-1 ring-gray-200"
+                        hidden>
+                    </div>
                 </div>
 
                 <!-- 使用者資訊 ＋ 登入 / 登出 / 同步 -->
