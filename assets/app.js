@@ -12,6 +12,8 @@ import {
     doc,
     getDoc,
     getDocs,
+    onSnapshot,
+    runTransaction,
     writeBatch,
     deleteField
 } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
@@ -21,6 +23,10 @@ const WRONG_FOLDER = '錯題區';
 const REVIEW_FOLDER_LABEL = '待複習';
 const UNFILED_FOLDER = '未分類';
 const SYNC_TIMEOUT_MS = 15000;
+const ATOMIC_OPERATION_LIMIT = 440;
+const BATCH_CHUNK_SIZE = 440;
+const BATCH_RETRY_LIMIT = 3;
+const SYNC_LOCK_STALE_MS = 2 * 60 * 1000;
 
 const PART_OF_SPEECH_OPTIONS = {
     noun: { label: '名詞', short: '(n.)' },
@@ -76,6 +82,10 @@ let isSyncing = false;
 let isLoggingIn = false;
 let isLoggingOut = false;
 let isFolderDeleting = false;
+let cloudRevision = 0;
+let pendingRemoteRevision = 0;
+let activeCloudWrites = 0;
+let unsubscribeUserRevision = null;
 
 const modalReturnFocus = new WeakMap();
 
@@ -83,6 +93,38 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
+let createWriteBatch = database => writeBatch(database);
+let executeTransaction = (database, updateFunction) => runTransaction(database, updateFunction);
+let subscribeToSnapshot = (reference, onNext, onError) => onSnapshot(reference, onNext, onError);
+let waitBeforeRetry = delay => new Promise(resolve => setTimeout(resolve, delay));
+
+class CloudRevisionConflictError extends Error {
+    constructor(expectedRevision, actualRevision) {
+        super(`雲端資料版本已更新（本機 ${expectedRevision}、雲端 ${actualRevision}）。`);
+        this.name = 'CloudRevisionConflictError';
+        this.code = 'cloud-revision-conflict';
+        this.expectedRevision = expectedRevision;
+        this.actualRevision = actualRevision;
+    }
+}
+
+class CloudSyncInProgressError extends Error {
+    constructor() {
+        super('另一個裝置正在同步大量資料，請稍後重新載入。');
+        this.name = 'CloudSyncInProgressError';
+        this.code = 'cloud-sync-in-progress';
+    }
+}
+
+class CloudPartialCommitError extends Error {
+    constructor(message, { committedChunks = 0, totalChunks = 0, cause = null } = {}) {
+        super(message, cause ? { cause } : undefined);
+        this.name = 'CloudPartialCommitError';
+        this.code = 'cloud-partial-commit';
+        this.committedChunks = committedChunks;
+        this.totalChunks = totalChunks;
+    }
+}
 
 const state = {
     words: [],
@@ -577,6 +619,61 @@ function getSettingsRef(user) {
     return doc(db, 'users', user.uid, 'settings', 'main');
 }
 
+function normalizeCloudRevision(value) {
+    const revision = Number(value);
+    return Number.isSafeInteger(revision) && revision >= 0 ? revision : 0;
+}
+
+function getCloudMetadata(snapshot) {
+    const data = snapshot && typeof snapshot.exists === 'function' && snapshot.exists()
+        ? (snapshot.data() || {})
+        : {};
+    const syncLock = data.syncLock && typeof data.syncLock === 'object'
+        ? data.syncLock
+        : null;
+    return {
+        data,
+        revision: normalizeCloudRevision(data.revision),
+        syncLock
+    };
+}
+
+function getObservedCloudRevision(metadata) {
+    const lockRevision = metadata.syncLock
+        ? normalizeCloudRevision(metadata.syncLock.targetRevision)
+        : 0;
+    return Math.max(metadata.revision, lockRevision);
+}
+
+function isSyncLockStale(syncLock) {
+    if (!syncLock) return false;
+    const updatedAt = Date.parse(syncLock.updatedAt || syncLock.startedAt || '');
+    return !Number.isFinite(updatedAt) || Date.now() - updatedAt >= SYNC_LOCK_STALE_MS;
+}
+
+function createSyncOperationId() {
+    const randomId = window.crypto && typeof window.crypto.randomUUID === 'function'
+        ? window.crypto.randomUUID()
+        : Math.random().toString(36).slice(2);
+    return `${Date.now()}-${randomId}`;
+}
+
+function acknowledgeCloudRevision(revision) {
+    cloudRevision = normalizeCloudRevision(revision);
+    if (pendingRemoteRevision <= cloudRevision) pendingRemoteRevision = 0;
+    updateAuthUI(currentUser);
+}
+
+function getLegacyCleanupPatch(now) {
+    return {
+        words: deleteField(),
+        folders: deleteField(),
+        settings: deleteField(),
+        schemaVersion: 2,
+        migratedToDiffStorageAt: now
+    };
+}
+
 async function readUserCollection(user, collectionName) {
     const snap = await getDocs(collection(db, 'users', user.uid, collectionName));
     return snap.docs.map(item => ({ id: item.id, ...(item.data() || {}) }));
@@ -668,7 +765,7 @@ function createDefaultUserData(settings = DEFAULT_SETTINGS) {
     return { words, folders, settings: nextSettings };
 }
 
-function collectDiffOperations(previous, next, user, { cleanupLegacy = false } = {}) {
+function collectDiffOperations(previous, next, user) {
     const operations = [];
     const now = new Date().toISOString();
     const before = {
@@ -758,77 +855,278 @@ function collectDiffOperations(previous, next, user, { cleanupLegacy = false } =
         }
     });
 
-    if (cleanupLegacy) {
-        operations.push(batch => batch.set(getUserRef(user), {
-            words: deleteField(),
-            folders: deleteField(),
-            settings: deleteField(),
-            schemaVersion: 2,
-            migratedToDiffStorageAt: now,
-            updatedAt: now
-        }, { merge: true }));
-    }
-
     return operations;
 }
 
-async function commitBatchOperations(operations) {
-    const chunkSize = 450;
-    for (let i = 0; i < operations.length; i += chunkSize) {
-        const batch = writeBatch(db);
-        operations.slice(i, i + chunkSize).forEach(apply => apply(batch));
-        await batch.commit();
+async function commitAtomicOperations(operations, user, expectedRevision, rootPatch = {}) {
+    const rootRef = getUserRef(user);
+    return executeTransaction(db, async transaction => {
+        const rootSnapshot = await transaction.get(rootRef);
+        const metadata = getCloudMetadata(rootSnapshot);
+        if (metadata.syncLock) throw new CloudSyncInProgressError();
+        if (metadata.revision !== expectedRevision) {
+            throw new CloudRevisionConflictError(expectedRevision, metadata.revision);
+        }
+
+        operations.forEach(apply => apply(transaction));
+        const revision = expectedRevision + 1;
+        transaction.set(rootRef, {
+            ...rootPatch,
+            revision,
+            schemaVersion: 2,
+            updatedAt: new Date().toISOString()
+        }, { merge: true });
+        return { revision, committedChunks: 1, totalChunks: 1 };
+    });
+}
+
+async function beginLargeSync(user, expectedRevision, totalChunks) {
+    const rootRef = getUserRef(user);
+    const now = new Date().toISOString();
+    const syncLock = {
+        id: createSyncOperationId(),
+        baseRevision: expectedRevision,
+        targetRevision: expectedRevision + 1,
+        totalChunks,
+        completedChunks: 0,
+        startedAt: now,
+        updatedAt: now
+    };
+
+    return executeTransaction(db, async transaction => {
+        const rootSnapshot = await transaction.get(rootRef);
+        const metadata = getCloudMetadata(rootSnapshot);
+        if (metadata.syncLock) throw new CloudSyncInProgressError();
+        if (metadata.revision !== expectedRevision) {
+            throw new CloudRevisionConflictError(expectedRevision, metadata.revision);
+        }
+        transaction.set(rootRef, { syncLock, updatedAt: now }, { merge: true });
+        return syncLock;
+    });
+}
+
+async function commitLargeSyncChunk(operations, user, syncLock, completedChunks) {
+    const rootRef = getUserRef(user);
+    let lastError = null;
+    for (let attempt = 0; attempt < BATCH_RETRY_LIMIT; attempt += 1) {
+        const now = new Date().toISOString();
+        const batch = createWriteBatch(db);
+        operations.forEach(apply => apply(batch));
+        batch.set(rootRef, {
+            syncLock: {
+                ...syncLock,
+                completedChunks,
+                updatedAt: now
+            },
+            updatedAt: now
+        }, { merge: true });
+        try {
+            await batch.commit();
+            return;
+        } catch (error) {
+            lastError = error;
+            if (attempt + 1 < BATCH_RETRY_LIMIT) {
+                await waitBeforeRetry(150 * (2 ** attempt));
+            }
+        }
+    }
+    throw lastError || new Error('大型同步批次寫入失敗。');
+}
+
+async function finishLargeSync(user, syncLock, rootPatch = {}) {
+    const rootRef = getUserRef(user);
+    return executeTransaction(db, async transaction => {
+        const rootSnapshot = await transaction.get(rootRef);
+        const metadata = getCloudMetadata(rootSnapshot);
+        if (!metadata.syncLock) {
+            if (metadata.revision === syncLock.targetRevision) return metadata.revision;
+            throw new CloudRevisionConflictError(syncLock.baseRevision, metadata.revision);
+        }
+        if (metadata.syncLock.id !== syncLock.id) throw new CloudSyncInProgressError();
+
+        transaction.set(rootRef, {
+            ...rootPatch,
+            revision: syncLock.targetRevision,
+            schemaVersion: 2,
+            syncLock: deleteField(),
+            updatedAt: new Date().toISOString()
+        }, { merge: true });
+        return syncLock.targetRevision;
+    });
+}
+
+async function closeInterruptedLargeSync(user, syncLock) {
+    const rootRef = getUserRef(user);
+    let lastError = null;
+    for (let attempt = 0; attempt < BATCH_RETRY_LIMIT; attempt += 1) {
+        try {
+            return await executeTransaction(db, async transaction => {
+                const rootSnapshot = await transaction.get(rootRef);
+                const metadata = getCloudMetadata(rootSnapshot);
+                if (!metadata.syncLock || metadata.syncLock.id !== syncLock.id) {
+                    return metadata.revision;
+                }
+                const revision = Math.max(metadata.revision, syncLock.targetRevision);
+                transaction.set(rootRef, {
+                    revision,
+                    syncLock: deleteField(),
+                    syncInterruptedAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
+                return revision;
+            });
+        } catch (error) {
+            lastError = error;
+            if (attempt + 1 < BATCH_RETRY_LIMIT) {
+                await waitBeforeRetry(150 * (2 ** attempt));
+            }
+        }
+    }
+    throw lastError || new Error('無法結束中斷的同步作業。');
+}
+
+async function commitBatchOperations(operations, user, expectedRevision, { rootPatch = {} } = {}) {
+    if (!operations.length && !Object.keys(rootPatch).length) {
+        return { revision: expectedRevision, committedChunks: 0, totalChunks: 0 };
+    }
+    if (operations.length <= ATOMIC_OPERATION_LIMIT) {
+        return commitAtomicOperations(operations, user, expectedRevision, rootPatch);
+    }
+
+    const chunks = [];
+    for (let index = 0; index < operations.length; index += BATCH_CHUNK_SIZE) {
+        chunks.push(operations.slice(index, index + BATCH_CHUNK_SIZE));
+    }
+    const syncLock = await beginLargeSync(user, expectedRevision, chunks.length);
+    let committedChunks = 0;
+    try {
+        for (let index = 0; index < chunks.length; index += 1) {
+            await commitLargeSyncChunk(chunks[index], user, syncLock, index + 1);
+            committedChunks = index + 1;
+        }
+        const revision = await finishLargeSync(user, syncLock, rootPatch);
+        return { revision, committedChunks, totalChunks: chunks.length };
+    } catch (error) {
+        try {
+            await closeInterruptedLargeSync(user, syncLock);
+        } catch (cleanupError) {
+            console.error('無法清除中斷的雲端同步鎖。', cleanupError);
+        }
+        throw new CloudPartialCommitError('部分資料可能已同步，必須重新載入雲端狀態。', {
+            committedChunks,
+            totalChunks: chunks.length,
+            cause: error
+        });
     }
 }
 
 async function saveDiffChangesToCloud(previous, next, user = currentUser, options = {}) {
-    if (!user) return false;
-    const operations = collectDiffOperations(previous, next, user, options);
-    if (operations.length) await commitBatchOperations(operations);
-    return true;
+    if (!user) return { revision: cloudRevision, committedChunks: 0, totalChunks: 0 };
+    const operations = collectDiffOperations(previous, next, user);
+    const now = new Date().toISOString();
+    const rootPatch = options.cleanupLegacy ? getLegacyCleanupPatch(now) : {};
+    const expectedRevision = Number.isSafeInteger(options.expectedRevision)
+        ? options.expectedRevision
+        : cloudRevision;
+    activeCloudWrites += 1;
+    updateAuthUI(currentUser);
+    try {
+        const result = await commitBatchOperations(operations, user, expectedRevision, { rootPatch });
+        acknowledgeCloudRevision(result.revision);
+        return result;
+    } finally {
+        activeCloudWrites = Math.max(0, activeCloudWrites - 1);
+        updateAuthUI(currentUser);
+    }
+}
+
+async function recoverStaleSyncLock(user) {
+    const rootRef = getUserRef(user);
+    return executeTransaction(db, async transaction => {
+        const rootSnapshot = await transaction.get(rootRef);
+        const metadata = getCloudMetadata(rootSnapshot);
+        if (!metadata.syncLock) return metadata.revision;
+        if (!isSyncLockStale(metadata.syncLock)) throw new CloudSyncInProgressError();
+
+        const revision = Math.max(
+            metadata.revision,
+            normalizeCloudRevision(metadata.syncLock.targetRevision)
+        );
+        transaction.set(rootRef, {
+            revision,
+            syncLock: deleteField(),
+            syncRecoveredAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        }, { merge: true });
+        return revision;
+    });
+}
+
+async function getStableUserRootSnapshot(user) {
+    const rootRef = getUserRef(user);
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+        const snapshot = await getDoc(rootRef);
+        const metadata = getCloudMetadata(snapshot);
+        if (!metadata.syncLock) return snapshot;
+        if (isSyncLockStale(metadata.syncLock)) {
+            await recoverStaleSyncLock(user);
+            return getDoc(rootRef);
+        }
+        await waitBeforeRetry(250);
+    }
+    throw new CloudSyncInProgressError();
 }
 
 async function loadUserDiffData(user) {
-    const [
-        settingsSnap,
-        customWords,
-        wordOverrides,
-        deletedDefaults,
-        folders,
-        legacySnap
-    ] = await Promise.all([
-        getDoc(getSettingsRef(user)),
-        readUserCollection(user, 'customWords'),
-        readUserCollection(user, 'wordOverrides'),
-        readUserCollection(user, 'deletedDefaults'),
-        readUserCollection(user, 'folders'),
-        getDoc(getUserRef(user))
-    ]);
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+        const rootBefore = await getStableUserRootSnapshot(user);
+        const beforeMetadata = getCloudMetadata(rootBefore);
+        const [settingsSnap, customWords, wordOverrides, deletedDefaults, folders] = await Promise.all([
+            getDoc(getSettingsRef(user)),
+            readUserCollection(user, 'customWords'),
+            readUserCollection(user, 'wordOverrides'),
+            readUserCollection(user, 'deletedDefaults'),
+            readUserCollection(user, 'folders')
+        ]);
+        const rootAfter = await getDoc(getUserRef(user));
+        const afterMetadata = getCloudMetadata(rootAfter);
 
-    const hasDiffData = settingsSnap.exists() ||
-        customWords.length ||
-        wordOverrides.length ||
-        deletedDefaults.length ||
-        folders.length;
-
-    if (!hasDiffData && legacySnap.exists()) {
-        const legacyData = legacySnap.data() || {};
-        if (Array.isArray(legacyData.words) || Array.isArray(legacyData.folders) || legacyData.settings) {
-            const migratedData = normalizeUserData(legacyData);
-            await saveDiffChangesToCloud(createDefaultUserData(), migratedData, user, { cleanupLegacy: true });
-            return migratedData;
+        if (afterMetadata.syncLock || afterMetadata.revision !== beforeMetadata.revision) {
+            await waitBeforeRetry(100 * (attempt + 1));
+            continue;
         }
-    }
 
-    return buildUserDataFromDiffs({
-        settings: settingsSnap.exists() ? settingsSnap.data() : null,
-        customWords,
-        wordOverrides,
-        deletedDefaultIds: deletedDefaults
-            .filter(item => item.deleted !== false)
-            .map(item => item.id),
-        folders
-    });
+        if (rootAfter.exists()) {
+            const legacyData = afterMetadata.data;
+            const hasLegacyData = Array.isArray(legacyData.words) ||
+                Array.isArray(legacyData.folders) ||
+                !!legacyData.settings;
+            if (hasLegacyData && !legacyData.migratedToDiffStorageAt) {
+                const migratedData = normalizeUserData(legacyData);
+                const result = await saveDiffChangesToCloud(
+                    createDefaultUserData(),
+                    migratedData,
+                    user,
+                    { cleanupLegacy: true, expectedRevision: afterMetadata.revision }
+                );
+                return { ...migratedData, revision: result.revision };
+            }
+        }
+
+        return {
+            ...buildUserDataFromDiffs({
+                settings: settingsSnap.exists() ? settingsSnap.data() : null,
+                customWords,
+                wordOverrides,
+                deletedDefaultIds: deletedDefaults
+                    .filter(item => item.deleted !== false)
+                    .map(item => item.id),
+                folders
+            }),
+            revision: afterMetadata.revision
+        };
+    }
+    throw new Error('雲端資料在載入期間持續更新，請稍後再試。');
 }
 
 function requireLoginForChange() {
@@ -837,20 +1135,25 @@ function requireLoginForChange() {
     return false;
 }
 
-async function persistUserData({ requireAuth = true } = {}) {
-    if (isCloudLoading) return false;
-    if (!currentUser) {
-        if (requireAuth) requireLoginForChange();
-        return false;
+function isCloudConsistencyError(error) {
+    return error && [
+        'cloud-partial-commit',
+        'cloud-revision-conflict',
+        'cloud-sync-in-progress'
+    ].includes(error.code);
+}
+
+function getCloudRecoveryMessage(error, reloaded) {
+    if (!reloaded) {
+        return '雲端狀態可能已變更，但重新載入失敗。請重新整理頁面後再操作。';
     }
-    try {
-        await saveDiffChangesToCloud(createDefaultUserData(), snapshotUserState(), currentUser);
-        return true;
-    } catch (err) {
-        console.error('雲端儲存失敗', err);
-        alert('雲端儲存失敗：' + (err.message || err));
-        return false;
+    if (error.code === 'cloud-partial-commit') {
+        return '部分資料可能已同步，已重新載入雲端狀態。';
     }
+    if (error.code === 'cloud-revision-conflict') {
+        return '偵測到其他分頁或裝置的更新，已重新載入雲端最新資料。請重新執行剛才的操作。';
+    }
+    return '另一個分頁或裝置正在同步，已重新載入雲端狀態。請稍後再試。';
 }
 
 async function commitUserMutation(mutator, { requireAuth = true, afterRollback = null } = {}) {
@@ -871,18 +1174,33 @@ async function commitUserMutation(mutator, { requireAuth = true, afterRollback =
     }
 
     const previous = snapshotUserState();
+    const mutationUser = currentUser;
     try {
         mutator(state);
         state.words = ensureWordIdentities(state.words);
         state.folders = normalizeFolders(state.folders, state.words, state.settings);
         refreshFolders();
-        await saveDiffChangesToCloud(previous, snapshotUserState(), currentUser);
+        await saveDiffChangesToCloud(previous, snapshotUserState(), mutationUser, {
+            expectedRevision: cloudRevision
+        });
         return true;
     } catch (err) {
-        restoreUserState(previous);
+        let reloaded = false;
+        if (isCloudConsistencyError(err) && currentUser && currentUser.uid === mutationUser.uid) {
+            try {
+                reloaded = await loadFromCloud(mutationUser);
+            } catch (reloadError) {
+                console.error('重新載入雲端狀態失敗', reloadError);
+            }
+        }
+        if (!reloaded) restoreUserState(previous);
         refreshFolders();
-        console.error('使用者資料儲存失敗，已還原本機狀態', err);
-        alert('資料儲存失敗，已還原剛剛的變更：' + (err.message || err));
+        console.error('使用者資料儲存失敗', err);
+        if (isCloudConsistencyError(err)) {
+            alert(getCloudRecoveryMessage(err, reloaded));
+        } else {
+            alert('資料儲存失敗，已還原剛剛的變更：' + (err.message || err));
+        }
         if (typeof afterRollback === 'function') afterRollback();
         rerenderVisibleView();
         return false;
@@ -895,6 +1213,7 @@ async function loadFromCloud(user, generation = ++cloudLoadGeneration) {
     try {
         const data = await loadUserDiffData(user);
         if (generation !== cloudLoadGeneration || !currentUser || currentUser.uid !== user.uid) return false;
+        acknowledgeCloudRevision(data.revision);
         applyUserData(data);
         return true;
     } finally {
@@ -903,6 +1222,25 @@ async function loadFromCloud(user, generation = ++cloudLoadGeneration) {
             updateAuthUI(currentUser);
         }
     }
+}
+
+function stopUserRevisionListener() {
+    if (typeof unsubscribeUserRevision === 'function') unsubscribeUserRevision();
+    unsubscribeUserRevision = null;
+}
+
+function startUserRevisionListener(user) {
+    stopUserRevisionListener();
+    unsubscribeUserRevision = subscribeToSnapshot(getUserRef(user), snapshot => {
+        if (!currentUser || currentUser.uid !== user.uid) return;
+        const observedRevision = getObservedCloudRevision(getCloudMetadata(snapshot));
+        if (observedRevision > cloudRevision) {
+            pendingRemoteRevision = Math.max(pendingRemoteRevision, observedRevision);
+            updateAuthUI(currentUser);
+        }
+    }, error => {
+        console.error('監聽雲端資料版本失敗', error);
+    });
 }
 
 function setupAudioSystem() {
@@ -2518,7 +2856,9 @@ function updateAuthUI(user) {
     const homeSyncStatus = document.getElementById('home-sync-status');
     if (homeSyncStatus) {
         homeSyncStatus.textContent = user
-            ? '你的自訂單字、資料夾與待複習狀態會自動同步至雲端。'
+            ? (pendingRemoteRevision > cloudRevision
+                ? '雲端有其他分頁或裝置的新資料，請重新載入。'
+                : '你的自訂單字、資料夾與待複習狀態會自動同步至雲端。')
             : '登入後即可新增單字，並同步你的資料夾與待複習狀態。';
     }
     if (!loginBtn || !logoutBtn || !syncBtn || !userSpan) return;
@@ -2529,10 +2869,14 @@ function updateAuthUI(user) {
         setElementVisible(syncBtn, true);
         setElementVisible(userSpan, true);
         userSpan.textContent = user.email || user.displayName || '已登入';
-        logoutBtn.disabled = isLoggingOut || isSyncing || isCloudLoading;
+        logoutBtn.disabled = isLoggingOut || isSyncing || isCloudLoading || activeCloudWrites > 0;
         logoutBtn.textContent = isLoggingOut ? '登出中...' : '登出';
-        syncBtn.disabled = isSyncing || isLoggingOut || isCloudLoading;
-        syncBtn.textContent = isSyncing ? '☁ 同步中...' : (isCloudLoading ? '☁ 載入中...' : '☁ 同步');
+        syncBtn.disabled = isSyncing || isLoggingOut || isCloudLoading || activeCloudWrites > 0;
+        syncBtn.textContent = isSyncing
+            ? '☁ 重新載入中...'
+            : (isCloudLoading
+                ? '☁ 載入中...'
+                : (pendingRemoteRevision > cloudRevision ? '☁ 有新資料' : '☁ 重新載入'));
     } else {
         setElementVisible(loginBtn, true);
         setElementVisible(logoutBtn, false);
@@ -2562,7 +2906,7 @@ async function firebaseLogin() {
 }
 
 async function firebaseLogout() {
-    if (!currentUser || isLoggingOut || isLoggingIn || isSyncing || isCloudLoading) return;
+    if (!currentUser || isLoggingOut || isLoggingIn || isSyncing || isCloudLoading || activeCloudWrites > 0) return;
     isLoggingOut = true;
     updateAuthUI(currentUser);
     let logoutCompleted = false;
@@ -2587,7 +2931,7 @@ function withTimeout(promise, timeoutMs, timeoutMessage) {
 }
 
 async function syncCloudNow() {
-    if (isSyncing || isLoggingOut || isLoggingIn) return;
+    if (isSyncing || isLoggingOut || isLoggingIn || activeCloudWrites > 0) return;
     if (!requireLoginForChange()) return;
     if (isCloudLoading) {
         alert('雲端資料仍在載入，請稍候再同步。');
@@ -2596,15 +2940,19 @@ async function syncCloudNow() {
     isSyncing = true;
     updateAuthUI(currentUser);
     try {
-        const ok = await withTimeout(
-            persistUserData(),
+        const loaded = await withTimeout(
+            loadFromCloud(currentUser),
             SYNC_TIMEOUT_MS,
-            '同步逾時，請確認網路後再試。'
+            '重新載入逾時，請確認網路後再試。'
         );
-        if (ok) alert('已同步到雲端。');
+        if (loaded) {
+            applyBgmSettingsToElement();
+            rerenderVisibleView();
+            alert('已重新載入雲端最新資料。');
+        }
     } catch (err) {
-        console.error('手動同步失敗', err);
-        alert(err.message || '同步失敗，請稍後再試。');
+        console.error('重新載入雲端資料失敗', err);
+        alert(err.message || '重新載入失敗，請稍後再試。');
     } finally {
         isSyncing = false;
         updateAuthUI(currentUser);
@@ -2626,12 +2974,12 @@ function rerenderVisibleView() {
 }
 
 function bindStaticEvents() {
-    document.querySelector('nav h1')?.addEventListener('click', () => navigateTo('home'));
-    document.querySelector('button[title="設定"]')?.addEventListener('click', openSettingsModal);
+    document.getElementById('btn-home-brand')?.addEventListener('click', () => navigateTo('home'));
+    document.getElementById('btn-settings')?.addEventListener('click', openSettingsModal);
     document.getElementById('search-input')?.addEventListener('keydown', event => {
         if (event.key === 'Enter') searchWord();
     });
-    document.querySelector('#search-input + button')?.addEventListener('click', searchWord);
+    document.getElementById('btn-search')?.addEventListener('click', searchWord);
 
     document.getElementById('btn-login')?.addEventListener('click', firebaseLogin);
     document.getElementById('btn-logout')?.addEventListener('click', firebaseLogout);
@@ -2642,12 +2990,10 @@ function bindStaticEvents() {
     navButtons[1]?.addEventListener('click', () => navigateTo('library'));
     navButtons[2]?.addEventListener('click', () => navigateTo('practice'));
 
-    const resetBtn = Array.from(document.querySelectorAll('button')).find(btn => btn.textContent.includes('重置全部資料'));
-    resetBtn?.addEventListener('click', confirmReset);
+    document.getElementById('btn-reset-all')?.addEventListener('click', confirmReset);
 
-    const homeCards = document.querySelectorAll('#view-home .cursor-pointer');
-    homeCards[0]?.addEventListener('click', () => navigateTo('library'));
-    homeCards[1]?.addEventListener('click', () => navigateTo('practice'));
+    document.getElementById('btn-home-library')?.addEventListener('click', () => navigateTo('library'));
+    document.getElementById('btn-home-practice')?.addEventListener('click', () => navigateTo('practice'));
 
     document.getElementById('btn-library-back')?.addEventListener('click', () => navigateTo('home'));
     document.getElementById('btn-word-list-back')?.addEventListener('click', () => navigateTo('library'));
@@ -2731,15 +3077,19 @@ async function bootstrap() {
 
         onAuthStateChanged(auth, async user => {
             const generation = ++cloudLoadGeneration;
+            stopUserRevisionListener();
             authReady = true;
             currentUser = user;
+            cloudRevision = 0;
+            pendingRemoteRevision = 0;
             if (user) isLoggingIn = false;
             else isLoggingOut = false;
             updateAuthUI(user);
             if (user) {
                 try {
-                    await loadFromCloud(user, generation);
+                    const loaded = await loadFromCloud(user, generation);
                     if (generation !== cloudLoadGeneration) return;
+                    if (loaded) startUserRevisionListener(user);
                     applyBgmSettingsToElement();
                 } catch (err) {
                     if (generation !== cloudLoadGeneration) return;

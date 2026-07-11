@@ -3,10 +3,9 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy"
-          content="default-src 'self'; script-src 'self' https://cdn.tailwindcss.com https://www.gstatic.com https://apis.google.com https://www.googleapis.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://www.gstatic.com https://www.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://*.googleapis.com https://*.firebaseio.com; img-src 'self' data: https:; media-src 'self' https://www.soundhelix.com; frame-src https://accounts.google.com https://*.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self';">
+          content="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com https://www.googleapis.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://www.gstatic.com https://www.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://*.googleapis.com https://*.firebaseio.com; img-src 'self' data: https:; media-src 'self' https://www.soundhelix.com; frame-src https://accounts.google.com https://*.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self';">
     <title>單字王 - 核心系統</title>
 
     <style>
@@ -62,8 +61,7 @@
         }
     </style>
 
-    <!-- Tailwind CSS CDN -->
-    <script defer src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./assets/tailwind.css">
     <link rel="stylesheet" href="./assets/styles.css">
 </head>
 <body class="bg-gray-50 min-h-screen font-sans pb-24" aria-busy="true">
@@ -87,15 +85,19 @@
             <!-- 左側：Logo + 標題 + 設定 -->
             <div class="flex items-center gap-2">
                 <!-- Logo：連到首頁「分頁」 -->
-                <h1 class="text-2xl font-bold tracking-tight cursor-pointer flex items-center gap-2">
-                    <span>🎓</span> 單字王
+                <h1 class="text-2xl font-bold tracking-tight">
+                    <button id="btn-home-brand" type="button" class="flex items-center gap-2 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white" aria-label="單字王，回到首頁">
+                        <span aria-hidden="true">🎓</span><span>單字王</span>
+                    </button>
                 </h1>
                 <!-- 設定按鈕：緊貼在「單字王」右邊 -->
                 <button
+                    id="btn-settings"
                     type="button"
                     class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-indigo-500 text-white text-lg shadow-md active:scale-95 transition"
-                    title="設定">
-                    ⚙
+                    title="設定"
+                    aria-label="設定">
+                    <span aria-hidden="true">⚙</span>
                 </button>
             </div>
 
@@ -106,10 +108,11 @@
                     <input
                         type="text"
                         id="search-input"
+                        aria-label="搜尋單字"
                         placeholder="搜尋..."
                         class="w-32 sm:w-48 pl-3 pr-8 py-1 rounded-full text-gray-800 text-sm focus:w-40 sm:focus:w-56 transition-all outline-none">
-                    <button class="absolute right-2 text-gray-500 hover:text-indigo-600">
-                        🔍
+                    <button id="btn-search" type="button" aria-label="搜尋單字" class="absolute right-2 text-gray-500 hover:text-indigo-600">
+                        <span aria-hidden="true">🔍</span>
                     </button>
                 </div>
 
@@ -122,20 +125,23 @@
 
                     <button
                         id="btn-login"
+                        type="button"
                         class="bg-white text-indigo-600 px-3 py-1 rounded-full text-xs sm:text-sm font-bold shadow-md active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100">
                         登入
                     </button>
 
                     <button
                         id="btn-logout"
+                        type="button"
                         class="hidden bg-indigo-500 text-white px-3 py-1 rounded-full text-xs sm:text-sm font-bold shadow-md active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100">
                         登出
                     </button>
 
                     <button
                         id="btn-sync"
+                        type="button"
                         class="hidden bg-amber-400 text-white px-3 py-1 rounded-full text-xs sm:text-sm font-bold shadow-md active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100">
-                        ☁ 同步
+                        ☁ 重新載入
                     </button>
                 </div>
             </div>
@@ -151,6 +157,7 @@
         <!-- 重置全部資料（回到初始狀態，並同步雲端） -->
         <div class="mt-2 flex justify-end">
             <button
+                id="btn-reset-all"
                 type="button"
                 class="text-xs text-red-500 hover:text-red-700 underline underline-offset-2"
                 title="恢復初始狀態（包含雲端同步資料）">
@@ -169,14 +176,14 @@
         </div>
 
         <div class="flex flex-col gap-4">
-            <div class="bg-white p-6 rounded-2xl shadow-md border-l-8 border-indigo-500 cursor-pointer active:bg-gray-50">
-                <h3 class="text-xl font-bold text-gray-800">📖 單字庫</h3>
-                <p class="text-gray-500 mt-1">瀏覽、編輯單字與資料夾</p>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-md border-l-8 border-green-500 cursor-pointer active:bg-gray-50">
-                <h3 class="text-xl font-bold text-gray-800">🎯 練習專區</h3>
-                <p class="text-gray-500 mt-1">拼字練習、選擇題挑戰</p>
-            </div>
+            <button id="btn-home-library" type="button" class="w-full text-left bg-white p-6 rounded-2xl shadow-md border-l-8 border-indigo-500 cursor-pointer active:bg-gray-50">
+                <span class="block text-xl font-bold text-gray-800">📖 單字庫</span>
+                <span class="block text-gray-500 mt-1">瀏覽、編輯單字與資料夾</span>
+            </button>
+            <button id="btn-home-practice" type="button" class="w-full text-left bg-white p-6 rounded-2xl shadow-md border-l-8 border-green-500 cursor-pointer active:bg-gray-50">
+                <span class="block text-xl font-bold text-gray-800">🎯 練習專區</span>
+                <span class="block text-gray-500 mt-1">拼字練習、選擇題挑戰</span>
+            </button>
         </div>
     </div>
 

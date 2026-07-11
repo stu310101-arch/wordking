@@ -8,6 +8,8 @@ function loadWordKing() {
     let source = fs.readFileSync(appPath, 'utf8');
     source = source.slice(source.indexOf("const LESSON_MANIFEST_URL"));
     source += `
+        const __originalSaveDiffChangesToCloud = saveDiffChangesToCloud;
+        const __originalLoadUserDiffData = loadUserDiffData;
         globalThis.__wordKingTest = {
             state,
             WRONG_FOLDER,
@@ -21,6 +23,7 @@ function loadWordKing() {
             saveNewWord,
             executeRename,
             collectDiffOperations,
+            commitBatchOperations,
             buildUserDataFromDiffs,
             createDefaultUserData,
             commitUserMutation,
@@ -33,6 +36,8 @@ function loadWordKing() {
             clearPracticeSession,
             getFolderDeleteConfirmation,
             normalizeFolders,
+            startUserRevisionListener,
+            stopUserRevisionListener,
             setDefaults(words, lessonFolderIds) {
                 defaultWordDatabase = cloneWords(words);
                 defaultWordMap = new Map(defaultWordDatabase.map(word => [word.defaultId, cloneWord(word)]));
@@ -45,13 +50,45 @@ function loadWordKing() {
             setSaver(saver) {
                 saveDiffChangesToCloud = saver;
             },
+            setCloudLoader(loader) {
+                loadUserDiffData = loader;
+            },
+            setBatchFactory(factory) {
+                createWriteBatch = factory;
+            },
+            setTransactionExecutor(executor) {
+                executeTransaction = executor;
+            },
+            setRetryWaiter(waiter) {
+                waitBeforeRetry = waiter;
+            },
+            setSnapshotSubscriber(subscriber) {
+                subscribeToSnapshot = subscriber;
+            },
+            setCloudRevision(revision) {
+                cloudRevision = revision;
+                pendingRemoteRevision = 0;
+            },
+            getCloudSyncState() {
+                return { cloudRevision, pendingRemoteRevision, activeCloudWrites };
+            },
             disableNavigation() {
                 navigateTo = () => {};
                 showView = () => {};
             },
             reset() {
+                stopUserRevisionListener();
                 currentUser = null;
                 isCloudLoading = false;
+                cloudRevision = 0;
+                pendingRemoteRevision = 0;
+                activeCloudWrites = 0;
+                saveDiffChangesToCloud = __originalSaveDiffChangesToCloud;
+                loadUserDiffData = __originalLoadUserDiffData;
+                createWriteBatch = database => writeBatch(database);
+                executeTransaction = (database, updateFunction) => runTransaction(database, updateFunction);
+                subscribeToSnapshot = (reference, onNext, onError) => onSnapshot(reference, onNext, onError);
+                waitBeforeRetry = delay => new Promise(resolve => setTimeout(resolve, delay));
                 state.words = [];
                 state.folders = [WRONG_FOLDER];
                 state.folderIds = [WRONG_FOLDER];
@@ -107,6 +144,12 @@ function loadWordKing() {
         doc: (...parts) => ({ path: parts.slice(1).join('/') }),
         getDoc: async () => ({ exists: () => false }),
         getDocs: async () => ({ docs: [] }),
+        onSnapshot: () => () => {},
+        runTransaction: async (database, updateFunction) => updateFunction({
+            get: async () => ({ exists: () => false, data: () => ({}) }),
+            set() {},
+            delete() {}
+        }),
         writeBatch: () => ({
             set() {},
             delete() {},
@@ -500,6 +543,179 @@ async function run() {
         assert.match(firestoreRules, /match \/\{document=\*\*\}/);
         assert.match(firestoreRules, /request\.auth != null && request\.auth\.uid == userId/);
         results.push('BUG 8 - Firestore diff subcollection access');
+    }
+
+    // BUG 9: a later large-write chunk failure is reported as a partial commit.
+    {
+        api.reset();
+        const rootData = { revision: 0 };
+        const successfulOperationWrites = [];
+        let batchCount = 0;
+        const makeSnapshot = () => ({
+            exists: () => true,
+            data: () => ({ ...rootData })
+        });
+        const applyRootPatch = data => {
+            Object.entries(data).forEach(([key, value]) => {
+                if (value === '__DELETE_FIELD__') delete rootData[key];
+                else rootData[key] = value;
+            });
+        };
+
+        api.setTransactionExecutor(async (database, updateFunction) => updateFunction({
+            get: async () => makeSnapshot(),
+            set(ref, data) {
+                if (ref.path === 'users/user-1') applyRootPatch(data);
+            },
+            delete() {}
+        }));
+        api.setBatchFactory(() => {
+            batchCount += 1;
+            const currentBatch = batchCount;
+            const writes = [];
+            return {
+                set(ref, data, options) { writes.push({ ref, data, options }); },
+                delete(ref) { writes.push({ ref, deleted: true }); },
+                async commit() {
+                    if (currentBatch > 1) throw new Error('forced second chunk failure');
+                    writes.forEach(write => {
+                        if (write.ref.path === 'users/user-1') applyRootPatch(write.data);
+                        else successfulOperationWrites.push(write.ref.path);
+                    });
+                }
+            };
+        });
+        api.setRetryWaiter(async () => {});
+
+        const operations = Array.from({ length: 441 }, (_, index) => batch => {
+            batch.set({ path: `items/${index}` }, { index });
+        });
+        let failure = null;
+        try {
+            await api.commitBatchOperations(operations, { uid: 'user-1' }, 0);
+        } catch (error) {
+            failure = error;
+        }
+
+        assert.ok(failure);
+        assert.equal(failure.code, 'cloud-partial-commit');
+        assert.equal(failure.committedChunks, 1);
+        assert.equal(failure.totalChunks, 2);
+        assert.equal(batchCount, 4);
+        assert.equal(successfulOperationWrites.length, 440);
+        assert.equal(rootData.revision, 1);
+        assert.equal(Object.hasOwn(rootData, 'syncLock'), false);
+        results.push('BUG 9 - partial multi-batch failure');
+    }
+
+    // BUG 10: after a partial commit, UI state reloads cloud truth instead of rolling back everything.
+    {
+        api.reset();
+        const previousWord = {
+            id: 'custom-before',
+            source: 'custom',
+            english: 'before',
+            meaning: '舊資料',
+            folderId: 'Old',
+            isWrong: false
+        };
+        const cloudWord = {
+            id: 'custom-cloud',
+            source: 'custom',
+            english: 'cloud',
+            meaning: '雲端實況',
+            folderId: 'Cloud',
+            isWrong: false
+        };
+        api.state.words = [previousWord];
+        api.state.folders = [api.WRONG_FOLDER, 'Old'];
+        api.setUser({ uid: 'user-1' });
+        api.setCloudRevision(7);
+        api.setCloudLoader(async () => ({
+            words: [cloudWord],
+            folders: [api.WRONG_FOLDER, 'Cloud'],
+            settings: api.state.settings,
+            revision: 8
+        }));
+        api.setSaver(async () => {
+            const error = new Error('forced partial commit');
+            error.code = 'cloud-partial-commit';
+            throw error;
+        });
+
+        const saved = await api.commitUserMutation(draft => {
+            draft.words = [];
+            draft.folders = [api.WRONG_FOLDER];
+        });
+        assert.equal(saved, false);
+        assert.equal(api.state.words.length, 1);
+        assert.equal(api.state.words[0].english, 'cloud');
+        assert.equal(api.state.folders.includes('Cloud'), true);
+        assert.equal(api.getCloudSyncState().cloudRevision, 8);
+        assert.equal(alerts.some(message => message.includes('部分資料可能已同步，已重新載入雲端狀態')), true);
+        results.push('BUG 10 - partial commit reloads cloud truth');
+    }
+
+    // BUG 11: stale tabs cannot write over a newer revision and receive remote-version notice.
+    {
+        api.reset();
+        let transactionWrites = 0;
+        api.setTransactionExecutor(async (database, updateFunction) => updateFunction({
+            get: async () => ({ exists: () => true, data: () => ({ revision: 4 }) }),
+            set() { transactionWrites += 1; },
+            delete() { transactionWrites += 1; }
+        }));
+        let conflict = null;
+        try {
+            await api.commitBatchOperations([
+                transaction => transaction.set({ path: 'items/stale' }, { stale: true })
+            ], { uid: 'user-1' }, 3);
+        } catch (error) {
+            conflict = error;
+        }
+        assert.ok(conflict);
+        assert.equal(conflict.code, 'cloud-revision-conflict');
+        assert.equal(transactionWrites, 0);
+
+        let snapshotHandler = null;
+        let unsubscribed = false;
+        api.setUser({ uid: 'user-1' });
+        api.setCloudRevision(4);
+        api.setSnapshotSubscriber((reference, onNext) => {
+            snapshotHandler = onNext;
+            return () => { unsubscribed = true; };
+        });
+        api.startUserRevisionListener({ uid: 'user-1' });
+        snapshotHandler({ exists: () => true, data: () => ({ revision: 5 }) });
+        assert.equal(api.getCloudSyncState().pendingRemoteRevision, 5);
+        api.stopUserRevisionListener();
+        assert.equal(unsubscribed, true);
+        results.push('BUG 11 - revision conflict and remote notice');
+    }
+
+    // BUG 12: the manual cloud action reloads current cloud data instead of uploading from defaults.
+    {
+        const appSource = fs.readFileSync(path.join(__dirname, '..', 'assets', 'app.js'), 'utf8');
+        const syncStart = appSource.indexOf('async function syncCloudNow()');
+        const syncEnd = appSource.indexOf('function rerenderVisibleView()', syncStart);
+        const syncSource = appSource.slice(syncStart, syncEnd);
+        assert.match(syncSource, /loadFromCloud\(currentUser\)/);
+        assert.doesNotMatch(syncSource, /saveDiffChangesToCloud|createDefaultUserData/);
+        results.push('BUG 12 - manual action reloads cloud');
+    }
+
+    // A11Y / production CSS: zoom remains available and Tailwind is served as a built asset.
+    {
+        const repoRoot = path.join(__dirname, '..');
+        const html = fs.readFileSync(path.join(repoRoot, 'index.html'), 'utf8');
+        const tailwindCss = fs.readFileSync(path.join(repoRoot, 'assets', 'tailwind.css'), 'utf8');
+        assert.doesNotMatch(html, /user-scalable=no|maximum-scale=1\.0/);
+        assert.doesNotMatch(html, /cdn\.tailwindcss\.com/);
+        assert.match(html, /<link rel="stylesheet" href="\.\/assets\/tailwind\.css">/);
+        assert.match(html, /id="btn-search"[^>]*aria-label="搜尋單字"/);
+        assert.match(html, /id="btn-home-brand"[^>]*type="button"/);
+        assert.match(tailwindCss, /\.bg-indigo-600/);
+        results.push('A11Y - semantic controls and compiled Tailwind');
     }
 
     process.stdout.write(`${JSON.stringify({ passed: results.length, results }, null, 2)}\n`);
