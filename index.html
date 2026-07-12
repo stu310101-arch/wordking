@@ -61,8 +61,8 @@
         }
     </style>
 
-    <link rel="stylesheet" href="./assets/tailwind.css">
-    <link rel="stylesheet" href="./assets/styles.css">
+    <link rel="stylesheet" href="./assets/tailwind.css?v=20260712-practice-folders-2">
+    <link rel="stylesheet" href="./assets/styles.css?v=20260712-practice-folders-2">
 </head>
 <body class="bg-gray-50 min-h-screen font-sans pb-24" aria-busy="true">
 
@@ -250,11 +250,12 @@
 
                 <!-- Step 2: 勾選單字 -->
                 <div class="mb-6">
-                    <div class="flex justify-between items-center mb-2">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-2">
                         <label class="block font-bold text-gray-700 text-lg">📝 2. 勾選要練習的單字</label>
-                        <div class="space-x-2">
-                            <button class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded">全選</button>
-                            <button class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded">取消</button>
+                        <div class="flex flex-wrap gap-2">
+                            <button id="btn-practice-select-all" type="button" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded">全選</button>
+                            <button id="btn-practice-select-none" type="button" class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded">取消</button>
+                            <button id="btn-practice-exclude-review" type="button" class="text-xs bg-red-50 text-red-600 px-2 py-1 rounded disabled:opacity-40 disabled:cursor-not-allowed">已在待複習內的除外</button>
                         </div>
                     </div>
                     <div id="practice-word-selection" class="max-h-48 overflow-y-auto custom-scrollbar border-2 border-gray-100 rounded-xl p-2 bg-gray-50">
@@ -344,7 +345,7 @@
 
             <div class="text-left bg-gray-50 rounded-2xl p-4 border border-gray-100 max-h-[300px] overflow-y-auto custom-scrollbar flex-1">
                 <div class="flex justify-between items-center mb-2 border-b pb-2">
-                    <span class="font-bold text-gray-600">待複習單字</span>
+                    <span class="font-bold text-gray-600">錯誤／跳過單字</span>
                     <span id="result-stat" class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full font-bold"></span>
                 </div>
                 <p class="text-sm text-gray-500 mb-3">以下單字答錯或跳過：</p>
@@ -356,6 +357,27 @@
                 <p class="text-xs text-indigo-500 mt-1 mb-3">單字原本的資料夾不會改變。</p>
                 <button id="btn-save-review" class="w-full py-3 bg-indigo-600 text-white rounded-lg font-bold text-lg shadow-md hover:bg-indigo-700 active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed">
                     加入待複習
+                </button>
+            </div>
+
+            <div class="mt-4 pt-4 border-t border-gray-200 text-left">
+                <p class="text-sm font-bold text-emerald-900">將勾選單字加入資料夾</p>
+                <p id="result-folder-help" class="text-xs text-emerald-700 mt-1 mb-3">選擇現有資料夾，或直接建立新資料夾。加入後，單字會移至該資料夾，待複習狀態不變。</p>
+
+                <label for="result-folder-select" class="block text-xs font-bold text-gray-600 mb-1">現有資料夾</label>
+                <select id="result-folder-select" class="w-full p-3 border-2 border-emerald-100 rounded-lg bg-white outline-none focus:border-emerald-500" aria-describedby="result-folder-help"></select>
+
+                <div class="flex items-center gap-2 my-3 text-xs text-gray-400" aria-hidden="true">
+                    <span class="h-px bg-gray-200 flex-1"></span>
+                    <span>或建立新資料夾</span>
+                    <span class="h-px bg-gray-200 flex-1"></span>
+                </div>
+
+                <label for="result-new-folder-name" class="sr-only">新資料夾名稱</label>
+                <input id="result-new-folder-name" type="text" maxlength="40" class="w-full p-3 border-2 border-emerald-100 rounded-lg bg-white outline-none focus:border-emerald-500" placeholder="輸入新資料夾名稱" aria-describedby="result-folder-help">
+
+                <button id="btn-save-result-folder" type="button" class="w-full py-3 mt-3 bg-emerald-600 text-white rounded-lg font-bold text-lg shadow-md hover:bg-emerald-700 active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed">
+                    加入資料夾
                 </button>
             </div>
 
@@ -537,6 +559,6 @@
 </div>
 
 <!-- 主程式腳本（非 module，掛在 window 上） -->
-<script type="module" src="./assets/app.js"></script>
+<script type="module" src="./assets/app.js?v=20260712-practice-folders-2"></script>
 </body>
 </html>

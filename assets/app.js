@@ -1139,7 +1139,7 @@ async function loadUserDiffData(user) {
 
 function requireLoginForChange() {
     if (currentUser) return true;
-    alert('請先登入 Google 帳號，才能新增、編輯、儲存待複習狀態或同步個人資料。');
+    alert('請先登入 Google 帳號，才能新增、編輯、管理資料夾、儲存待複習狀態或同步個人資料。');
     return false;
 }
 
@@ -2513,6 +2513,7 @@ function renderPracticeWordSelection() {
     const scope = document.getElementById('practice-scope').value;
     const container = document.getElementById('practice-word-selection');
     const countLabel = document.getElementById('selection-count');
+    const excludeReviewButton = document.getElementById('btn-practice-exclude-review');
     container.replaceChildren();
 
     const pool = (scope === 'all')
@@ -2526,9 +2527,12 @@ function renderPracticeWordSelection() {
         empty.textContent = '此資料夾沒有單字';
         container.appendChild(empty);
         countLabel.innerText = '已選 0 個單字';
+        if (excludeReviewButton) excludeReviewButton.disabled = true;
         updatePracticeStartButtons(0);
         return;
     }
+
+    if (excludeReviewButton) excludeReviewButton.disabled = !pool.some(word => word.isWrong);
 
     pool.forEach(word => {
         const div = document.createElement('div');
@@ -2539,6 +2543,7 @@ function renderPracticeWordSelection() {
         checkbox.className = 'practice-checkbox w-5 h-5 text-indigo-600 rounded mr-3';
         checkbox.checked = true;
         checkbox.dataset.wordId = getWordKey(word);
+        checkbox.dataset.inReview = String(!!word.isWrong);
         checkbox.addEventListener('change', updateSelectionCount);
 
         const info = document.createElement('div');
@@ -2573,6 +2578,13 @@ function updatePracticeStartButtons(selectedCount) {
 function toggleAllPracticeWords(checked) {
     document.querySelectorAll('.practice-checkbox').forEach(cb => {
         cb.checked = checked;
+    });
+    updateSelectionCount();
+}
+
+function excludeReviewPracticeWords() {
+    document.querySelectorAll('.practice-checkbox[data-in-review="true"]').forEach(checkbox => {
+        checkbox.checked = false;
     });
     updateSelectionCount();
 }
@@ -3017,28 +3029,95 @@ function endGame(isAborted = false) {
 
     const wrongs = Array.from(state.game.wrongWords);
     document.getElementById('result-stat').innerText = `錯誤/跳過：${wrongs.length} 個`;
-    state.game.reviewSelection = [];
+    const newFolderInput = document.getElementById('result-new-folder-name');
+    if (newFolderInput) newFolderInput.value = '';
+    renderResultFolderOptions();
+    renderResultWordList();
+}
 
+function renderResultWordList(selectedWordIds = null) {
+    const wrongs = Array.from(state.game.wrongWords);
+    const checkedIds = selectedWordIds || new Set(wrongs.map(getWordKey));
     const list = document.getElementById('result-skipped-items');
+    state.game.reviewSelection = [];
     list.replaceChildren();
+
     if (!wrongs.length) {
         const li = document.createElement('li');
         li.className = 'p-4 text-center text-green-600 font-bold bg-green-50 rounded-xl';
         li.textContent = '👏 完美！沒有錯誤單字。';
         list.appendChild(li);
     } else {
-        wrongs.forEach((w, idx) => {
-            state.game.reviewSelection.push(w);
-            list.appendChild(createReviewItem(w, idx));
+        wrongs.forEach((word, idx) => {
+            const checked = checkedIds.has(getWordKey(word));
+            if (checked) state.game.reviewSelection.push(word);
+            list.appendChild(createReviewItem(word, idx, checked));
         });
     }
-    const saveReviewButton = document.getElementById('btn-save-review');
-    if (saveReviewButton) saveReviewButton.disabled = wrongs.length === 0;
+
+    updateResultActionButtons();
 }
 
-function createReviewItem(w, idx) {
+function getAssignableResultFolderIds() {
+    return state.folderIds.filter(folderId => folderId !== WRONG_FOLDER && folderId !== UNFILED_FOLDER);
+}
+
+function renderResultFolderOptions(selectedFolderId = '') {
+    refreshFolders();
+    const select = document.getElementById('result-folder-select');
+    if (!select) return;
+
+    const folderIds = getAssignableResultFolderIds();
+    const placeholder = new Option(folderIds.length ? '選擇現有資料夾' : '目前沒有可選資料夾', '');
+    select.replaceChildren(placeholder);
+    folderIds.forEach(folderId => {
+        select.appendChild(new Option(getFolderDisplayName(folderId), folderId));
+    });
+    select.disabled = folderIds.length === 0;
+    if (selectedFolderId && folderIds.includes(selectedFolderId)) select.value = selectedFolderId;
+    updateResultActionButtons();
+}
+
+function updateResultActionButtons() {
+    const hasSelection = state.game.reviewSelection.length > 0;
+    const saveReviewButton = document.getElementById('btn-save-review');
+    if (saveReviewButton) saveReviewButton.disabled = !hasSelection;
+
+    const folderSelect = document.getElementById('result-folder-select');
+    const newFolderInput = document.getElementById('result-new-folder-name');
+    const saveFolderButton = document.getElementById('btn-save-result-folder');
+    const hasDestination = !!folderSelect?.value || !!newFolderInput?.value.trim();
+    if (saveFolderButton) saveFolderButton.disabled = !hasSelection || !hasDestination;
+}
+
+function handleResultFolderSelectChange() {
+    const select = document.getElementById('result-folder-select');
+    const input = document.getElementById('result-new-folder-name');
+    if (select?.value && input) input.value = '';
+    updateResultActionButtons();
+}
+
+function handleResultNewFolderInput() {
+    const select = document.getElementById('result-folder-select');
+    const input = document.getElementById('result-new-folder-name');
+    if (input?.value.trim() && select) select.value = '';
+    updateResultActionButtons();
+}
+
+function syncResultWordReferences() {
+    const currentWordsById = new Map(state.words.map(word => [getWordKey(word), word]));
+    state.game.wrongWords = new Set(Array.from(state.game.wrongWords)
+        .map(word => currentWordsById.get(getWordKey(word)))
+        .filter(Boolean));
+    state.game.reviewSelection = state.game.reviewSelection
+        .map(word => currentWordsById.get(getWordKey(word)))
+        .filter(Boolean);
+}
+
+function createReviewItem(w, idx, checked = true) {
     const li = document.createElement('li');
     li.className = 'bg-white p-3 rounded-xl border border-gray-100 shadow-sm';
+    li.dataset.wordId = getWordKey(w);
 
     const rowWrap = document.createElement('div');
     rowWrap.className = 'flex items-center gap-3';
@@ -3047,7 +3126,7 @@ function createReviewItem(w, idx) {
     checkbox.type = 'checkbox';
     checkbox.id = `review-chk-${idx}`;
     checkbox.className = 'w-6 h-6 text-indigo-600 rounded flex-none';
-    checkbox.checked = true;
+    checkbox.checked = checked;
     checkbox.addEventListener('change', () => toggleReviewItem(idx));
 
     const wrap = document.createElement('div');
@@ -3088,6 +3167,7 @@ function toggleReviewItem(idx) {
     } else {
         state.game.reviewSelection = state.game.reviewSelection.filter(w => w !== word);
     }
+    updateResultActionButtons();
 }
 
 async function saveReviewWords() {
@@ -3109,6 +3189,8 @@ async function saveReviewWords() {
         draft.folders = normalizeFolders(draft.folders, draft.words, draft.settings);
     });
     if (!ok) return;
+    syncResultWordReferences();
+    renderResultWordList(selectedWordIds);
     const count = state.words.filter(word =>
         selectedWordIds.has(getWordKey(word)) &&
         word.isWrong &&
@@ -3118,7 +3200,72 @@ async function saveReviewWords() {
     alert(count > 0
         ? `已將 ${count} 個單字加入待複習。`
         : '所選單字已在待複習中。');
-    navigateTo('practice');
+}
+
+async function saveResultWordsToFolder() {
+    if (!requireLoginForChange()) return;
+    if (!state.game.reviewSelection.length) {
+        alert('請至少選擇一個單字。');
+        return;
+    }
+
+    const folderSelect = document.getElementById('result-folder-select');
+    const newFolderInput = document.getElementById('result-new-folder-name');
+    const selectedFolderId = folderSelect?.value || '';
+    const newFolderName = newFolderInput?.value.trim() || '';
+
+    if (!selectedFolderId && !newFolderName) {
+        alert('請選擇現有資料夾，或輸入新資料夾名稱。');
+        return;
+    }
+    if (selectedFolderId && newFolderName) {
+        alert('請選擇現有資料夾或建立新資料夾，二選一。');
+        return;
+    }
+
+    let targetFolderId = selectedFolderId;
+    let createdFolder = false;
+    if (newFolderName) {
+        const validation = validateFolderName(newFolderName);
+        if (!validation.valid) {
+            alert(validation.message);
+            return;
+        }
+        targetFolderId = validation.name;
+        createdFolder = true;
+    } else if (!getAssignableResultFolderIds().includes(selectedFolderId)) {
+        alert('所選資料夾已不存在，請重新選擇。');
+        renderResultFolderOptions();
+        return;
+    }
+
+    const selectedWordIds = new Set(state.game.reviewSelection.map(getWordKey));
+    const movedCount = state.words.filter(word =>
+        selectedWordIds.has(getWordKey(word)) && word.folderId !== targetFolderId
+    ).length;
+    const ok = await commitUserMutation(draft => {
+        if (createdFolder && !draft.folders.includes(targetFolderId)) draft.folders.push(targetFolderId);
+        draft.words.forEach(word => {
+            if (!selectedWordIds.has(getWordKey(word))) return;
+            word.folderId = targetFolderId;
+        });
+        draft.folders = normalizeFolders(draft.folders, draft.words, draft.settings);
+    });
+    if (!ok) return;
+
+    syncResultWordReferences();
+    renderResultWordList(selectedWordIds);
+    if (newFolderInput) newFolderInput.value = '';
+    renderResultFolderOptions(targetFolderId);
+
+    const displayName = getFolderDisplayName(targetFolderId);
+    if (createdFolder) {
+        alert(`已建立「${displayName}」，並將 ${movedCount} 個單字移至此資料夾。`);
+    } else if (movedCount > 0) {
+        alert(`已將 ${movedCount} 個單字移至「${displayName}」。`);
+    } else {
+        alert(`所選單字已在「${displayName}」中。`);
+    }
 }
 
 function openSettingsModal() {
@@ -3420,9 +3567,9 @@ function bindStaticEvents() {
     editHintButtons[1]?.addEventListener('click', toggleEditMode);
 
     document.getElementById('practice-scope')?.addEventListener('change', renderPracticeWordSelection);
-    const selectionButtons = document.querySelectorAll('#view-practice .space-x-2 button');
-    selectionButtons[0]?.addEventListener('click', () => toggleAllPracticeWords(true));
-    selectionButtons[1]?.addEventListener('click', () => toggleAllPracticeWords(false));
+    document.getElementById('btn-practice-select-all')?.addEventListener('click', () => toggleAllPracticeWords(true));
+    document.getElementById('btn-practice-select-none')?.addEventListener('click', () => toggleAllPracticeWords(false));
+    document.getElementById('btn-practice-exclude-review')?.addEventListener('click', excludeReviewPracticeWords);
 
     document.querySelectorAll('#view-practice [data-start-mode]').forEach(button => {
         button.addEventListener('click', () => startGame(button.dataset.startMode));
@@ -3442,6 +3589,9 @@ function bindStaticEvents() {
     spellingButtons[1]?.addEventListener('click', skipSpellingWord);
 
     document.getElementById('btn-save-review')?.addEventListener('click', saveReviewWords);
+    document.getElementById('result-folder-select')?.addEventListener('change', handleResultFolderSelectChange);
+    document.getElementById('result-new-folder-name')?.addEventListener('input', handleResultNewFolderInput);
+    document.getElementById('btn-save-result-folder')?.addEventListener('click', saveResultWordsToFolder);
     document.getElementById('btn-result-return')?.addEventListener('click', () => navigateTo('practice'));
 
     const addButtons = document.querySelectorAll('#add-modal .grid button');
