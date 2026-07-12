@@ -18,7 +18,7 @@ import {
     deleteField
 } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
-const LESSON_MANIFEST_URL = './data/lessons/manifest.json';
+const LESSON_MANIFEST_URL = './app/data/lessons/manifest.json';
 const WRONG_FOLDER = '錯題區';
 const REVIEW_FOLDER_LABEL = '待複習';
 const UNFILED_FOLDER = '未分類';
@@ -53,10 +53,10 @@ const firebaseConfig = {
 };
 
 const BGM_TRACKS = [
-    { id: 'bgm_new_dora', name: '新哆啦A夢主題曲', url: './background music/新哆啦A夢主題曲.mp3' },
-    { id: 'bgm_old_dora', name: '舊版哆啦A夢主題曲', url: './background music/舊版哆啦A夢主題曲.mp3' },
-    { id: 'bgm_summer', name: "On Summer's Day", url: "./background music/On Summer's Day.mp3" },
-    { id: 'bgm_columbina', name: 'Genshin Impact - Columbina To Where She Flies', url: './background music/Genshin Impact - Columbina To Where She Flies.mp3' },
+    { id: 'bgm_new_dora', name: '新哆啦A夢主題曲', url: './app/background music/新哆啦A夢主題曲.mp3' },
+    { id: 'bgm_old_dora', name: '舊版哆啦A夢主題曲', url: './app/background music/舊版哆啦A夢主題曲.mp3' },
+    { id: 'bgm_summer', name: "On Summer's Day", url: "./app/background music/On Summer's Day.mp3" },
+    { id: 'bgm_columbina', name: 'Genshin Impact - Columbina To Where She Flies', url: './app/background music/Genshin Impact - Columbina To Where She Flies.mp3' },
     { id: 'bgm_demo', name: '線上測試音樂', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' }
 ];
 
@@ -406,7 +406,7 @@ async function loadDefaultWordDatabase() {
         if (!lesson || typeof lesson.file !== 'string' || !lesson.file.trim()) {
             throw new Error('Lesson manifest entry is missing file');
         }
-        const res = await fetch(`./data/lessons/${encodeURIComponent(lesson.file)}`, { cache: 'no-cache' });
+        const res = await fetch(`./app/data/lessons/${encodeURIComponent(lesson.file)}`, { cache: 'no-cache' });
         if (!res.ok) throw new Error(`Failed to fetch ${lesson.file}: ${res.status}`);
         const data = await res.json();
         return validateLessonData(data, lesson);
