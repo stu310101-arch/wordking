@@ -61,8 +61,8 @@
         }
     </style>
 
-    <link rel="stylesheet" href="./assets/tailwind.css?v=20260712-practice-folders-2">
-    <link rel="stylesheet" href="./assets/styles.css?v=20260712-practice-folders-2">
+    <link rel="stylesheet" href="./assets/tailwind.css?v=20260828-lv5a-search-sources">
+    <link rel="stylesheet" href="./assets/styles.css?v=20260828-lv5a-search-sources">
 </head>
 <body class="bg-gray-50 min-h-screen font-sans pb-24" aria-busy="true">
 
@@ -260,7 +260,7 @@
                     </div>
                     <div id="practice-word-selection" class="max-h-48 overflow-y-auto custom-scrollbar border-2 border-gray-100 rounded-xl p-2 bg-gray-50">
                     </div>
-                    <p id="selection-count" class="text-right text-xs text-gray-400 mt-1">已選 0 個單字</p>
+                    <p id="selection-count" class="text-right text-xs text-gray-400 mt-1" aria-live="polite">已選 0 個單字</p>
                 </div>
 
                 <!-- Step 3: 開始遊戲 -->
@@ -304,7 +304,7 @@
                         <button class="w-full bg-gray-100 text-gray-500 py-4 rounded-xl font-bold text-lg active:bg-gray-200">跳過 (視為答錯)</button>
                     </div>
                 </div>
-                <div id="spelling-feedback" class="mt-4 font-bold text-xl min-h-[2rem]"></div>
+                <div id="spelling-feedback" class="mt-4 font-bold text-xl min-h-[2rem]" role="status" aria-live="polite"></div>
                 <div id="spelling-review-answer" class="hidden mt-3 p-3 rounded-xl bg-amber-50 border border-amber-100 text-amber-700 font-bold"></div>
             </div>
         </div>
@@ -330,7 +330,7 @@
                     <h3 id="choice-question" class="text-3xl font-extrabold text-indigo-900 break-words leading-snug">Question</h3>
                 </div>
                 <div id="choice-options" class="flex flex-col gap-3 w-full flex-1 justify-center"></div>
-                <div id="choice-feedback" class="mt-4 font-bold text-xl min-h-[2rem]"></div>
+                <div id="choice-feedback" class="mt-4 font-bold text-xl min-h-[2rem]" role="status" aria-live="polite"></div>
             </div>
         </div>
     </div>
@@ -559,6 +559,6 @@
 </div>
 
 <!-- 主程式腳本（非 module，掛在 window 上） -->
-<script type="module" src="./assets/app.js?v=20260712-practice-folders-2"></script>
+<script type="module" src="./assets/app.js?v=20260828-lv5a-search-sources"></script>
 </body>
 </html>

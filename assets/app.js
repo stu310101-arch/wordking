@@ -220,6 +220,9 @@ function getLegacyFolderData(word = {}) {
 
 function cloneWord(word = {}) {
     const folderData = getLegacyFolderData(word);
+    const lessonIds = normalizeLegacyTags(word.lessonIds)
+        .map(normalizeFolderId)
+        .filter(Boolean);
     const cloned = {
         english: word.english || '',
         meaning: word.meaning || '',
@@ -227,6 +230,7 @@ function cloneWord(word = {}) {
         folderId: folderData.folderId,
         isWrong: folderData.isWrong
     };
+    if (lessonIds.length) cloned.lessonIds = lessonIds;
     if (word.id) cloned.id = word.id;
     if (word.defaultId) cloned.defaultId = word.defaultId;
     if (word.source === 'custom' || word.source === 'default') cloned.source = word.source;
@@ -317,6 +321,30 @@ function getFolderDisplayName(folderId, settings = state.settings) {
     return (settings && settings.lessonFolderNames && settings.lessonFolderNames[folderId]) || folderId;
 }
 
+function getDefaultWordLessonIds(word = {}) {
+    if (word.source !== 'default' || !word.defaultId) return [];
+    const defaultWord = defaultWordMap.get(word.defaultId);
+    if (!defaultWord) return [];
+    const lessonIds = Array.isArray(defaultWord.lessonIds) && defaultWord.lessonIds.length
+        ? defaultWord.lessonIds
+        : [defaultWord.folderId];
+    return Array.from(new Set(lessonIds.filter(folderId => isLessonFolder(folderId))));
+}
+
+function getDefaultWordActiveLessonIds(word = {}, settings = state.settings, excludedFolderId = '') {
+    const deletedLessonIds = new Set((settings && settings.deletedLessonIds) || []);
+    return getDefaultWordLessonIds(word).filter(folderId => (
+        folderId !== excludedFolderId && !deletedLessonIds.has(folderId)
+    ));
+}
+
+function getWordSourceFolderIds(word = {}, settings = state.settings) {
+    const primaryFolderId = word.folderId || UNFILED_FOLDER;
+    const activeLessonIds = getDefaultWordActiveLessonIds(word, settings);
+    if (!activeLessonIds.length || !activeLessonIds.includes(word.folderId)) return [primaryFolderId];
+    return activeLessonIds;
+}
+
 function folderNameExists(name, exceptFolderId = '') {
     if (!name) return false;
     if (state.categories.includes(name.toUpperCase())) return true;
@@ -345,8 +373,8 @@ function getDefaultWords() {
     return cloneWords(defaultWordDatabase);
 }
 
-function getCurrentBgmTrack() {
-    return BGM_TRACKS.find(t => t.id === state.settings.selectedBgmId) || BGM_TRACKS[0] || null;
+function getCurrentBgmTrack(trackId = state.settings.selectedBgmId) {
+    return BGM_TRACKS.find(t => t.id === trackId) || BGM_TRACKS[0] || null;
 }
 
 function validateLessonWord(rawWord, lessonId, index, fileName) {
@@ -363,8 +391,11 @@ function validateLessonWord(rawWord, lessonId, index, fileName) {
 
     const meaning = typeof rawWord.meaning === 'string' ? rawWord.meaning : '';
     const partOfSpeech = normalizePartOfSpeech(rawWord.partOfSpeech);
-    const rawTags = Array.isArray(rawWord.tags) ? rawWord.tags : [lessonId];
-    const folderId = normalizeLegacyTags(rawTags).find(tag => tag !== WRONG_FOLDER) || lessonId;
+    const rawTags = Array.isArray(rawWord.tags) ? rawWord.tags : [];
+    const lessonIds = normalizeLegacyTags([lessonId, ...rawTags])
+        .map(normalizeFolderId)
+        .filter(Boolean);
+    const folderId = lessonIds[0] || lessonId;
 
     const defaultId = createDefaultWordId(lessonId, english);
     return {
@@ -375,6 +406,7 @@ function validateLessonWord(rawWord, lessonId, index, fileName) {
         meaning,
         partOfSpeech,
         folderId,
+        lessonIds,
         isWrong: false
     };
 }
@@ -595,10 +627,19 @@ function normalizeFolders(folders, words, settings = state.settings) {
     return Array.from(folderIds);
 }
 
-function applyFolderDeletion(words, folderName, deleteWords) {
+function applyFolderDeletion(words, folderName, deleteWords, settings = state.settings) {
     return cloneWords(words).reduce((kept, word) => {
-        if (word.folderId !== folderName) {
+        const sourceFolderIds = getWordSourceFolderIds(word, settings);
+        if (!sourceFolderIds.includes(folderName)) {
             kept.push(word);
+            return kept;
+        }
+        const remainingFolderIds = sourceFolderIds.filter(folderId => folderId !== folderName);
+        if (remainingFolderIds.length) {
+            kept.push({
+                ...word,
+                folderId: word.folderId === folderName ? remainingFolderIds[0] : word.folderId
+            });
             return kept;
         }
         if (deleteWords) return kept;
@@ -692,13 +733,19 @@ function normalizeUserData(data = {}) {
     const deleted = new Set(settings.deletedLessonIds || []);
     const baseWords = new Map(getDefaultWords().map(word => [word.defaultId, {
         ...cloneWord(word),
-        folderId: deleted.has(word.folderId) ? '' : word.folderId
+        folderId: deleted.has(word.folderId)
+            ? (getDefaultWordActiveLessonIds(word, settings)[0] || '')
+            : word.folderId
     }]));
     const customWords = [];
 
     cloneWords(data.words || []).forEach(word => {
-        if (deleted.has(word.folderId)) word.folderId = '';
         const matchedDefault = defaultWordEnglishMap.get((word.english || '').toLowerCase());
+        if (deleted.has(word.folderId)) {
+            word.folderId = matchedDefault
+                ? (getDefaultWordActiveLessonIds(matchedDefault, settings)[0] || '')
+                : '';
+        }
         if (matchedDefault && baseWords.has(matchedDefault.defaultId)) {
             baseWords.set(matchedDefault.defaultId, {
                 ...matchedDefault,
@@ -732,9 +779,14 @@ function buildUserDataFromDiffs(diffData = {}) {
             const override = overrides.get(word.defaultId) || {};
             const hasLegacyTags = Object.prototype.hasOwnProperty.call(override, 'tags');
             const legacyData = hasLegacyTags ? getLegacyFolderData(override) : null;
-            const folderId = Object.prototype.hasOwnProperty.call(override, 'folderId')
+            const requestedFolderId = Object.prototype.hasOwnProperty.call(override, 'folderId')
                 ? String(override.folderId || '')
-                : (legacyData ? legacyData.folderId : (deletedLessonIds.has(word.folderId) ? '' : word.folderId));
+                : (legacyData
+                    ? legacyData.folderId
+                    : word.folderId);
+            const folderId = deletedLessonIds.has(requestedFolderId)
+                ? (getDefaultWordActiveLessonIds(word, settings)[0] || '')
+                : requestedFolderId;
             const isWrong = Object.prototype.hasOwnProperty.call(override, 'isWrong')
                 ? !!override.isWrong
                 : (legacyData ? legacyData.isWrong : !!word.isWrong);
@@ -1276,11 +1328,13 @@ function setupAudioSystem() {
     applyBgmSettingsToElement();
 }
 
-function applyBgmSettingsToElement() {
+function applyBgmSettingsToElement(settings = state.settings) {
     const audio = state.audio && state.audio.bgmElement;
     if (!audio) return;
-    audio.volume = clamp01(state.settings.bgmVolume);
-    if (state.settings.bgmEnabled) {
+    const track = getCurrentBgmTrack(settings.selectedBgmId);
+    if (track && audio.getAttribute('src') !== track.url) audio.src = track.url;
+    audio.volume = clamp01(settings.bgmVolume);
+    if (settings.bgmEnabled) {
         audio.play().catch(() => {});
     } else {
         audio.pause();
@@ -1338,6 +1392,7 @@ function getWordKey(word = {}) {
 function wordIsInFolder(word, folderId) {
     if (folderId === WRONG_FOLDER) return !!word.isWrong;
     if (folderId === UNFILED_FOLDER) return !word.folderId;
+    if (isLessonFolder(folderId)) return getWordSourceFolderIds(word).includes(folderId);
     return word.folderId === folderId;
 }
 
@@ -1617,6 +1672,17 @@ function findSearchMatches(query, words = state.words) {
     const normalizedEnglishQuery = normalizeEnglishSearchText(normalizedQuery);
     const matches = [];
     const matchedKeys = new Set();
+    const sourceFolderIdsByEnglish = new Map();
+
+    (words || []).forEach(word => {
+        const normalizedEnglish = normalizeEnglishSearchText(word.english);
+        if (!normalizedEnglish) return;
+        const sourceFolderIds = sourceFolderIdsByEnglish.get(normalizedEnglish) || [];
+        getWordSourceFolderIds(word).forEach(folderId => {
+            if (!sourceFolderIds.includes(folderId)) sourceFolderIds.push(folderId);
+        });
+        sourceFolderIdsByEnglish.set(normalizedEnglish, sourceFolderIds);
+    });
 
     (words || []).forEach(word => {
         const key = getWordKey(word);
@@ -1650,11 +1716,14 @@ function findSearchMatches(query, words = state.words) {
         }
 
         const folderId = word.folderId || UNFILED_FOLDER;
+        const folderName = (sourceFolderIdsByEnglish.get(normalizedEnglish) || getWordSourceFolderIds(word))
+            .map(sourceFolderId => getFolderDisplayName(sourceFolderId))
+            .join(', ');
         matches.push({
             key,
             word,
             folderId,
-            folderName: getFolderDisplayName(folderId),
+            folderName,
             englishMatchStart,
             englishMatchLength,
             chineseMatchIndexes,
@@ -1828,8 +1897,13 @@ function createSearchSuggestionOption(candidate, index, renderId) {
     textWrap.append(english, meaning);
 
     const folder = document.createElement('span');
-    folder.className = 'max-w-[7rem] flex-none truncate text-xs text-gray-400';
+    folder.className = 'flex-none text-xs text-gray-400';
+    folder.style.maxWidth = '52%';
+    folder.style.overflowWrap = 'anywhere';
+    folder.style.textAlign = 'right';
+    folder.style.lineHeight = '1.25';
     folder.textContent = candidate.folderName;
+    folder.title = candidate.folderName;
     option.append(textWrap, folder);
     option.addEventListener('mouseenter', () => updateActiveSearchSuggestion(index, { scroll: false }));
     option.addEventListener('click', () => selectSearchSuggestion(index));
@@ -2078,14 +2152,42 @@ async function executeRename() {
 }
 
 function getFolderDeleteConfirmation(folderId, deleteAll) {
-    const wordCount = state.words.filter(word => word.folderId === folderId).length;
+    const folderWords = state.words.filter(word => getWordSourceFolderIds(word).includes(folderId));
+    const sharedCount = folderWords.filter(word => (
+        getWordSourceFolderIds(word).some(sourceFolderId => sourceFolderId !== folderId)
+    )).length;
+    const wordCount = folderWords.length;
+    const exclusiveCount = wordCount - sharedCount;
     const folderDisplayName = getFolderDisplayName(folderId);
+    const isDefaultLesson = isLessonFolder(folderId);
     if (deleteAll) {
+        if (isDefaultLesson) {
+            return {
+                title: `永久刪除「${folderDisplayName}」？`,
+                description: `此資料夾共有 ${wordCount} 個單字：\n• ${exclusiveCount} 個僅屬於此課程，將永久刪除\n• ${sharedCount} 個仍屬於其他課程，會保留在那些課程中\n\n永久刪除的單字也會從待複習與目前練習資料中移除。\n\n此操作無法復原。`,
+                submitLabel: exclusiveCount
+                    ? `刪除資料夾與 ${exclusiveCount} 個專屬單字`
+                    : '刪除資料夾（保留共享單字）',
+                wordCount,
+                sharedCount,
+                exclusiveCount
+            };
+        }
         return {
             title: `永久刪除「${folderDisplayName}」？`,
             description: `將永久刪除：\n• 「${folderDisplayName}」資料夾\n• ${wordCount} 個單字\n\n被刪除的單字也會從待複習與目前練習資料中移除。\n\n此操作無法復原。`,
             submitLabel: `刪除資料夾與 ${wordCount} 個單字`,
             wordCount
+        };
+    }
+    if (isDefaultLesson) {
+        return {
+            title: `刪除「${folderDisplayName}」資料夾？`,
+            description: `此資料夾共有 ${wordCount} 個單字，全部都會保留：\n• ${sharedCount} 個仍屬於其他課程，會留在那些課程中\n• ${exclusiveCount} 個僅屬於此課程，將移至「${UNFILED_FOLDER}」。`,
+            submitLabel: '刪除資料夾',
+            wordCount,
+            sharedCount,
+            exclusiveCount
         };
     }
     return {
@@ -2133,10 +2235,11 @@ async function executeDelete() {
     const deleteWords = type === 'all';
     if (!oldName || !type) return;
     const isDefaultLesson = isLessonFolder(oldName);
+    const remainingWordKeys = new Set(
+        applyFolderDeletion(state.words, oldName, deleteWords, state.settings).map(getWordKey)
+    );
     const deletedWordKeys = new Set(
-        deleteWords
-            ? state.words.filter(word => word.folderId === oldName).map(getWordKey)
-            : []
+        state.words.filter(word => !remainingWordKeys.has(getWordKey(word))).map(getWordKey)
     );
     const modal = document.getElementById('confirm-modal');
     const cancel = document.getElementById('confirm-cancel');
@@ -2152,7 +2255,7 @@ async function executeDelete() {
 
     try {
         const ok = await commitUserMutation(draft => {
-            draft.words = applyFolderDeletion(draft.words, oldName, deleteWords);
+            draft.words = applyFolderDeletion(draft.words, oldName, deleteWords, draft.settings);
             draft.folders = draft.folders.filter(f => f !== oldName);
             draft.settings = cloneSettings(draft.settings);
             if (isDefaultLesson && !draft.settings.deletedLessonIds.includes(oldName)) {
@@ -2359,22 +2462,30 @@ function renderLibrary() {
 }
 
 function createCatBtn(name, cls, editable, oriName) {
-    const div = document.createElement('div');
-    div.className = `${cls} folder-card relative min-h-[80px] rounded-2xl flex items-center justify-center shadow-sm cursor-pointer active:scale-95 transition-all text-lg text-center px-2 break-all leading-tight`;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `${cls} folder-card relative min-h-[80px] rounded-2xl flex items-center justify-center shadow-sm cursor-pointer active:scale-95 transition-all text-lg text-center px-2 break-all leading-tight`;
 
     const span = document.createElement('span');
     span.textContent = name;
-    div.appendChild(span);
+    button.appendChild(span);
 
     if (state.isEditing && editable) {
         const edit = document.createElement('span');
         edit.className = 'absolute top-1 right-1 text-xs bg-white text-red-500 rounded-full w-5 h-5 flex items-center justify-center';
         edit.textContent = '✎';
-        div.appendChild(edit);
+        edit.setAttribute('aria-hidden', 'true');
+        button.appendChild(edit);
     }
 
-    div.addEventListener('click', () => handleFolderClick(oriName || name.split(' ')[0]));
-    return div;
+    const activateFolder = () => handleFolderClick(oriName || name.split(' ')[0]);
+    button.addEventListener('click', activateFolder);
+    button.addEventListener('keydown', event => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        activateFolder();
+    });
+    return button;
 }
 
 function renderWordList(name) {
@@ -2417,19 +2528,23 @@ function renderWordList(name) {
 
 function createWordCard(w) {
     const card = document.createElement('div');
-    card.className = 'word-card w-full';
+    card.className = 'word-card w-full relative';
     card.dataset.wordId = getWordKey(w);
+    card.setAttribute('role', 'group');
+    card.setAttribute('aria-label', `${w.english} 單字卡`);
 
     const inner = document.createElement('div');
     inner.className = 'word-card-inner';
 
     const front = document.createElement('div');
     front.className = 'word-card-front bg-white border-2 border-indigo-50 p-6 relative flex flex-col justify-center items-center rounded-2xl';
+    front.setAttribute('aria-hidden', 'false');
 
     const editBtn = document.createElement('button');
     editBtn.className = 'absolute top-3 left-3 text-gray-400 hover:text-indigo-600 bg-white rounded-full p-1 shadow-sm z-20';
     editBtn.type = 'button';
     editBtn.textContent = '✎';
+    editBtn.setAttribute('aria-label', `編輯 ${w.english}`);
     editBtn.addEventListener('click', event => {
         event.stopPropagation();
         openAddModal(w.idx);
@@ -2438,7 +2553,7 @@ function createWordCard(w) {
 
     if (w.isWrong) {
         const badge = document.createElement('span');
-        badge.className = 'absolute top-3 right-3 text-xs bg-red-100 text-red-500 px-2 py-1 rounded-full font-bold';
+        badge.className = 'absolute top-3 right-12 text-xs bg-red-100 text-red-500 px-2 py-1 rounded-full font-bold';
         badge.textContent = REVIEW_FOLDER_LABEL;
         front.appendChild(badge);
     }
@@ -2446,8 +2561,17 @@ function createWordCard(w) {
     const english = document.createElement('span');
     english.className = 'text-3xl font-black text-indigo-900 break-all text-center cursor-pointer';
     english.title = '發音';
+    english.tabIndex = 0;
+    english.setAttribute('role', 'button');
+    english.setAttribute('aria-label', `發音：${w.english}`);
     english.textContent = w.english;
     english.addEventListener('click', event => {
+        event.stopPropagation();
+        speakWord(w.english);
+    });
+    english.addEventListener('keydown', event => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
         event.stopPropagation();
         speakWord(w.english);
     });
@@ -2455,6 +2579,7 @@ function createWordCard(w) {
 
     const back = document.createElement('div');
     back.className = 'word-card-back p-6 bg-indigo-50 border-2 border-indigo-200 flex flex-col rounded-2xl';
+    back.setAttribute('aria-hidden', 'true');
     parseMeaning(w.meaning, w.partOfSpeech).forEach(part => {
         const block = document.createElement('div');
         block.className = 'mb-3 text-indigo-800 font-bold text-lg';
@@ -2468,7 +2593,39 @@ function createWordCard(w) {
 
     inner.append(front, back);
     card.appendChild(inner);
-    card.addEventListener('click', () => card.classList.toggle('is-flipped'));
+
+    const flipButton = document.createElement('button');
+    flipButton.type = 'button';
+    flipButton.className = 'absolute top-3 right-3 text-indigo-500 hover:text-indigo-600 bg-white rounded-full p-1 shadow-sm z-20';
+    flipButton.textContent = '↻';
+    flipButton.setAttribute('aria-pressed', 'false');
+    flipButton.setAttribute('aria-label', `翻看 ${w.english} 的字義`);
+    card.appendChild(flipButton);
+
+    const toggleCard = () => {
+        const isFlipped = card.classList.toggle('is-flipped');
+        front.inert = isFlipped;
+        front.setAttribute('aria-hidden', String(isFlipped));
+        back.setAttribute('aria-hidden', String(!isFlipped));
+        flipButton.setAttribute('aria-pressed', String(isFlipped));
+        flipButton.setAttribute(
+            'aria-label',
+            isFlipped
+                ? `翻回 ${w.english}，字義：${getMeaningWithPartOfSpeech(w)}`
+                : `翻看 ${w.english} 的字義`
+        );
+    };
+    card.addEventListener('click', toggleCard);
+    flipButton.addEventListener('click', event => {
+        event.stopPropagation();
+        toggleCard();
+    });
+    flipButton.addEventListener('keydown', event => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        event.stopPropagation();
+        toggleCard();
+    });
     return card;
 }
 
@@ -2544,6 +2701,7 @@ function renderPracticeWordSelection() {
         checkbox.checked = true;
         checkbox.dataset.wordId = getWordKey(word);
         checkbox.dataset.inReview = String(!!word.isWrong);
+        checkbox.setAttribute('aria-label', `選取 ${word.english}`);
         checkbox.addEventListener('change', updateSelectionCount);
 
         const info = document.createElement('div');
@@ -3127,6 +3285,7 @@ function createReviewItem(w, idx, checked = true) {
     checkbox.id = `review-chk-${idx}`;
     checkbox.className = 'w-6 h-6 text-indigo-600 rounded flex-none';
     checkbox.checked = checked;
+    checkbox.setAttribute('aria-label', `選取 ${w.english}`);
     checkbox.addEventListener('change', () => toggleReviewItem(idx));
 
     const wrap = document.createElement('div');
@@ -3309,7 +3468,7 @@ async function closeSettingsModal() {
     }
 }
 
-async function saveSettingsFromUI() {
+function getSettingsDraftFromUI() {
     const bgmEnabledEl = document.getElementById('settings-bgm-enabled');
     const bgmVolumeEl = document.getElementById('settings-bgm-volume');
     const speechVolumeEl = document.getElementById('settings-speech-volume');
@@ -3320,7 +3479,11 @@ async function saveSettingsFromUI() {
     if (bgmVolumeEl) nextSettings.bgmVolume = clamp01((parseInt(bgmVolumeEl.value, 10) || 0) / 100);
     if (speechVolumeEl) nextSettings.speechVolume = clamp01((parseInt(speechVolumeEl.value, 10) || 0) / 100);
     if (bgmSelectEl && bgmSelectEl.value) nextSettings.selectedBgmId = bgmSelectEl.value;
+    return nextSettings;
+}
 
+async function saveSettingsFromUI() {
+    const nextSettings = getSettingsDraftFromUI();
     const ok = await commitUserMutation(draft => {
         draft.settings = cloneSettings(nextSettings);
         draft.folders = normalizeFolders(draft.folders, draft.words, draft.settings);
@@ -3328,20 +3491,21 @@ async function saveSettingsFromUI() {
         requireAuth: false,
         afterRollback: applyBgmSettingsToElement
     });
-    if (ok) applyBgmSettingsToElement();
+    applyBgmSettingsToElement();
+    return ok;
 }
 
 function updateBgmVolumeFromSlider(value) {
     const v = Math.max(0, Math.min(100, parseInt(value, 10) || 0));
+    const previewVolume = clamp01(v / 100);
     const label = document.getElementById('settings-bgm-volume-value');
     if (label) label.textContent = v + '%';
-    state.settings.bgmVolume = clamp01(v / 100);
 
     const audio = state.audio && state.audio.bgmElement;
     if (audio) {
         audio.volume = bgmDucking.isDucking
-            ? clamp01(state.settings.bgmVolume * bgmDucking.ratio)
-            : clamp01(state.settings.bgmVolume);
+            ? clamp01(previewVolume * bgmDucking.ratio)
+            : previewVolume;
     }
 }
 
@@ -3349,42 +3513,14 @@ function updateSpeechVolumeFromSlider(value) {
     const v = Math.max(0, Math.min(100, parseInt(value, 10) || 0));
     const label = document.getElementById('settings-speech-volume-value');
     if (label) label.textContent = v + '%';
-    state.settings.speechVolume = clamp01(v / 100);
 }
 
-async function toggleBgmEnabledFromCheckbox(checked) {
-    const nextSettings = cloneSettings(state.settings);
-    nextSettings.bgmEnabled = !!checked;
-    const ok = await commitUserMutation(draft => {
-        draft.settings = cloneSettings(nextSettings);
-    }, {
-        requireAuth: false,
-        afterRollback: applyBgmSettingsToElement
-    });
-    applyBgmSettingsToElement();
-    if (!ok) openSettingsModal();
+function toggleBgmEnabledFromCheckbox() {
+    applyBgmSettingsToElement(getSettingsDraftFromUI());
 }
 
-async function changeBgmTrackFromSelect(trackId) {
-    const nextSettings = cloneSettings(state.settings);
-    nextSettings.selectedBgmId = trackId;
-    const ok = await commitUserMutation(draft => {
-        draft.settings = cloneSettings(nextSettings);
-    }, {
-        requireAuth: false,
-        afterRollback: applyBgmSettingsToElement
-    });
-    if (!ok) {
-        openSettingsModal();
-        return;
-    }
-    const audio = state.audio && state.audio.bgmElement;
-    const track = getCurrentBgmTrack();
-    if (audio && track) {
-        const wasPlaying = !audio.paused;
-        audio.src = track.url;
-        if (state.settings.bgmEnabled && wasPlaying) audio.play().catch(() => {});
-    }
+function changeBgmTrackFromSelect() {
+    applyBgmSettingsToElement(getSettingsDraftFromUI());
 }
 
 async function confirmReset() {
