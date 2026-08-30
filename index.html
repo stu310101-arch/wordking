@@ -61,8 +61,8 @@
         }
     </style>
 
-    <link rel="stylesheet" href="./assets/tailwind.css?v=20260828-lv5a-search-sources">
-    <link rel="stylesheet" href="./assets/styles.css?v=20260828-lv5a-search-sources">
+    <link rel="stylesheet" href="./assets/tailwind.css?v=20260830-multi-folder-membership-v2">
+    <link rel="stylesheet" href="./assets/styles.css?v=20260830-multi-folder-membership-v2">
 </head>
 <body class="bg-gray-50 min-h-screen font-sans pb-24" aria-busy="true">
 
@@ -362,7 +362,7 @@
 
             <div class="mt-4 pt-4 border-t border-gray-200 text-left">
                 <p class="text-sm font-bold text-emerald-900">將勾選單字加入資料夾</p>
-                <p id="result-folder-help" class="text-xs text-emerald-700 mt-1 mb-3">選擇現有資料夾，或直接建立新資料夾。加入後，單字會移至該資料夾，待複習狀態不變。</p>
+                <p id="result-folder-help" class="text-xs text-emerald-700 mt-1 mb-3">選擇現有資料夾，或直接建立新資料夾。加入後會保留單字原有的所有資料夾與待複習狀態。</p>
 
                 <label for="result-folder-select" class="block text-xs font-bold text-gray-600 mb-1">現有資料夾</label>
                 <select id="result-folder-select" class="w-full p-3 border-2 border-emerald-100 rounded-lg bg-white outline-none focus:border-emerald-500" aria-describedby="result-folder-help"></select>
@@ -417,23 +417,26 @@
                 </select>
             </div>
             <div>
-                <label class="text-xs text-gray-500 font-bold ml-1">資料夾</label>
+                <p id="word-folder-selection-label" class="text-xs text-gray-500 font-bold ml-1">資料夾（可複選）</p>
 
-                <!-- 單一資料夾選擇 -->
+                <!-- 多資料夾選擇；原始課程來源固定保留 -->
                 <div
                     id="folder-selection-container"
-                    class="mt-1 max-h-32 overflow-y-auto custom-scrollbar border-2 border-gray-200 rounded-xl bg-gray-50 p-2 text-sm space-y-1">
+                    role="group"
+                    aria-labelledby="word-folder-selection-label"
+                    class="mt-1 max-h-48 overflow-y-auto custom-scrollbar border-2 border-gray-200 rounded-xl bg-gray-50 p-2 text-sm space-y-1">
                 </div>
 
-                <!-- 新增並移動至資料夾（選填） -->
+                <!-- 新增並加入資料夾（選填） -->
                 <input
                     type="text"
                     id="new-folder-name"
-                    placeholder="可選：新增並移動至一個資料夾"
+                    maxlength="40"
+                    placeholder="可選：再建立並加入一個新資料夾"
                     class="mt-2 w-full border-2 border-gray-200 p-2 rounded-xl focus:border-indigo-500 outline-none text-sm">
 
                 <p class="text-xs text-gray-400 mt-1 ml-1">
-                    * 待複習狀態不會改變單字原本的資料夾
+                    * 可同時加入多個資料夾；標示「課程來源」者會固定保留
                 </p>
             </div>
             <div class="grid grid-cols-2 gap-3 pt-2">
@@ -559,6 +562,6 @@
 </div>
 
 <!-- 主程式腳本（非 module，掛在 window 上） -->
-<script type="module" src="./assets/app.js?v=20260828-lv5a-search-sources"></script>
+<script type="module" src="./assets/app.js?v=20260830-multi-folder-membership-v2"></script>
 </body>
 </html>

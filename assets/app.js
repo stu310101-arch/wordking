@@ -205,17 +205,54 @@ function normalizeFolderId(value) {
     return folderId;
 }
 
+function normalizeFolderIds(values = []) {
+    const source = Array.isArray(values) ? values : [values];
+    return Array.from(new Set(source.map(normalizeFolderId).filter(Boolean)));
+}
+
 function getLegacyFolderData(word = {}) {
     const tags = normalizeLegacyTags(word.tags);
-    const legacyFolderIds = Array.isArray(word.folderIds) ? word.folderIds : [];
+    const hasFolderIds = Array.isArray(word.folderIds);
+    const legacyFolderIds = hasFolderIds ? word.folderIds : [];
     const explicitFolderId = typeof word.folderId === 'string' ? word.folderId.trim() : '';
-    const folderId = [explicitFolderId, ...legacyFolderIds, ...tags]
-        .map(normalizeFolderId)
-        .find(Boolean) || '';
+    const folderIds = hasFolderIds
+        ? normalizeFolderIds(legacyFolderIds)
+        : normalizeFolderIds([explicitFolderId, ...tags]);
     const isWrong = typeof word.isWrong === 'boolean'
         ? word.isWrong
         : explicitFolderId === WRONG_FOLDER || tags.includes(WRONG_FOLDER) || legacyFolderIds.includes(WRONG_FOLDER);
-    return { folderId, isWrong };
+    return { folderIds, folderId: folderIds[0] || '', isWrong };
+}
+
+function getStoredWordFolderIds(word = {}) {
+    return getLegacyFolderData(word).folderIds;
+}
+
+function withWordFolderIds(word = {}, folderIds = []) {
+    const normalizedFolderIds = normalizeFolderIds(folderIds);
+    return {
+        ...word,
+        folderIds: normalizedFolderIds,
+        folderId: normalizedFolderIds[0] || ''
+    };
+}
+
+function addWordFolderId(word = {}, folderId = '') {
+    return withWordFolderIds(word, [...getStoredWordFolderIds(word), folderId]);
+}
+
+function removeWordFolderId(word = {}, folderId = '') {
+    return withWordFolderIds(
+        word,
+        getStoredWordFolderIds(word).filter(storedFolderId => storedFolderId !== folderId)
+    );
+}
+
+function sameFolderIds(a = [], b = []) {
+    const normalizedA = normalizeFolderIds(a).sort(compareFoldersBySeries);
+    const normalizedB = normalizeFolderIds(b).sort(compareFoldersBySeries);
+    return normalizedA.length === normalizedB.length &&
+        normalizedA.every((folderId, index) => folderId === normalizedB[index]);
 }
 
 function cloneWord(word = {}) {
@@ -227,6 +264,7 @@ function cloneWord(word = {}) {
         english: word.english || '',
         meaning: word.meaning || '',
         partOfSpeech: normalizePartOfSpeech(word.partOfSpeech),
+        folderIds: folderData.folderIds,
         folderId: folderData.folderId,
         isWrong: folderData.isWrong
     };
@@ -339,10 +377,11 @@ function getDefaultWordActiveLessonIds(word = {}, settings = state.settings, exc
 }
 
 function getWordSourceFolderIds(word = {}, settings = state.settings) {
-    const primaryFolderId = word.folderId || UNFILED_FOLDER;
+    const deletedLessonIds = new Set((settings && settings.deletedLessonIds) || []);
     const activeLessonIds = getDefaultWordActiveLessonIds(word, settings);
-    if (!activeLessonIds.length || !activeLessonIds.includes(word.folderId)) return [primaryFolderId];
-    return activeLessonIds;
+    const storedFolderIds = getStoredWordFolderIds(word)
+        .filter(folderId => !deletedLessonIds.has(folderId));
+    return normalizeFolderIds([...activeLessonIds, ...storedFolderIds]);
 }
 
 function folderNameExists(name, exceptFolderId = '') {
@@ -395,7 +434,8 @@ function validateLessonWord(rawWord, lessonId, index, fileName) {
     const lessonIds = normalizeLegacyTags([lessonId, ...rawTags])
         .map(normalizeFolderId)
         .filter(Boolean);
-    const folderId = lessonIds[0] || lessonId;
+    const folderIds = normalizeFolderIds(lessonIds);
+    const folderId = folderIds[0] || lessonId;
 
     const defaultId = createDefaultWordId(lessonId, english);
     return {
@@ -405,6 +445,7 @@ function validateLessonWord(rawWord, lessonId, index, fileName) {
         english,
         meaning,
         partOfSpeech,
+        folderIds,
         folderId,
         lessonIds,
         isWrong: false
@@ -515,8 +556,9 @@ function refreshFolders() {
     ));
     let hasUnfiledWords = false;
     state.words.forEach(w => {
-        if (w.folderId && !deleted.has(w.folderId)) folderSet.add(w.folderId);
-        else if (!w.folderId) hasUnfiledWords = true;
+        const sourceFolderIds = getWordSourceFolderIds(w, state.settings);
+        sourceFolderIds.forEach(folderId => folderSet.add(folderId));
+        if (!sourceFolderIds.length) hasUnfiledWords = true;
     });
     if (hasUnfiledWords) folderSet.add(UNFILED_FOLDER);
     folderSet.add(WRONG_FOLDER);
@@ -542,11 +584,11 @@ function sameCustomWordData(a, b) {
         (a.english || '') === (b.english || '') &&
         (a.meaning || '') === (b.meaning || '') &&
         normalizePartOfSpeech(a.partOfSpeech) === normalizePartOfSpeech(b.partOfSpeech) &&
-        (a.folderId || '') === (b.folderId || '') &&
+        sameFolderIds(getStoredWordFolderIds(a), getStoredWordFolderIds(b)) &&
         !!a.isWrong === !!b.isWrong;
 }
 
-function getDefaultOverrideFields(word, baseWord) {
+function getDefaultOverrideFields(word, baseWord, settings = state.settings) {
     if (!word || !baseWord) return {};
     const override = {};
     if ((word.english || '') !== (baseWord.english || '')) override.english = word.english || '';
@@ -554,7 +596,13 @@ function getDefaultOverrideFields(word, baseWord) {
     if (normalizePartOfSpeech(word.partOfSpeech) !== normalizePartOfSpeech(baseWord.partOfSpeech)) {
         override.partOfSpeech = normalizePartOfSpeech(word.partOfSpeech);
     }
-    if ((word.folderId || '') !== (baseWord.folderId || '')) override.folderId = word.folderId || '';
+    const deletedLessonIds = new Set((settings && settings.deletedLessonIds) || []);
+    const wordFolderIds = getStoredWordFolderIds(word).filter(folderId => !deletedLessonIds.has(folderId));
+    const baseFolderIds = getStoredWordFolderIds(baseWord).filter(folderId => !deletedLessonIds.has(folderId));
+    if (!sameFolderIds(wordFolderIds, baseFolderIds)) {
+        override.folderIds = wordFolderIds;
+        override.folderId = wordFolderIds[0] || '';
+    }
     if (!!word.isWrong !== !!baseWord.isWrong) override.isWrong = !!word.isWrong;
     return override;
 }
@@ -563,7 +611,10 @@ function sameOverride(a = {}, b = {}) {
     const aKeys = Object.keys(a).filter(key => key !== 'updatedAt').sort();
     const bKeys = Object.keys(b).filter(key => key !== 'updatedAt').sort();
     if (aKeys.length !== bKeys.length) return false;
-    return aKeys.every(key => a[key] === b[key]);
+    return aKeys.every(key => {
+        if (key === 'folderIds') return sameFolderIds(a[key], b[key]);
+        return a[key] === b[key];
+    });
 }
 
 function ensureWordIdentities(words) {
@@ -617,8 +668,9 @@ function normalizeFolders(folders, words, settings = state.settings) {
     });
     let hasUnfiledWords = false;
     (words || []).forEach(w => {
-        if (w.folderId) folderIds.add(w.folderId);
-        else hasUnfiledWords = true;
+        const sourceFolderIds = getWordSourceFolderIds(w, settings);
+        sourceFolderIds.forEach(folderId => folderIds.add(folderId));
+        if (!sourceFolderIds.length) hasUnfiledWords = true;
     });
     const deleted = new Set((settings && settings.deletedLessonIds) || []);
     deleted.forEach(folderId => folderIds.delete(folderId));
@@ -636,23 +688,20 @@ function applyFolderDeletion(words, folderName, deleteWords, settings = state.se
         }
         const remainingFolderIds = sourceFolderIds.filter(folderId => folderId !== folderName);
         if (remainingFolderIds.length) {
-            kept.push({
-                ...word,
-                folderId: word.folderId === folderName ? remainingFolderIds[0] : word.folderId
-            });
+            kept.push(removeWordFolderId(word, folderName));
             return kept;
         }
         if (deleteWords) return kept;
-        kept.push({ ...word, folderId: '' });
+        kept.push(removeWordFolderId(word, folderName));
         return kept;
     }, []);
 }
 
 function renameFolderInWords(words, oldName, newName) {
-    return cloneWords(words).map(word => ({
-        ...word,
-        folderId: word.folderId === oldName ? newName : word.folderId
-    }));
+    return cloneWords(words).map(word => withWordFolderIds(
+        word,
+        getStoredWordFolderIds(word).map(folderId => folderId === oldName ? newName : folderId)
+    ));
 }
 
 function getUserRef(user = currentUser) {
@@ -718,7 +767,7 @@ function getLegacyCleanupPatch(now) {
         words: deleteField(),
         folders: deleteField(),
         settings: deleteField(),
-        schemaVersion: 2,
+        schemaVersion: 3,
         migratedToDiffStorageAt: now
     };
 }
@@ -731,35 +780,30 @@ async function readUserCollection(user, collectionName) {
 function normalizeUserData(data = {}) {
     const settings = hydrateSettings(data.settings || null);
     const deleted = new Set(settings.deletedLessonIds || []);
-    const baseWords = new Map(getDefaultWords().map(word => [word.defaultId, {
-        ...cloneWord(word),
-        folderId: deleted.has(word.folderId)
-            ? (getDefaultWordActiveLessonIds(word, settings)[0] || '')
-            : word.folderId
-    }]));
+    const baseWords = new Map(getDefaultWords().map(word => [word.defaultId, cloneWord(word)]));
     const customWords = [];
 
     cloneWords(data.words || []).forEach(word => {
-        const matchedDefault = defaultWordEnglishMap.get((word.english || '').toLowerCase());
-        if (deleted.has(word.folderId)) {
-            word.folderId = matchedDefault
-                ? (getDefaultWordActiveLessonIds(matchedDefault, settings)[0] || '')
-                : '';
-        }
+        const matchedDefault = (word.defaultId && defaultWordMap.get(word.defaultId)) ||
+            (word.source === 'default' && word.id && defaultWordMap.get(word.id)) ||
+            defaultWordEnglishMap.get((word.english || '').toLowerCase());
+        const storedFolderIds = getStoredWordFolderIds(word)
+            .filter(folderId => !deleted.has(folderId));
         if (matchedDefault && baseWords.has(matchedDefault.defaultId)) {
-            baseWords.set(matchedDefault.defaultId, {
+            baseWords.set(matchedDefault.defaultId, cloneWord(withWordFolderIds({
                 ...matchedDefault,
                 ...word,
+                lessonIds: matchedDefault.lessonIds,
                 id: matchedDefault.defaultId,
                 defaultId: matchedDefault.defaultId,
                 source: 'default'
-            });
+            }, [...getDefaultWordLessonIds(matchedDefault), ...storedFolderIds])));
         } else {
-            customWords.push({
+            customWords.push(cloneWord(withWordFolderIds({
                 ...word,
                 id: word.id || createCustomWordId(),
                 source: 'custom'
-            });
+            }, storedFolderIds)));
         }
     });
 
@@ -779,14 +823,18 @@ function buildUserDataFromDiffs(diffData = {}) {
             const override = overrides.get(word.defaultId) || {};
             const hasLegacyTags = Object.prototype.hasOwnProperty.call(override, 'tags');
             const legacyData = hasLegacyTags ? getLegacyFolderData(override) : null;
-            const requestedFolderId = Object.prototype.hasOwnProperty.call(override, 'folderId')
-                ? String(override.folderId || '')
+            const hasFolderIds = Object.prototype.hasOwnProperty.call(override, 'folderIds');
+            const requestedFolderIds = hasFolderIds
+                ? normalizeFolderIds(override.folderIds)
+                : (Object.prototype.hasOwnProperty.call(override, 'folderId')
+                    ? normalizeFolderIds([override.folderId])
                 : (legacyData
-                    ? legacyData.folderId
-                    : word.folderId);
-            const folderId = deletedLessonIds.has(requestedFolderId)
-                ? (getDefaultWordActiveLessonIds(word, settings)[0] || '')
-                : requestedFolderId;
+                    ? legacyData.folderIds
+                    : getStoredWordFolderIds(word)));
+            const folderIds = normalizeFolderIds([
+                ...getDefaultWordLessonIds(word),
+                ...requestedFolderIds.filter(folderId => !deletedLessonIds.has(folderId))
+            ]);
             const isWrong = Object.prototype.hasOwnProperty.call(override, 'isWrong')
                 ? !!override.isWrong
                 : (legacyData ? legacyData.isWrong : !!word.isWrong);
@@ -798,7 +846,8 @@ function buildUserDataFromDiffs(diffData = {}) {
                 english: Object.prototype.hasOwnProperty.call(override, 'english') ? override.english : word.english,
                 meaning: Object.prototype.hasOwnProperty.call(override, 'meaning') ? override.meaning : word.meaning,
                 partOfSpeech,
-                folderId,
+                folderIds,
+                folderId: folderIds[0] || '',
                 isWrong,
                 id: word.defaultId,
                 defaultId: word.defaultId,
@@ -874,11 +923,13 @@ function collectDiffOperations(previous, next, user) {
     afterWords.custom.forEach((word, wordId) => {
         const previousWord = beforeWords.custom.get(wordId);
         if (!sameCustomWordData(previousWord, word)) {
+            const folderIds = getStoredWordFolderIds(word);
             operations.push(batch => batch.set(getUserSubDocRef(user, 'customWords', wordId), {
                 english: word.english || '',
                 meaning: word.meaning || '',
                 partOfSpeech: normalizePartOfSpeech(word.partOfSpeech),
-                folderId: word.folderId || '',
+                folderIds,
+                folderId: folderIds[0] || '',
                 isWrong: !!word.isWrong,
                 createdAt: word.createdAt || now,
                 updatedAt: now
@@ -901,8 +952,8 @@ function collectDiffOperations(previous, next, user) {
         }
 
         if (!nextWord) return;
-        const previousOverride = previousWord ? getDefaultOverrideFields(previousWord, baseWord) : {};
-        const nextOverride = getDefaultOverrideFields(nextWord, baseWord);
+        const previousOverride = previousWord ? getDefaultOverrideFields(previousWord, baseWord, before.settings) : {};
+        const nextOverride = getDefaultOverrideFields(nextWord, baseWord, after.settings);
         if (sameOverride(previousOverride, nextOverride)) return;
 
         if (!Object.keys(nextOverride).length) {
@@ -933,7 +984,7 @@ async function commitAtomicOperations(operations, user, expectedRevision, rootPa
         transaction.set(rootRef, {
             ...rootPatch,
             revision,
-            schemaVersion: 2,
+            schemaVersion: 3,
             updatedAt: new Date().toISOString()
         }, { merge: true });
         return { revision, committedChunks: 1, totalChunks: 1 };
@@ -1007,7 +1058,7 @@ async function finishLargeSync(user, syncLock, rootPatch = {}) {
         transaction.set(rootRef, {
             ...rootPatch,
             revision: syncLock.targetRevision,
-            schemaVersion: 2,
+            schemaVersion: 3,
             syncLock: deleteField(),
             updatedAt: new Date().toISOString()
         }, { merge: true });
@@ -1391,9 +1442,9 @@ function getWordKey(word = {}) {
 
 function wordIsInFolder(word, folderId) {
     if (folderId === WRONG_FOLDER) return !!word.isWrong;
-    if (folderId === UNFILED_FOLDER) return !word.folderId;
-    if (isLessonFolder(folderId)) return getWordSourceFolderIds(word).includes(folderId);
-    return word.folderId === folderId;
+    const sourceFolderIds = getWordSourceFolderIds(word);
+    if (folderId === UNFILED_FOLDER) return sourceFolderIds.length === 0;
+    return sourceFolderIds.includes(folderId);
 }
 
 function setElementVisible(element, visible) {
@@ -1715,10 +1766,13 @@ function findSearchMatches(query, words = state.words) {
             if (englishMatchStart === -1) return;
         }
 
-        const folderId = word.folderId || UNFILED_FOLDER;
-        const folderName = (sourceFolderIdsByEnglish.get(normalizedEnglish) || getWordSourceFolderIds(word))
+        const sourceFolderIds = sourceFolderIdsByEnglish.get(normalizedEnglish) || getWordSourceFolderIds(word);
+        const folderId = getWordSourceFolderIds(word)[0] || UNFILED_FOLDER;
+        const folderName = sourceFolderIds.length
+            ? sourceFolderIds
             .map(sourceFolderId => getFolderDisplayName(sourceFolderId))
-            .join(', ');
+                .join(', ')
+            : UNFILED_FOLDER;
         matches.push({
             key,
             word,
@@ -1842,7 +1896,7 @@ function updateActiveSearchSuggestion(index, { scroll = true } = {}) {
 function navigateToWord(word) {
     if (!word) return false;
     closeSearchSuggestions({ clearResults: true });
-    const targetFolderId = word.folderId || UNFILED_FOLDER;
+    const targetFolderId = getWordSourceFolderIds(word)[0] || UNFILED_FOLDER;
     const targetWordId = getWordKey(word);
     navigateTo('library');
     showView('word-list');
@@ -2159,32 +2213,13 @@ function getFolderDeleteConfirmation(folderId, deleteAll) {
     const wordCount = folderWords.length;
     const exclusiveCount = wordCount - sharedCount;
     const folderDisplayName = getFolderDisplayName(folderId);
-    const isDefaultLesson = isLessonFolder(folderId);
     if (deleteAll) {
-        if (isDefaultLesson) {
-            return {
-                title: `永久刪除「${folderDisplayName}」？`,
-                description: `此資料夾共有 ${wordCount} 個單字：\n• ${exclusiveCount} 個僅屬於此課程，將永久刪除\n• ${sharedCount} 個仍屬於其他課程，會保留在那些課程中\n\n永久刪除的單字也會從待複習與目前練習資料中移除。\n\n此操作無法復原。`,
-                submitLabel: exclusiveCount
-                    ? `刪除資料夾與 ${exclusiveCount} 個專屬單字`
-                    : '刪除資料夾（保留共享單字）',
-                wordCount,
-                sharedCount,
-                exclusiveCount
-            };
-        }
         return {
             title: `永久刪除「${folderDisplayName}」？`,
-            description: `將永久刪除：\n• 「${folderDisplayName}」資料夾\n• ${wordCount} 個單字\n\n被刪除的單字也會從待複習與目前練習資料中移除。\n\n此操作無法復原。`,
-            submitLabel: `刪除資料夾與 ${wordCount} 個單字`,
-            wordCount
-        };
-    }
-    if (isDefaultLesson) {
-        return {
-            title: `刪除「${folderDisplayName}」資料夾？`,
-            description: `此資料夾共有 ${wordCount} 個單字，全部都會保留：\n• ${sharedCount} 個仍屬於其他課程，會留在那些課程中\n• ${exclusiveCount} 個僅屬於此課程，將移至「${UNFILED_FOLDER}」。`,
-            submitLabel: '刪除資料夾',
+            description: `此資料夾共有 ${wordCount} 個單字：\n• ${exclusiveCount} 個僅屬於此資料夾，將永久刪除\n• ${sharedCount} 個同時屬於其他資料夾，會保留在那些資料夾中\n\n永久刪除的單字也會從待複習與目前練習資料中移除。\n\n此操作無法復原。`,
+            submitLabel: exclusiveCount
+                ? `刪除資料夾與 ${exclusiveCount} 個專屬單字`
+                : '刪除資料夾（保留共享單字）',
             wordCount,
             sharedCount,
             exclusiveCount
@@ -2192,9 +2227,11 @@ function getFolderDeleteConfirmation(folderId, deleteAll) {
     }
     return {
         title: `刪除「${folderDisplayName}」資料夾？`,
-        description: `此資料夾中的 ${wordCount} 個單字將保留，並移至「${UNFILED_FOLDER}」。`,
+        description: `此資料夾共有 ${wordCount} 個單字，全部都會保留：\n• ${sharedCount} 個同時屬於其他資料夾，會留在那些資料夾中\n• ${exclusiveCount} 個僅屬於此資料夾，將移至「${UNFILED_FOLDER}」。`,
         submitLabel: '刪除資料夾',
-        wordCount
+        wordCount,
+        sharedCount,
+        exclusiveCount
     };
 }
 
@@ -2295,18 +2332,24 @@ function openAddModal(idx = -1) {
         document.getElementById('new-word').value = w.english;
         document.getElementById('new-meaning').value = w.meaning;
         if (partOfSpeechInput) partOfSpeechInput.value = normalizePartOfSpeech(w.partOfSpeech);
-        renderFolderSelection(w.folderId || '', !!w.isWrong);
+        renderFolderSelection(
+            getWordSourceFolderIds(w),
+            !!w.isWrong,
+            getDefaultWordActiveLessonIds(w)
+        );
     } else {
         document.getElementById('new-word').value = '';
         document.getElementById('new-meaning').value = '';
         if (partOfSpeechInput) partOfSpeechInput.value = '';
         let preSelectedFolderId = '';
+        const wordListView = document.getElementById('view-word-list');
         const currentTitle = document.getElementById('list-title');
         const current = currentTitle?.dataset.folderId || currentTitle?.innerText;
-        if (current && !state.categories.includes(current) && current !== '全部' && current !== WRONG_FOLDER && current !== UNFILED_FOLDER) {
+        const isWordListVisible = wordListView && !wordListView.classList.contains('hidden');
+        if (isWordListVisible && current && !state.categories.includes(current) && current !== '全部' && current !== WRONG_FOLDER && current !== UNFILED_FOLDER) {
             preSelectedFolderId = current;
         }
-        renderFolderSelection(preSelectedFolderId, current === WRONG_FOLDER);
+        renderFolderSelection(preSelectedFolderId ? [preSelectedFolderId] : [], current === WRONG_FOLDER);
     }
     if (tagInput) tagInput.value = '';
     openModal(modal, '#new-word');
@@ -2317,38 +2360,61 @@ function closeAddModal() {
     state.editingWordIndex = -1;
 }
 
-function renderFolderSelection(selectedFolderId = '', isWrong = false) {
+function renderFolderSelection(selectedFolderIds = [], isWrong = false, requiredFolderIds = []) {
     const container = document.getElementById('folder-selection-container');
     if (!container) return;
     container.replaceChildren();
 
-    const normalFolderIds = state.folderIds.filter(folderId => folderId !== WRONG_FOLDER);
+    const selected = new Set(normalizeFolderIds(selectedFolderIds));
+    const required = new Set(normalizeFolderIds(requiredFolderIds));
+    const normalFolderIds = state.folderIds.filter(folderId => (
+        folderId !== WRONG_FOLDER && folderId !== UNFILED_FOLDER
+    ));
     if (!normalFolderIds.length) {
         const empty = document.createElement('div');
         empty.className = 'text-xs text-gray-400';
-        empty.textContent = '目前沒有資料夾，請先建立。';
+        empty.textContent = '目前沒有可選資料夾；儲存後會列入未分類。';
         container.appendChild(empty);
     }
 
     normalFolderIds.forEach((folderId, index) => {
         const label = document.createElement('label');
-        label.className = 'inline-flex items-center space-x-2 mr-3 mb-1';
+        label.className = 'flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-white';
 
-        const radio = document.createElement('input');
-        radio.type = 'radio';
-        radio.name = 'word-folder';
-        radio.className = 'folder-radio w-4 h-4 text-indigo-600';
-        radio.value = folderId === UNFILED_FOLDER ? '' : folderId;
-        radio.id = `folder-radio-${index}`;
-        radio.checked = folderId === UNFILED_FOLDER ? !selectedFolderId : selectedFolderId === folderId;
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.name = 'word-folders';
+        checkbox.className = 'folder-checkbox w-4 h-4 text-indigo-600 rounded flex-none';
+        checkbox.value = folderId;
+        checkbox.id = `folder-checkbox-${index}`;
+        checkbox.checked = selected.has(folderId) || required.has(folderId);
+        checkbox.disabled = required.has(folderId);
+        if (checkbox.disabled) {
+            checkbox.dataset.requiredSource = 'true';
+            checkbox.setAttribute('aria-describedby', `folder-source-badge-${index}`);
+        }
 
         const span = document.createElement('span');
-        span.className = 'text-sm text-gray-700';
+        span.className = 'text-sm text-gray-700 min-w-0 break-all';
         span.textContent = getFolderDisplayName(folderId);
 
-        label.append(radio, span);
+        label.append(checkbox, span);
+        if (required.has(folderId)) {
+            const badge = document.createElement('span');
+            badge.id = `folder-source-badge-${index}`;
+            badge.className = 'ml-auto text-xs text-indigo-600 bg-indigo-100 rounded-full px-2 py-0.5 flex-none';
+            badge.textContent = '課程來源';
+            label.appendChild(badge);
+        }
         container.appendChild(label);
     });
+
+    if (normalFolderIds.length) {
+        const unfiledHint = document.createElement('p');
+        unfiledHint.className = 'text-xs text-gray-400 px-2 pt-1';
+        unfiledHint.textContent = '未勾選任何資料夾時，單字會列入未分類。';
+        container.appendChild(unfiledHint);
+    }
 
     const wrongLabel = document.createElement('label');
     wrongLabel.className = 'flex items-center space-x-2 mt-2 pt-2 border-t border-gray-200';
@@ -2375,10 +2441,11 @@ async function saveNewWord() {
         return;
     }
 
-    const selectedFolder = document.querySelector('.folder-radio:checked');
+    const selectedFolderIds = Array.from(document.querySelectorAll('.folder-checkbox:checked'))
+        .map(checkbox => checkbox.value);
     const newFolderName = tagInputEl ? tagInputEl.value.trim() : '';
     if (/[,，]/.test(newFolderName)) {
-        alert('一個單字只能選擇一個資料夾，請只輸入一個資料夾名稱。');
+        alert('一次只能建立一個新資料夾，請勿輸入逗號。');
         return;
     }
     let validatedNewFolderName = '';
@@ -2390,26 +2457,34 @@ async function saveNewWord() {
         }
         validatedNewFolderName = validation.name;
     }
-    const folderId = validatedNewFolderName || (selectedFolder ? selectedFolder.value : '');
     const isWrong = !!document.getElementById('wrong-checkbox')?.checked;
 
     const editingIndex = state.editingWordIndex;
     const previousWord = editingIndex >= 0 ? cloneWord(state.words[editingIndex]) : null;
     const previousEnglish = previousWord ? previousWord.english : '';
+    const requiredFolderIds = previousWord ? getDefaultWordActiveLessonIds(previousWord) : [];
+    const folderIds = normalizeFolderIds([
+        ...requiredFolderIds,
+        ...selectedFolderIds,
+        validatedNewFolderName
+    ]);
     const data = previousWord
-        ? { ...previousWord, english: eng, meaning: mean, partOfSpeech, folderId, isWrong }
+        ? withWordFolderIds({ ...previousWord, english: eng, meaning: mean, partOfSpeech, isWrong }, folderIds)
         : {
             id: createCustomWordId(),
             source: 'custom',
             english: eng,
             meaning: mean,
             partOfSpeech,
-            folderId,
+            folderIds,
+            folderId: folderIds[0] || '',
             isWrong,
             createdAt: new Date().toISOString()
         };
     const ok = await commitUserMutation(draft => {
-        if (folderId && !draft.folders.includes(folderId)) draft.folders.push(folderId);
+        folderIds.forEach(folderId => {
+            if (!draft.folders.includes(folderId)) draft.folders.push(folderId);
+        });
         if (editingIndex >= 0) {
             const targetIndex = previousWord && previousWord.id
                 ? draft.words.findIndex(w => w.id === previousWord.id)
@@ -3399,15 +3474,16 @@ async function saveResultWordsToFolder() {
     }
 
     const selectedWordIds = new Set(state.game.reviewSelection.map(getWordKey));
-    const movedCount = state.words.filter(word =>
-        selectedWordIds.has(getWordKey(word)) && word.folderId !== targetFolderId
+    const addedCount = state.words.filter(word =>
+        selectedWordIds.has(getWordKey(word)) && !getWordSourceFolderIds(word).includes(targetFolderId)
     ).length;
     const ok = await commitUserMutation(draft => {
         if (createdFolder && !draft.folders.includes(targetFolderId)) draft.folders.push(targetFolderId);
-        draft.words.forEach(word => {
-            if (!selectedWordIds.has(getWordKey(word))) return;
-            word.folderId = targetFolderId;
-        });
+        draft.words = draft.words.map(word => (
+            selectedWordIds.has(getWordKey(word))
+                ? addWordFolderId(word, targetFolderId)
+                : word
+        ));
         draft.folders = normalizeFolders(draft.folders, draft.words, draft.settings);
     });
     if (!ok) return;
@@ -3419,9 +3495,9 @@ async function saveResultWordsToFolder() {
 
     const displayName = getFolderDisplayName(targetFolderId);
     if (createdFolder) {
-        alert(`已建立「${displayName}」，並將 ${movedCount} 個單字移至此資料夾。`);
-    } else if (movedCount > 0) {
-        alert(`已將 ${movedCount} 個單字移至「${displayName}」。`);
+        alert(`已建立「${displayName}」，並將 ${addedCount} 個單字加入此資料夾。`);
+    } else if (addedCount > 0) {
+        alert(`已將 ${addedCount} 個單字加入「${displayName}」，原有資料夾不變。`);
     } else {
         alert(`所選單字已在「${displayName}」中。`);
     }
