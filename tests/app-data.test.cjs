@@ -1,250 +1,83 @@
-const assert = require('node:assert/strict');
-const { test } = require('node:test');
-const { createAppHarness } = require('./helpers/app-harness.cjs');
-
-const clone = value => JSON.parse(JSON.stringify(value));
-const user = { uid: 'data-owner' };
-const rawCatalog = [
-    { id: 'fixed-apple', english: 'apple', meaning: 'public apple', partOfSpeech: 'noun', isWrong: true, tags: ['課程1', '課程2'] },
-    { id: 'fixed-banana', english: 'banana', meaning: 'public banana', partOfSpeech: 'noun', tags: ['課程2'] }
-];
-const aliases = { aliases: { 'old-apple': 'fixed-apple' }, legacyTagsById: {
-    'fixed-apple': ['課程1', '課程2'], 'old-apple': ['課程1', '課程2']
-} };
-
-function harness(initialDocuments = {}) {
-    const documents = new Map(Object.entries(clone(initialDocuments)));
-    const writes = [];
-    const read = reference => {
-        const data = documents.get(reference.path);
-        return { exists: () => data !== undefined, data: () => data === undefined ? {} : clone(data) };
-    };
-    const apply = write => {
-        writes.push(clone(write));
-        if (write.type === 'delete') documents.delete(write.path);
-        else documents.set(write.path, write.merge ? { ...documents.get(write.path), ...clone(write.data) } : clone(write.data));
-    };
-    const h = createAppHarness({ firebase: {
-        getDoc: async reference => read(reference),
-        getDocs: async reference => ({ docs: [...documents.entries()]
-            .filter(([key]) => key.startsWith(`${reference.path}/`) && !key.slice(reference.path.length + 1).includes('/'))
-            .map(([key, value]) => ({ id: key.slice(reference.path.length + 1), data: () => clone(value) })) }),
-        runTransaction: async (_db, callback) => {
-            const pending = [];
-            const result = await callback({
-                get: async reference => read(reference),
-                set: (reference, data, options = {}) => pending.push({ type: 'set', path: reference.path, data, merge: !!options.merge }),
-                delete: reference => pending.push({ type: 'delete', path: reference.path })
-            });
-            pending.forEach(apply);
-            return result;
-        }
-    } });
-    h.context.__catalog = clone(rawCatalog);
-    h.context.__aliases = clone(aliases);
-    h.context.__user = user;
-    h.run(`
-        defaultWordDatabase = wordData.normalizeCatalog(__catalog).map(cloneWord);
-        defaultWordMap = new Map(defaultWordDatabase.map(word => [word.defaultId, word]));
-        defaultWordEnglishMap = new Map(defaultWordDatabase.map(word => [word.english.toLowerCase(), word]));
-        defaultWordAliases = __aliases;
-        state.lessonFolderIds = ['課程1', '課程2'];
-        currentUser = __user;
-        authReady = true;
-        isUserDataReady = true;
-    `);
-    return { ...h, documents, writes, apply };
+'use strict';
+const assert=require('node:assert/strict');const {test}=require('node:test');
+const {createAppHarness,createMemoryFirestore}=require('./helpers/app-harness.cjs');
+const rawCatalog=[{id:'w_000001',english:'penetrate',meaning:'穿透',partOfSpeech:['verb'],lessonIds:['U6','U8']},
+{id:'w_000002',english:'record',meaning:'紀錄；錄製',partOfSpeech:['noun','verb'],lessonIds:['U8']}];
+const copy=v=>JSON.parse(JSON.stringify(v));
+function harness(snapshot={}){
+ const cloud=createMemoryFirestore({'users/A':{schemaVersion:5,revision:0,migrationV5:{status:'complete'}}});
+ const h=createAppHarness({firebase:cloud.firebase});h.context.__catalog=copy(rawCatalog);h.context.__snapshot=copy(snapshot);
+ h.run(`publicCatalog=wordData.normalizeCatalog(__catalog);currentUser={uid:'A'};authReady=true;isUserDataReady=true;
+ applyUserData({snapshot:__snapshot,revision:0});["new-word","new-meaning","new-folder-name","input-rename-folder"].forEach(id=>document.getElementById(id));renderLibrary=()=>{};renderWordList=()=>{};renderResultWordList=()=>{};
+ renderResultFolderOptions=()=>{};openAddModal=()=>{};closeAddModal=()=>{state.editingWordIndex=-1;};`);
+ return {...h,...cloud};
 }
-
-function merged(h, diff = {}) {
-    h.context.__diff = clone(diff);
-    return clone(h.run('buildUserDataFromDiffs(__diff)'));
-}
-
-function operations(h, previous, next) {
-    const recorded = [];
-    h.context.__previous = clone(previous);
-    h.context.__next = clone(next);
-    h.context.__transaction = {
-        set: (reference, data, options = {}) => recorded.push({ type: 'set', path: reference.path, data: clone(data), merge: !!options.merge }),
-        delete: reference => recorded.push({ type: 'delete', path: reference.path })
-    };
-    h.run('collectDiffOperations(__previous, __next, __user).forEach(apply => apply(__transaction))');
-    return recorded;
-}
-
-test('an untouched account produces no word copies; changing one field writes only that difference', () => {
-    const h = harness();
-    const before = merged(h);
-    assert.equal(operations(h, before, clone(before)).length, 0);
-    const after = clone(before);
-    after.words[0].meaning = '';
-    const changes = operations(h, before, after);
-    assert.equal(changes.length, 1);
-    assert.equal(changes[0].path, 'users/data-owner/wordOverrides/fixed-apple');
-    assert.equal(changes[0].data.meaning, '');
-    assert.equal(Object.hasOwn(changes[0].data, 'english'), false);
-    assert.equal(Object.hasOwn(changes[0].data, 'partOfSpeech'), false);
-    assert.equal(Object.hasOwn(changes[0].data, 'folderIds'), false);
+function word(h,id='w_000001'){h.context.__id=id;return copy(h.run('userWordState.getEffectiveWord(__id)'));}
+test('editing only meaning through form writes a sparse override using stable identity',async()=>{
+ const h=harness();h.elements.get('new-word').value='penetrate';h.elements.get('new-meaning').value='我的穿透';
+ h.run(`state.editingWordIndex=0;document.querySelectorAll=selector=>selector.includes('new-part-of-speech')?[{value:'verb'}]:selector.includes('folder-checkbox')?[{value:'lesson:U6'},{value:'lesson:U8'}]:[];`);
+ await h.run('saveNewWord()');const override=h.documents.get('users/A/wordOverrides/w_000001');
+ assert.equal(override.meaning,'我的穿透');assert.equal(Object.hasOwn(override,'english'),false);assert.equal(Object.hasOwn(override,'lessonIds'),false);assert.equal(Object.hasOwn(override,'folderIds'),false);
+ assert.equal(word(h).id,'w_000001');assert.equal(rawCatalog[0].meaning,'穿透');
 });
-
-test('empty strings, false, and empty legacy tag arrays survive the actual app merge', () => {
-    const h = harness();
-    const result = merged(h, { wordOverrides: [{ id: 'fixed-apple', meaning: '', partOfSpeech: '', isWrong: false, folderIds: [] }] });
-    const apple = result.words.find(word => word.id === 'fixed-apple');
-    assert.equal(apple.meaning, '');
-    assert.equal(apple.partOfSpeech, '');
-    assert.equal(apple.isWrong, false);
-    assert.deepEqual(apple.tags, []);
-    assert.deepEqual(apple.folderIds, []);
-    assert.equal(apple.english, 'apple');
+test('derived state is never the write model',async()=>{
+ const h=harness();h.run("state.words[0].meaning='rogue merged edit';state.game.reviewSelection=[state.words[0]];state.game.wrongWords=new Set(state.game.reviewSelection);");
+ await h.run('saveReviewWords()');assert.equal(word(h).meaning,'穿透');assert.equal(word(h).isWrong,true);
+ assert.equal(Object.hasOwn(h.documents.get('users/A/wordOverrides/w_000001'),'meaning'),false);
 });
-
-test('course removal persists a tag difference and preserves the word in other courses', () => {
-    const h = harness();
-    const before = merged(h);
-    const after = clone(before);
-    h.context.__word = after.words[0];
-    after.words[0] = clone(h.run("removeWordFolderId(__word, '課程1')"));
-    const changes = operations(h, before, after);
-    assert.equal(changes.length, 1);
-    assert.ok(changes[0].path.includes('/wordOverrides/'));
-    assert.deepEqual(changes[0].data.removedTags, ['課程1']);
-    assert.deepEqual(changes[0].data.addedTags, []);
-    assert.equal(changes.some(change => change.path.includes('/deletedDefaults/')), false);
-    const reloaded = merged(h, { wordOverrides: [{ ...changes[0].data, id: 'fixed-apple' }] });
-    assert.deepEqual(reloaded.words[0].folderIds, ['課程2']);
+test('identical lesson/folder names have different view keys and edit independent memberships',async()=>{
+ const h=harness({userFolders:{U6:{name:'U6'}},userOverrides:{w_000001:{folderIds:['U6']}}});
+ assert.deepEqual(copy(h.run('getWordSourceFolderIds(state.words[0])')),['lesson:U6','lesson:U8','folder:U6']);
+ await h.run("commitUserMutation(model=>model.setWordLessons('w_000001',['U8']))");
+ assert.deepEqual(word(h).lessonIds,['U8']);assert.deepEqual(word(h).folderIds,['U6']);assert.equal(h.run("wordIsInFolder(state.words[0],'folder:U6')"),true);
 });
-
-test('public updates inherit through persisted sparse fields and tag differences', () => {
-    const h = harness();
-    const before = merged(h);
-    const after = clone(before);
-    after.words[0].meaning = 'my meaning';
-    after.words[0].folderIds = ['課程2', '個人資料夾'];
-    const changes = operations(h, before, after);
-    const override = changes.find(change => change.path.includes('/wordOverrides/')).data;
-    h.run(`
-        defaultWordDatabase[0] = withWordFolderIds({ ...defaultWordDatabase[0], english: 'updated apple', partOfSpeech: 'verb' }, ['課程1', '課程2', '課程3']);
-        defaultWordMap.set('fixed-apple', defaultWordDatabase[0]);
-    `);
-    const reloaded = merged(h, { wordOverrides: [{ ...override, id: 'fixed-apple' }] });
-    assert.equal(reloaded.words[0].id, 'fixed-apple');
-    assert.equal(reloaded.words[0].meaning, 'my meaning');
-    assert.equal(reloaded.words[0].english, 'updated apple');
-    assert.equal(reloaded.words[0].partOfSpeech, 'verb');
-    assert.deepEqual(reloaded.words[0].folderIds, ['課程2', '課程3', '個人資料夾']);
+test('hiding and restoring public words preserves modifications and uses hiddenWords existence',async()=>{
+ const h=harness({userOverrides:{w_000001:{meaning:'my hidden'}}});await h.run("deletePersonalWord('w_000001')");
+ assert.ok(h.documents.has('users/A/hiddenWords/w_000001'));assert.equal(h.run('state.hiddenWords.length'),1);
+ h.run('closeSettingsModal=()=>{};');await h.run('restoreHiddenWords()');assert.equal(h.documents.has('users/A/hiddenWords/w_000001'),false);assert.equal(word(h).meaning,'my hidden');
+ assert.equal(h.writes.some(w=>w.path.includes('deletedDefaults')),false);
 });
-
-test('hiding public words retains their overrides; deleting custom words deletes only their private record', () => {
-    const h = harness();
-    const before = merged(h, {
-        wordOverrides: [{ id: 'fixed-apple', meaning: 'my meaning' }],
-        customWords: [{ id: 'custom-one', english: 'custom', meaning: 'mine', folderIds: [] }]
-    });
-    const after = clone(before);
-    after.words = after.words.filter(word => !['fixed-apple', 'custom-one'].includes(word.id));
-    const changes = operations(h, before, after);
-    assert.deepEqual(changes.filter(change => change.type === 'delete').map(change => change.path), ['users/data-owner/customWords/custom-one']);
-    assert.equal(changes.find(change => change.path === 'users/data-owner/deletedDefaults/fixed-apple').data.deleted, true);
-    assert.equal(changes.some(change => change.path.includes('/wordOverrides/')), false);
+test('clear a field or whole override deletes empty sparse documents and retains current public meaning',async()=>{
+ const h=harness();await h.run("commitUserMutation(model=>model.updateWordOverride('w_000001',{meaning:'mine',isWrong:true}))");
+ await h.run("changeWordOverride('w_000001',model=>model.clearWordOverrideField('w_000001','meaning'))");
+ assert.equal(word(h).meaning,'穿透');assert.equal(h.documents.get('users/A/wordOverrides/w_000001').isWrong,true);
+ await h.run("changeWordOverride('w_000001',model=>model.clearWordOverride('w_000001'))");assert.equal(h.documents.has('users/A/wordOverrides/w_000001'),false);
 });
-
-test('restoring default writes authoritative empty differences so retained aliases cannot resurrect old edits', () => {
-    const h = harness();
-    const oldAlias = { id: 'old-apple', meaning: 'old personal', folderIds: [] };
-    const before = merged(h, { wordOverrides: [oldAlias], deletedDefaultIds: ['old-apple'] });
-    const after = clone(h.run('createDefaultUserData()'));
-    const changes = operations(h, before, after);
-    const override = changes.find(change => change.path === 'users/data-owner/wordOverrides/fixed-apple').data;
-    assert.equal(override.supersedesLegacyAliases, true);
-    assert.equal(Object.hasOwn(override, 'meaning'), false);
-    for (const id of ['fixed-apple', 'old-apple']) {
-        assert.equal(changes.find(change => change.path === `users/data-owner/deletedDefaults/${id}`).data.deleted, false);
-    }
-    const reloaded = merged(h, { wordOverrides: [oldAlias, { ...override, id: 'fixed-apple' }] });
-    assert.equal(reloaded.words[0].meaning, 'public apple');
-    assert.deepEqual(reloaded.words[0].tags, ['課程1', '課程2']);
+test('custom word create/update/delete never changes a public entity',async()=>{
+ const h=harness();await h.run("commitUserMutation(model=>model.createCustomWord({id:'c',english:'custom',meaning:'mine',partOfSpeech:['noun','verb'],lessonIds:['U6'],folderIds:[]}))");
+ await h.run("commitUserMutation(model=>model.updateCustomWord('c',{english:'renamed',meaning:'changed'}))");assert.equal(h.documents.get('users/A/customWords/c').english,'renamed');
+ await h.run("deletePersonalWord('c')");assert.equal(h.documents.has('users/A/customWords/c'),false);assert.equal(word(h).english,'penetrate');
 });
-
-test('clearing a currently invisible tag or field difference is still persisted and restores future inheritance', () => {
-    const h = harness();
-    const before = merged(h, { wordOverrides: [{
-        id: 'fixed-apple', schemaVersion: 2, tagDiffVersion: 2, supersedesLegacyAliases: true,
-        meaning: 'public apple', addedTags: ['課程1'], removedTags: ['未來課程']
-    }] });
-    const after = clone(before);
-    h.context.__apple = after.words[0];
-    after.words[0] = clone(h.run(`(() => {
-        const base = defaultWordMap.get('fixed-apple');
-        let override = wordData.clearOverrideField(getDefaultOverrideFields(__apple, base), 'meaning');
-        override = wordData.clearTagChange(override, '課程1');
-        override = wordData.clearTagChange(override, '未來課程');
-        return cloneWord({ ...wordData.applyOverride(base, override), _override: override });
-    })()`));
-    assert.equal(after.words[0].meaning, before.words[0].meaning);
-    assert.deepEqual(after.words[0].folderIds, before.words[0].folderIds);
-    const changes = operations(h, before, after);
-    assert.equal(changes.length, 1);
-    const override = changes[0].data;
-    assert.equal(Object.hasOwn(override, 'meaning'), false);
-    assert.deepEqual(override.addedTags, []);
-    assert.deepEqual(override.removedTags, []);
-    h.run(`
-        defaultWordDatabase[0] = withWordFolderIds({ ...defaultWordDatabase[0], meaning: 'new public' }, ['課程2', '未來課程']);
-        defaultWordMap.set('fixed-apple', defaultWordDatabase[0]);
-    `);
-    const reloaded = merged(h, { wordOverrides: [{ ...override, id: 'fixed-apple' }] });
-    assert.equal(reloaded.words[0].meaning, 'new public');
-    assert.deepEqual(reloaded.words[0].folderIds, ['課程2', '未來課程']);
+test('case-insensitive duplicate form edits roll back newly created folders too',async()=>{
+ const h=harness();h.elements.get('new-word').value='RECORD';h.elements.get('new-meaning').value='duplicate';h.elements.get('new-folder-name').value='New folder';
+ h.run('state.editingWordIndex=-1;document.querySelectorAll=()=>[];');await h.run('saveNewWord()');
+ assert.equal(Object.keys(h.run('snapshotUserState().customWords')).length,0);assert.equal(Object.keys(h.run('snapshotUserState().userFolders')).length,0);
+ assert.equal(h.writes.length,0);assert.match(h.events.alerts.at(-1),/Duplicate/);
 });
-
-test('unhiding a word restores its retained personal fields and tag differences', () => {
-    const h = harness();
-    const before = merged(h, { wordOverrides: [{ id: 'old-apple', meaning: 'personal hidden', folderIds: ['課程2'] }], deletedDefaultIds: ['old-apple'] });
-    const after = clone(before);
-    after.words.push(...after.hiddenWords);
-    after.hiddenWords = [];
-    const changes = operations(h, before, after);
-    const override = changes.find(change => change.path === 'users/data-owner/wordOverrides/fixed-apple').data;
-    assert.equal(override.meaning, 'personal hidden');
-    assert.deepEqual(override.removedTags, ['課程1']);
-    assert.ok(override.aliasMigrationBackup.length, 'restoring a hidden word must retain migration recovery data');
-    assert.equal(changes.filter(change => change.path.includes('/deletedDefaults/') && change.data.deleted === false).length, 2);
+test('folder rename changes display name only, keeping fixed folder IDs and word associations',async()=>{
+ const h=harness({userFolders:{f_1:{name:'before'}},userOverrides:{w_000001:{folderIds:['f_1']}}});
+ h.elements.get('input-rename-folder').value='after';h.run("state.targetFolderAction='folder:f_1';");await h.run('executeRename()');
+ assert.deepEqual(word(h).folderIds,['f_1']);assert.equal(h.run("getFolderDisplayName('folder:f_1')"),'after');assert.equal(h.writes.some(w=>w.path.includes('/wordOverrides/')),false);
 });
-
-test('legacy root migration preserves originals, personal same-English words, hidden state and newer subcollection data, then stops writing', async () => {
-    const root = {
-        words: [
-            { defaultId: 'old-apple', english: 'apple', meaning: 'old root meaning', folderIds: ['課程1'] },
-            { id: 'my-apple', source: 'custom', english: 'apple', meaning: 'personal separate word', folderIds: [] }
-        ],
-        folders: ['私人課程'], settings: { bgmEnabled: false }, deletedDefaults: ['fixed-banana']
-    };
-    const h = harness({
-        'users/data-owner': root,
-        'users/data-owner/wordOverrides/old-apple': { meaning: 'new subcollection meaning', folderIds: ['課程2'] }
-    });
-    const first = clone(await h.run('loadUserDiffData(__user)'));
-    assert.equal(first.words.find(word => word.id === 'fixed-apple').meaning, 'new subcollection meaning');
-    assert.deepEqual(first.words.find(word => word.id === 'fixed-apple').folderIds, ['課程2']);
-    assert.equal(first.words.find(word => word.id === 'my-apple').source, 'custom');
-    assert.equal(first.words.some(word => word.id === 'fixed-banana'), false);
-    assert.equal(first.settings.bgmEnabled, false);
-    assert.deepEqual(h.documents.get('users/data-owner').words, root.words);
-    assert.deepEqual(h.documents.get('users/data-owner/wordOverrides/old-apple'), { meaning: 'new subcollection meaning', folderIds: ['課程2'] });
-    assert.equal(h.documents.get('users/data-owner').legacySnapshotRetained, true);
-    assert.ok(h.documents.get('users/data-owner/wordOverrides/fixed-apple').aliasMigrationBackup.length);
-    const writeCount = h.writes.length;
-    const second = clone(await h.run('loadUserDiffData(__user)'));
-    assert.equal(h.writes.length, writeCount, 'repeated migration should make no writes');
-    const visibleData = data => JSON.parse(JSON.stringify(data, (key, value) => key === 'updatedAt' ? undefined : value));
-    assert.deepEqual(visibleData(second), visibleData(first));
+test('folder deletion retains words belonging to other courses and hides only exclusive public words',async()=>{
+ const h=harness({userOverrides:{w_000001:{removedLessonIds:['U8']}}});h.run("state.targetFolderAction='lesson:U6';state.pendingDeleteType='all';");await h.run('executeDelete()');
+ assert.deepEqual(copy(h.run('snapshotUserState().hiddenWordIds')),['w_000001']);assert.equal(h.run('state.words[0].id'),'w_000002');
+ assert.deepEqual(copy(h.run('state.settings.hiddenLessonIds')),['U6']);
 });
-
-test('Firestore document paths determine identity even when legacy payload contains a conflicting id', async () => {
-    const h = harness({ 'users/data-owner/wordOverrides/fixed-apple': { id: 'fixed-banana', meaning: 'applies to apple' } });
-    const result = clone(await h.run('loadUserDiffData(__user)'));
-    assert.equal(result.words.find(word => word.id === 'fixed-apple').meaning, 'applies to apple');
-    assert.equal(result.words.find(word => word.id === 'fixed-banana').meaning, 'public banana');
+test('reset clears private collections and immediately derives public catalog again',async()=>{
+ const h=harness();await h.run("commitUserMutation(model=>{model.updateWordOverride('w_000001',{meaning:'mine'});model.hidePublicWord('w_000001');model.createCustomWord('c',{english:'custom'});model.setFolder('f',{name:'mine'});})");
+ await h.run('confirmReset()');assert.equal(h.run('state.words.length'),2);assert.equal(h.run('state.hiddenWords.length'),0);assert.equal(word(h).meaning,'穿透');
+ for(const group of ['wordOverrides','customWords','hiddenWords','folders'])assert.equal([...h.documents.keys()].some(path=>path.startsWith(`users/A/${group}/`)),false);
+});
+test('search, Chinese ordering, spelling history and practice definitions use effective canonical fields',async()=>{
+ const h=harness();await h.run("commitUserMutation(model=>model.updateWordOverride('w_000001',{english:'newpenetrate',meaning:'自己的穿透',partOfSpeech:['noun','verb']}))");
+ assert.equal(h.run("findSearchMatches('PEN')[0].word.id"),'w_000001');assert.equal(h.run("findSearchMatches('己透')[0].word.meaning"),'自己的穿透');
+ assert.equal(h.run("getMeaningWithPartOfSpeech(state.words[0])"),'自己的穿透 (n.) / (v.)');
+ assert.equal(h.run("parseMeaning('紀錄 (正式用法)；錄製',['noun','verb'])[0].text"),'紀錄 (正式用法)');
+ assert.deepEqual(copy(h.run('createAnswerRecord({word:state.words[0],result:"correct"}).partOfSpeech')),['noun','verb']);
+});
+test('a game timer from an older game or account cannot advance the current game',async()=>{
+ const h=harness();h.run("let advanced=0;nextQuestion=()=>{advanced+=1;};scheduleGameAdvance(1);clearPracticeSession();");
+ await new Promise(resolve=>setTimeout(resolve,10));assert.equal(h.run('advanced'),0);
+ h.run('scheduleGameAdvance(1);authSessionGeneration+=1;');await new Promise(resolve=>setTimeout(resolve,10));assert.equal(h.run('advanced'),0);
 });

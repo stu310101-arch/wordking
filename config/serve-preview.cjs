@@ -9,7 +9,7 @@ const server = http.createServer((req, res) => {
         const requestPath = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
         const relative = requestPath === '/' ? 'index.html' : requestPath.slice(1);
         if (!['GET', 'HEAD'].includes(req.method) || relative.includes('\\') || relative.split('/').some(segment => segment.startsWith('.')) ||
-            !(relative === 'index.html' || /^(assets|data|background music)\//.test(relative))) {
+            !(relative === 'index.html' || /^(assets|data|migration|background music)\//.test(relative))) {
             res.writeHead(404); res.end(); return;
         }
         const file = path.resolve(root, relative);

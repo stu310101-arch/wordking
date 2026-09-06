@@ -14,21 +14,16 @@ import {
     getDocs,
     onSnapshot,
     runTransaction,
-    writeBatch,
     deleteField
 } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
 const WORD_DATABASE_URL = './data/words.json';
-const WORD_ALIASES_URL = './data/word-id-aliases.json';
 const wordData = globalThis.WordKingData;
 const WRONG_FOLDER = '錯題區';
 const REVIEW_FOLDER_LABEL = '待複習';
 const UNFILED_FOLDER = '未分類';
 const SYNC_TIMEOUT_MS = 15000;
-const ATOMIC_OPERATION_LIMIT = 440;
-const BATCH_CHUNK_SIZE = 440;
-const BATCH_RETRY_LIMIT = 3;
-const SYNC_LOCK_STALE_MS = 2 * 60 * 1000;
+const USER_LOAD_TIMEOUT_MS = 120000;
 const SEARCH_SUGGESTION_VISIBLE_COUNT = 5;
 const SEARCH_SUGGESTION_ROW_HEIGHT = 64;
 const MAX_SEARCH_SUGGESTIONS = 200;
@@ -42,7 +37,12 @@ const PART_OF_SPEECH_OPTIONS = {
     preposition: { label: '介系詞', short: '(prep.)' },
     conjunction: { label: '連接詞', short: '(conj.)' },
     interjection: { label: '感嘆詞', short: '(interj.)' },
-    other: { label: '其他', short: '(其他)' }
+    other: { label: '其他', short: '(其他)' },
+    determiner: { label: '限定詞', short: '(det.)' },
+    article: { label: '冠詞', short: '(art.)' },
+    numeral: { label: '數詞', short: '(num.)' },
+    auxiliary: { label: '助動詞', short: '(aux.)' },
+    phrase: { label: '片語', short: '(phr.)' }
 };
 
 const firebaseConfig = {
@@ -68,7 +68,7 @@ const DEFAULT_SETTINGS = {
     speechVolume: 1.0,
     selectedBgmId: 'bgm_new_dora',
     lessonFolderNames: {},
-    deletedLessonIds: []
+    hiddenLessonIds: []
 };
 
 const bgmDucking = {
@@ -76,10 +76,9 @@ const bgmDucking = {
     ratio: 0.3
 };
 
-let defaultWordDatabase = [];
-let defaultWordMap = new Map();
-let defaultWordEnglishMap = new Map();
-let defaultWordAliases = { aliases: {}, legacyTagsById: {} };
+let publicCatalog = [];
+let userWordState = null;
+let persistence = null;
 let catalogLoadGeneration = 0;
 let currentUser = null;
 let authReady = false;
@@ -102,6 +101,7 @@ let searchSuggestions = [];
 let activeSearchSuggestionIndex = -1;
 let isSearchComposing = false;
 let searchSuggestionRenderId = 0;
+let gameGeneration = 0;
 
 const modalReturnFocus = new WeakMap();
 
@@ -109,46 +109,15 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
-let createWriteBatch = database => writeBatch(database);
-let executeTransaction = (database, updateFunction) => runTransaction(database, updateFunction);
-let subscribeToSnapshot = (reference, onNext, onError) => onSnapshot(reference, onNext, onError);
-let waitBeforeRetry = delay => new Promise(resolve => setTimeout(resolve, delay));
-
-class CloudRevisionConflictError extends Error {
-    constructor(expectedRevision, actualRevision) {
-        super(`雲端資料版本已更新（本機 ${expectedRevision}、雲端 ${actualRevision}）。`);
-        this.name = 'CloudRevisionConflictError';
-        this.code = 'cloud-revision-conflict';
-        this.expectedRevision = expectedRevision;
-        this.actualRevision = actualRevision;
-    }
-}
-
-class CloudSyncInProgressError extends Error {
-    constructor() {
-        super('另一個裝置正在同步大量資料，請稍後重新載入。');
-        this.name = 'CloudSyncInProgressError';
-        this.code = 'cloud-sync-in-progress';
-    }
-}
-
-class CloudPartialCommitError extends Error {
-    constructor(message, { committedChunks = 0, totalChunks = 0, cause = null } = {}) {
-        super(message, cause ? { cause } : undefined);
-        this.name = 'CloudPartialCommitError';
-        this.code = 'cloud-partial-commit';
-        this.committedChunks = committedChunks;
-        this.totalChunks = totalChunks;
-    }
-}
-
 const state = {
     words: [],
     hiddenWords: [],
+    recovery: null,
     categories: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(''),
     folderIds: [WRONG_FOLDER],
     folders: [WRONG_FOLDER],
     lessonFolderIds: [],
+    folderNames: {},
     settings: { ...DEFAULT_SETTINGS },
     audio: {
         bgmElement: null
@@ -173,121 +142,50 @@ const state = {
 
 window.state = state;
 
-function safeDocId(value) {
-    const raw = String(value || '').trim();
-    return encodeURIComponent(raw || `id-${Date.now()}`).replace(/\./g, '%2E');
-}
-
 function createCustomWordId() {
     if (window.crypto && typeof window.crypto.randomUUID === 'function') {
-        return `custom_${window.crypto.randomUUID()}`;
+        return `c_${window.crypto.randomUUID()}`;
     }
-    return `custom_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+    return `c_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function normalizeLegacyTags(tags) {
-    return Array.from(new Set(
-        (Array.isArray(tags) ? tags : [])
-            .filter(tag => typeof tag === 'string' && tag.trim())
-            .map(tag => tag.trim())
-    ));
+// DerivedView group keys distinguish a lesson from a private folder with the same name.
+function groupKey(kind, id) { return `${kind}:${id}`; }
+function groupInfo(key) {
+    const separator = String(key).indexOf(':');
+    return separator < 0 ? { kind: 'system', id: key }
+        : { kind: key.slice(0, separator), id: key.slice(separator + 1) };
 }
-
-function normalizePartOfSpeech(value) {
-    return typeof value === 'string' && Object.prototype.hasOwnProperty.call(PART_OF_SPEECH_OPTIONS, value)
-        ? value
-        : '';
-}
-
+function normalizePartOfSpeech(value) { return wordData.normalizePartOfSpeech(value); }
 function getPartOfSpeechShort(value) {
-    const normalized = normalizePartOfSpeech(value);
-    return normalized ? PART_OF_SPEECH_OPTIONS[normalized].short : '';
+    return normalizePartOfSpeech(value).map(pos => PART_OF_SPEECH_OPTIONS[pos]?.short || '').filter(Boolean).join(' / ');
 }
-
 function normalizeFolderId(value) {
-    const folderId = typeof value === 'string' ? value.trim() : '';
-    if (!folderId || folderId === WRONG_FOLDER || folderId === UNFILED_FOLDER) return '';
-    if (/^[A-Z]$/i.test(folderId)) return '';
-    return folderId;
+    const id = typeof value === 'string' ? value.trim() : '';
+    return !id || [WRONG_FOLDER, UNFILED_FOLDER].includes(id) || /^[A-Z]$/i.test(id) ? '' : id;
 }
-
 function normalizeFolderIds(values = []) {
-    const source = Array.isArray(values) ? values : [values];
-    return Array.from(new Set(source.map(normalizeFolderId).filter(Boolean)));
+    return Array.from(new Set((Array.isArray(values) ? values : [values]).map(normalizeFolderId).filter(Boolean)));
 }
-
-function getLegacyFolderData(word = {}) {
-    const tags = normalizeLegacyTags(word.tags);
-    const hasFolderIds = Array.isArray(word.folderIds);
-    const legacyFolderIds = hasFolderIds ? word.folderIds : [];
-    const explicitFolderId = typeof word.folderId === 'string' ? word.folderId.trim() : '';
-    const folderIds = hasFolderIds
-        ? normalizeFolderIds(legacyFolderIds)
-        : normalizeFolderIds([explicitFolderId, ...tags]);
-    const isWrong = typeof word.isWrong === 'boolean'
-        ? word.isWrong
-        : explicitFolderId === WRONG_FOLDER || tags.includes(WRONG_FOLDER) || legacyFolderIds.includes(WRONG_FOLDER);
-    return { folderIds, folderId: folderIds[0] || '', isWrong };
+function getWordGroupIds(word = {}) {
+    return [...(word.lessonIds || []).map(id => groupKey('lesson', id)),
+        ...(word.folderIds || []).map(id => groupKey('folder', id))];
 }
-
-function getStoredWordFolderIds(word = {}) {
-    return getLegacyFolderData(word).folderIds;
+function cloneWord(word) { return JSON.parse(JSON.stringify(word)); }
+function cloneWords(words = []) { return words.map(cloneWord); }
+function setWordGroups(model, id, keys) {
+    const groups = keys.map(groupInfo);
+    model.setWordLessons(id, groups.filter(item => item.kind === 'lesson').map(item => item.id));
+    model.setWordFolders(id, groups.filter(item => item.kind === 'folder').map(item => item.id));
 }
-
-function withWordFolderIds(word = {}, folderIds = []) {
-    const normalizedFolderIds = normalizeFolderIds(folderIds);
-    return {
-        ...word,
-        tags: normalizedFolderIds,
-        folderIds: normalizedFolderIds,
-        folderId: normalizedFolderIds[0] || ''
-    };
+function updatePersonalWord(model, id, patch) {
+    if (model.getPublicWord(id)) model.updateWordOverride(id, patch);
+    else model.updateCustomWord(id, patch);
 }
-
-function addWordFolderId(word = {}, folderId = '') {
-    return withWordFolderIds(word, [...getStoredWordFolderIds(word), folderId]);
-}
-
-function removeWordFolderId(word = {}, folderId = '') {
-    return withWordFolderIds(
-        word,
-        getStoredWordFolderIds(word).filter(storedFolderId => storedFolderId !== folderId)
-    );
-}
-
-function sameFolderIds(a = [], b = []) {
-    const normalizedA = normalizeFolderIds(a).sort(compareFoldersBySeries);
-    const normalizedB = normalizeFolderIds(b).sort(compareFoldersBySeries);
-    return normalizedA.length === normalizedB.length &&
-        normalizedA.every((folderId, index) => folderId === normalizedB[index]);
-}
-
-function cloneWord(word = {}) {
-    const folderData = getLegacyFolderData(word);
-    const lessonIds = normalizeLegacyTags(word.lessonIds)
-        .map(normalizeFolderId)
-        .filter(Boolean);
-    const cloned = {
-        english: word.english || '',
-        meaning: word.meaning || '',
-        partOfSpeech: normalizePartOfSpeech(word.partOfSpeech),
-        folderIds: folderData.folderIds,
-        tags: [...folderData.folderIds],
-        folderId: folderData.folderId,
-        isWrong: folderData.isWrong
-    };
-    if (lessonIds.length) cloned.lessonIds = lessonIds;
-    if (word.id) cloned.id = word.id;
-    if (word.defaultId) cloned.defaultId = word.defaultId;
-    if (word.source === 'custom' || word.source === 'default') cloned.source = word.source;
-    if (word.createdAt) cloned.createdAt = word.createdAt;
-    if (word.updatedAt) cloned.updatedAt = word.updatedAt;
-    if (word._override) cloned._override = JSON.parse(JSON.stringify(word._override));
-    return cloned;
-}
-
-function cloneWords(words) {
-    return (words || []).map(cloneWord);
+function createPersonalFolder(model, name) {
+    const id = `f_${window.crypto.randomUUID()}`;
+    model.setFolder(id, { name });
+    return groupKey('folder', id);
 }
 
 function clamp01(value) {
@@ -301,31 +199,33 @@ function cloneSettings(settings = {}) {
     return {
         ...hydrated,
         lessonFolderNames: { ...(hydrated.lessonFolderNames || {}) },
-        deletedLessonIds: Array.isArray(hydrated.deletedLessonIds) ? [...hydrated.deletedLessonIds] : []
+        hiddenLessonIds: Array.isArray(hydrated.hiddenLessonIds) ? [...hydrated.hiddenLessonIds] : []
     };
 }
 
-function snapshotUserState(source = state) {
-    return {
-        words: cloneWords(source.words),
-        hiddenWords: cloneWords(source.hiddenWords),
-        folders: Array.isArray(source.folders) ? [...source.folders] : [],
-        settings: cloneSettings(source.settings)
-    };
+function snapshotUserState() { return userWordState ? userWordState.exportState() : { userOverrides: {}, customWords: {}, hiddenWordIds: [], userFolders: {}, settings: {} }; }
+
+function refreshDerivedView() {
+    if (!userWordState) return;
+    const snapshot = userWordState.exportState();
+    state.words = userWordState.deriveEffectiveWords();
+    state.hiddenWords = snapshot.hiddenWordIds.map(id => userWordState.getEffectiveWord(id, { includeHidden: true })).filter(Boolean);
+    state.settings = cloneSettings(snapshot.settings);
+    state.lessonFolderIds = normalizeFolderIds([...publicCatalog, ...state.words, ...state.hiddenWords]
+        .flatMap(word => (word.lessonIds || []).map(id => groupKey('lesson', id))));
+    state.folderNames = Object.fromEntries(Object.entries(snapshot.userFolders).map(([id, folder]) => [id, folder.name]));
+    const personal = Object.keys(snapshot.userFolders).map(id => groupKey('folder', id));
+    state.folders = normalizeFolders(personal, state.words, state.settings);
 }
 
 function restoreUserState(snapshot) {
-    state.words = cloneWords(snapshot.words);
-    state.hiddenWords = cloneWords(snapshot.hiddenWords);
-    state.folders = Array.isArray(snapshot.folders) ? [...snapshot.folders] : [];
-    state.settings = cloneSettings(snapshot.settings);
+    userWordState = wordData.createUserWordState(publicCatalog, snapshot);
+    refreshDerivedView();
 }
 
 function applyUserData(data) {
-    state.words = cloneWords(data.words);
-    state.hiddenWords = cloneWords(data.hiddenWords);
-    state.settings = cloneSettings(data.settings);
-    state.folders = normalizeFolders(data.folders || [], state.words, state.settings);
+    restoreUserState(data.snapshot);
+    state.recovery = data.recovery || null;
     clearPracticeSession();
     refreshFolders();
     refreshSearchSuggestionsForCurrentData();
@@ -335,7 +235,7 @@ function hydrateSettings(saved) {
     const base = {
         ...DEFAULT_SETTINGS,
         lessonFolderNames: {},
-        deletedLessonIds: []
+        hiddenLessonIds: []
     };
     if (saved && typeof saved === 'object') {
         if (typeof saved.bgmEnabled === 'boolean') base.bgmEnabled = saved.bgmEnabled;
@@ -349,8 +249,8 @@ function hydrateSettings(saved) {
                 }
             });
         }
-        if (Array.isArray(saved.deletedLessonIds)) {
-            base.deletedLessonIds = Array.from(new Set(saved.deletedLessonIds.filter(id => typeof id === 'string' && id.trim())));
+        if (Array.isArray(saved.hiddenLessonIds)) {
+            base.hiddenLessonIds = Array.from(new Set(saved.hiddenLessonIds.filter(id => typeof id === 'string' && id.trim())));
         }
     }
     return base;
@@ -361,20 +261,23 @@ function isLessonFolder(folderId) {
 }
 
 function getActiveLessonFolderIds(settings = state.settings) {
-    const deleted = new Set((settings && settings.deletedLessonIds) || []);
-    return state.lessonFolderIds.filter(folderId => !deleted.has(folderId));
+    const deleted = new Set((settings && settings.hiddenLessonIds) || []);
+    return state.lessonFolderIds.filter(folderId => !deleted.has(groupInfo(folderId).id));
 }
 
 function getFolderDisplayName(folderId, settings = state.settings) {
     if (folderId === WRONG_FOLDER) return REVIEW_FOLDER_LABEL;
     if (folderId === UNFILED_FOLDER) return UNFILED_FOLDER;
-    return (settings && settings.lessonFolderNames && settings.lessonFolderNames[folderId]) || folderId;
+    const group = groupInfo(folderId);
+    if (group.kind === 'lesson') return settings?.lessonFolderNames?.[group.id] || group.id;
+    if (group.kind === 'folder') return state.folderNames[group.id] || group.id;
+    return folderId;
 }
 
 function getWordSourceFolderIds(word = {}, settings = state.settings) {
-    const deletedLessonIds = new Set((settings && settings.deletedLessonIds) || []);
-    const storedFolderIds = getStoredWordFolderIds(word)
-        .filter(folderId => !deletedLessonIds.has(folderId));
+    const hiddenLessonIds = new Set((settings && settings.hiddenLessonIds) || []);
+    const storedFolderIds = getWordGroupIds(word)
+        .filter(folderId => groupInfo(folderId).kind !== 'lesson' || !hiddenLessonIds.has(groupInfo(folderId).id));
     return normalizeFolderIds(storedFolderIds);
 }
 
@@ -402,42 +305,23 @@ function validateFolderName(value, exceptFolderId = '') {
     return { valid: true, name };
 }
 
-function getDefaultWords() {
-    return cloneWords(defaultWordDatabase);
-}
-
 function getCurrentBgmTrack(trackId = state.settings.selectedBgmId) {
     return BGM_TRACKS.find(t => t.id === trackId) || BGM_TRACKS[0] || null;
 }
 
 async function loadDefaultWordDatabase() {
     const generation = ++catalogLoadGeneration;
-    const [wordsResponse, aliasesResponse] = await Promise.all([
-        fetch(WORD_DATABASE_URL, { cache: 'no-cache' }),
-        fetch(WORD_ALIASES_URL, { cache: 'no-cache' })
-    ]);
-    if (!wordsResponse.ok || !aliasesResponse.ok) throw new Error('無法載入公用單字庫或相容資料，請重試。');
-    const [rawWords, aliases] = await Promise.all([wordsResponse.json(), aliasesResponse.json()]);
-    const catalog = wordData.normalizeCatalog(rawWords);
+    const response = await fetch(WORD_DATABASE_URL, { cache: 'no-cache' });
+    if (!response.ok) throw new Error('無法載入公用單字庫，請重試。');
+    const catalog = wordData.normalizeCatalog(await response.json());
     if (!catalog.length) throw new Error('公用單字庫是空的，請稍後重試。');
     if (generation !== catalogLoadGeneration) throw new Error('公用單字載入已由新的請求取代。');
-    defaultWordAliases = aliases;
-    defaultWordDatabase = catalog.map(cloneWord);
-    defaultWordMap = new Map(defaultWordDatabase.map(word => [word.defaultId, cloneWord(word)]));
-    defaultWordEnglishMap = new Map(defaultWordDatabase.map(word => [word.english.toLowerCase(), cloneWord(word)]));
-    state.lessonFolderIds = normalizeFolderIds(defaultWordDatabase.flatMap(word => word.tags));
-    window.defaultWordDatabase = defaultWordDatabase;
-}
-
-function resolveDefaultId(id) {
-    return wordData.resolveId(id, defaultWordAliases);
-}
-
-function getDefaultIdVariants(defaultId) {
-    return [defaultId, ...Object.keys(defaultWordAliases.aliases || {}).filter(id => resolveDefaultId(id) === defaultId)];
+    publicCatalog = catalog;
+    state.lessonFolderIds = normalizeFolderIds(catalog.flatMap(word => word.lessonIds.map(id => groupKey('lesson', id))));
 }
 
 function clearPracticeSession() {
+    gameGeneration += 1;
     state.game.mode = '';
     state.game.currentWords = [];
     state.game.index = 0;
@@ -451,10 +335,7 @@ function clearPracticeSession() {
 }
 
 function resetToDefaultState() {
-    state.settings = cloneSettings(DEFAULT_SETTINGS);
-    state.words = getDefaultWords();
-    state.hiddenWords = [];
-    state.folders = normalizeFolders([], state.words, state.settings);
+    restoreUserState({ settings: cloneSettings(DEFAULT_SETTINGS) });
     clearPracticeSession();
     refreshFolders();
 }
@@ -472,8 +353,8 @@ function compareFoldersBySeries(a, b) {
     if (a === WRONG_FOLDER && b !== WRONG_FOLDER) return 1;
     if (b === WRONG_FOLDER && a !== WRONG_FOLDER) return -1;
 
-    const sa = splitFolderNameForSeries(a);
-    const sb = splitFolderNameForSeries(b);
+    const sa = splitFolderNameForSeries(getFolderDisplayName(a));
+    const sb = splitFolderNameForSeries(getFolderDisplayName(b));
     if (sa.prefix !== sb.prefix) return sa.prefix.localeCompare(sb.prefix, 'zh-Hant');
 
     const len = Math.max(sa.numbers.length, sb.numbers.length);
@@ -482,13 +363,13 @@ function compareFoldersBySeries(a, b) {
         const nb = sb.numbers[i] ?? 0;
         if (na !== nb) return na - nb;
     }
-    return a.localeCompare(b, 'zh-Hant');
+    return getFolderDisplayName(a).localeCompare(getFolderDisplayName(b), 'zh-Hant');
 }
 
 function refreshFolders() {
-    const deleted = new Set((state.settings && state.settings.deletedLessonIds) || []);
+    const deleted = new Set((state.settings && state.settings.hiddenLessonIds) || []);
     const folderSet = new Set((state.folders || []).filter(folderId =>
-        folderId && folderId !== UNFILED_FOLDER && !deleted.has(folderId)
+        folderId && folderId !== UNFILED_FOLDER && !(groupInfo(folderId).kind === 'lesson' && deleted.has(groupInfo(folderId).id))
     ));
     let hasUnfiledWords = false;
     state.words.forEach(w => {
@@ -511,73 +392,6 @@ function refreshFolders() {
     }
 }
 
-function sameSettings(a, b) {
-    return JSON.stringify(cloneSettings(a)) === JSON.stringify(cloneSettings(b));
-}
-
-function sameCustomWordData(a, b) {
-    return !!a && !!b &&
-        (a.english || '') === (b.english || '') &&
-        (a.meaning || '') === (b.meaning || '') &&
-        normalizePartOfSpeech(a.partOfSpeech) === normalizePartOfSpeech(b.partOfSpeech) &&
-        sameFolderIds(getStoredWordFolderIds(a), getStoredWordFolderIds(b)) &&
-        !!a.isWrong === !!b.isWrong;
-}
-
-function getDefaultOverrideFields(word, baseWord) {
-    if (!word || !baseWord) return {};
-    const previous = word._override || {};
-    return wordData.updateOverride(baseWord, previous, word, wordData.applyOverride(baseWord, previous));
-}
-
-function sameOverride(a = {}, b = {}) {
-    const comparable = value => Object.fromEntries(Object.entries(value).filter(([key]) => !['updatedAt', 'id'].includes(key)).sort(([a], [b]) => a.localeCompare(b)));
-    return JSON.stringify(comparable(a)) === JSON.stringify(comparable(b));
-}
-
-function ensureWordIdentities(words) {
-    return cloneWords(words).map(word => {
-        if (word.defaultId && defaultWordMap.has(resolveDefaultId(word.defaultId))) {
-            return { ...word, defaultId: resolveDefaultId(word.defaultId), id: resolveDefaultId(word.defaultId), source: 'default' };
-        }
-        if (word.source === 'default' && word.id && defaultWordMap.has(word.id)) {
-            return { ...word, defaultId: word.id, source: 'default' };
-        }
-        if (word.source === 'custom' || word.id) {
-            return { ...word, id: word.id || createCustomWordId(), source: 'custom' };
-        }
-        const defaultMatch = defaultWordEnglishMap.get((word.english || '').toLowerCase());
-        if (defaultMatch && sameCustomWordData(word, defaultMatch)) {
-            return { ...word, id: defaultMatch.defaultId, defaultId: defaultMatch.defaultId, source: 'default' };
-        }
-        return { ...word, id: createCustomWordId(), source: 'custom' };
-    });
-}
-
-function getCustomFolderNames(folders = []) {
-    return Array.from(new Set(
-        (folders || [])
-            .map(normalizeFolderId)
-            .filter(name =>
-                name &&
-                !state.lessonFolderIds.includes(name)
-            )
-    ));
-}
-
-function mapWordsForStorage(words = []) {
-    const custom = new Map();
-    const defaults = new Map();
-    ensureWordIdentities(words).forEach(word => {
-        if (word.source === 'default' && word.defaultId) {
-            defaults.set(word.defaultId, word);
-        } else if (word.source === 'custom' && word.id) {
-            custom.set(word.id, word);
-        }
-    });
-    return { custom, defaults };
-}
-
 function normalizeFolders(folders, words, settings = state.settings) {
     const folderIds = new Set([WRONG_FOLDER, ...getActiveLessonFolderIds(settings)]);
     (folders || []).forEach(f => {
@@ -590,508 +404,49 @@ function normalizeFolders(folders, words, settings = state.settings) {
         sourceFolderIds.forEach(folderId => folderIds.add(folderId));
         if (!sourceFolderIds.length) hasUnfiledWords = true;
     });
-    const deleted = new Set((settings && settings.deletedLessonIds) || []);
-    deleted.forEach(folderId => folderIds.delete(folderId));
+    const deleted = new Set((settings && settings.hiddenLessonIds) || []);
+    deleted.forEach(id => folderIds.delete(groupKey('lesson', id)));
     if (hasUnfiledWords) folderIds.add(UNFILED_FOLDER);
     folderIds.add(WRONG_FOLDER);
     return Array.from(folderIds);
 }
 
-function applyFolderDeletion(words, folderName, deleteWords, settings = state.settings) {
-    return cloneWords(words).reduce((kept, word) => {
-        const sourceFolderIds = getWordSourceFolderIds(word, settings);
-        if (!sourceFolderIds.includes(folderName)) {
-            kept.push(word);
-            return kept;
-        }
-        const remainingFolderIds = sourceFolderIds.filter(folderId => folderId !== folderName);
-        if (remainingFolderIds.length) {
-            kept.push(removeWordFolderId(word, folderName));
-            return kept;
-        }
-        if (deleteWords) return kept;
-        kept.push(removeWordFolderId(word, folderName));
-        return kept;
-    }, []);
-}
-
-function renameFolderInWords(words, oldName, newName) {
-    return cloneWords(words).map(word => withWordFolderIds(
-        word,
-        getStoredWordFolderIds(word).map(folderId => folderId === oldName ? newName : folderId)
-    ));
-}
-
-function getUserRef(user = currentUser) {
-    if (!user) return null;
-    return doc(db, 'users', user.uid);
-}
-
-function getUserSubDocRef(user, collectionName, docId) {
-    return doc(db, 'users', user.uid, collectionName, docId);
-}
-
-function getSettingsRef(user) {
-    return doc(db, 'users', user.uid, 'settings', 'main');
-}
-
-function normalizeCloudRevision(value) {
-    const revision = Number(value);
-    return Number.isSafeInteger(revision) && revision >= 0 ? revision : 0;
-}
-
-function getCloudMetadata(snapshot) {
-    const data = snapshot && typeof snapshot.exists === 'function' && snapshot.exists()
-        ? (snapshot.data() || {})
-        : {};
-    const syncLock = data.syncLock && typeof data.syncLock === 'object'
-        ? data.syncLock
-        : null;
-    return {
-        data,
-        revision: normalizeCloudRevision(data.revision),
-        syncLock
-    };
-}
-
-function getObservedCloudRevision(metadata) {
-    const lockRevision = metadata.syncLock
-        ? normalizeCloudRevision(metadata.syncLock.targetRevision)
-        : 0;
-    return Math.max(metadata.revision, lockRevision);
-}
-
-function isSyncLockStale(syncLock) {
-    if (!syncLock) return false;
-    const updatedAt = Date.parse(syncLock.updatedAt || syncLock.startedAt || '');
-    return !Number.isFinite(updatedAt) || Date.now() - updatedAt >= SYNC_LOCK_STALE_MS;
-}
-
-function createSyncOperationId() {
-    const randomId = window.crypto && typeof window.crypto.randomUUID === 'function'
-        ? window.crypto.randomUUID()
-        : Math.random().toString(36).slice(2);
-    return `${Date.now()}-${randomId}`;
+function getPersistence() {
+    if (!persistence) persistence = globalThis.WordKingPersistence.createPersistence({
+        db, doc, collection, getDoc, getDocs, onSnapshot, runTransaction, deleteField,
+        fetch: (...args) => fetch(...args), getCatalog: () => publicCatalog
+    });
+    return persistence;
 }
 
 function acknowledgeCloudRevision(revision) {
-    cloudRevision = normalizeCloudRevision(revision);
+    cloudRevision = revision;
     if (pendingRemoteRevision <= cloudRevision) pendingRemoteRevision = 0;
     updateAuthUI(currentUser);
 }
 
-function getLegacyCleanupPatch(now) {
-    // Keep the original root snapshot as a recovery source. The marker makes migration repeatable.
-    return { schemaVersion: 4, migratedToDiffStorageAt: now, legacySnapshotRetained: true };
-}
-
-async function readUserCollection(user, collectionName) {
-    const snap = await getDocs(collection(db, 'users', user.uid, collectionName));
-    return snap.docs.map(item => ({ ...(item.data() || {}), id: item.id }));
-}
-
-function legacyRootDiffs(data = {}) {
-    const wordOverrides = [], customWords = [];
-    (Array.isArray(data.words) ? data.words : []).forEach((raw, index) => {
-        if (!raw || typeof raw !== 'object') return;
-        const legacyId = raw.defaultId || raw.id;
-        const base = raw.source !== 'custom' && (
-            defaultWordMap.get(resolveDefaultId(legacyId)) ||
-            (!legacyId && defaultWordEnglishMap.get(String(raw.english || '').toLowerCase()))
-        );
-        if (base) {
-            const override = { id: legacyId || base.defaultId };
-            wordData.FIELD_NAMES.forEach(field => {
-                if (Object.prototype.hasOwnProperty.call(raw, field) && raw[field] !== base[field]) override[field] = raw[field];
-            });
-            ['folderIds', 'folderId', 'tags'].forEach(field => {
-                if (Object.prototype.hasOwnProperty.call(raw, field)) override[field] = raw[field];
-            });
-            if (Object.keys(override).length > 1) wordOverrides.push(override);
-        } else {
-            customWords.push({ ...raw, id: raw.id || safeDocId(`legacy-custom::${index}::${raw.english || ''}`), source: 'custom' });
-        }
-    });
-    return {
-        wordOverrides, customWords,
-        folders: Array.isArray(data.folders) ? data.folders.map(name => ({ id: safeDocId(name), name })) : [],
-        settings: data.settings || {},
-        deletedDefaultIds: Array.isArray(data.deletedDefaults) ? data.deletedDefaults.filter(id => typeof id === 'string') : []
-    };
-}
-
-function normalizeUserData(data = {}) {
-    return buildUserDataFromDiffs(legacyRootDiffs(data));
-}
-
-function buildUserDataFromDiffs(diffData = {}) {
-    const settings = cloneSettings(diffData.settings || DEFAULT_SETTINGS);
-    const hidden = new Set((diffData.deletedDefaultIds || []).map(resolveDefaultId));
-    const mergedWords = getDefaultWords().map(word => {
-        const override = wordData.coalesceOverrides(word, diffData.wordOverrides || [], defaultWordAliases);
-        return cloneWord({ ...wordData.applyOverride(word, override), _override: override });
-    });
-    const defaultWords = mergedWords.filter(word => !hidden.has(word.defaultId));
-    const hiddenWords = mergedWords.filter(word => hidden.has(word.defaultId));
-    const customWords = (diffData.customWords || []).map(word => cloneWord({ ...word, id: word.id, source: 'custom' }));
-    const folderNames = (diffData.folders || []).map(folder => typeof folder === 'string' ? folder : (folder.name || folder.id)).filter(Boolean);
-    const words = [...defaultWords, ...customWords];
-    return { words, hiddenWords, folders: normalizeFolders(folderNames, words, settings), settings };
-}
-
-function createDefaultUserData(settings = DEFAULT_SETTINGS) {
-    const nextSettings = cloneSettings(settings);
-    const words = getDefaultWords();
-    const folders = normalizeFolders([], words, nextSettings);
-    return { words, hiddenWords: [], folders, settings: nextSettings };
-}
-
-function collectDiffOperations(previous, next, user) {
-    const operations = [];
-    const now = new Date().toISOString();
-    const before = {
-        ...previous,
-        words: ensureWordIdentities(previous.words || []),
-        folders: normalizeFolders(previous.folders || [], previous.words || [], previous.settings)
-    };
-    const after = {
-        ...next,
-        words: ensureWordIdentities(next.words || []),
-        folders: normalizeFolders(next.folders || [], next.words || [], next.settings)
-    };
-
-    if (!sameSettings(before.settings, after.settings)) {
-        operations.push(batch => batch.set(getSettingsRef(user), {
-            ...cloneSettings(after.settings),
-            updatedAt: now
-        }, { merge: true }));
-    }
-
-    const beforeFolders = new Set(getCustomFolderNames(before.folders));
-    const afterFolders = new Set(getCustomFolderNames(after.folders));
-    beforeFolders.forEach(folderName => {
-        if (!afterFolders.has(folderName)) {
-            operations.push(batch => batch.delete(getUserSubDocRef(user, 'folders', safeDocId(folderName))));
-        }
-    });
-    afterFolders.forEach(folderName => {
-        if (!beforeFolders.has(folderName)) {
-            operations.push(batch => batch.set(getUserSubDocRef(user, 'folders', safeDocId(folderName)), {
-                name: folderName,
-                createdAt: now,
-                updatedAt: now
-            }, { merge: true }));
-        }
-    });
-
-    const beforeWords = mapWordsForStorage(before.words);
-    const afterWords = mapWordsForStorage(after.words);
-
-    beforeWords.custom.forEach((word, wordId) => {
-        if (!afterWords.custom.has(wordId)) {
-            operations.push(batch => batch.delete(getUserSubDocRef(user, 'customWords', wordId)));
-        }
-    });
-    afterWords.custom.forEach((word, wordId) => {
-        const previousWord = beforeWords.custom.get(wordId);
-        if (!sameCustomWordData(previousWord, word)) {
-            const folderIds = getStoredWordFolderIds(word);
-            operations.push(batch => batch.set(getUserSubDocRef(user, 'customWords', wordId), {
-                english: word.english || '',
-                meaning: word.meaning || '',
-                partOfSpeech: normalizePartOfSpeech(word.partOfSpeech),
-                folderIds,
-                folderId: folderIds[0] || '',
-                isWrong: !!word.isWrong,
-                createdAt: word.createdAt || now,
-                updatedAt: now
-            }));
-        }
-    });
-
-    defaultWordMap.forEach((baseWord, defaultId) => {
-        const previousWord = beforeWords.defaults.get(defaultId);
-        const nextWord = afterWords.defaults.get(defaultId);
-
-        if (previousWord && !nextWord) {
-            operations.push(batch => batch.set(getUserSubDocRef(user, 'deletedDefaults', defaultId), {
-                deleted: true,
-                updatedAt: now
-            }, { merge: true }));
-        } else if (!previousWord && nextWord) {
-            getDefaultIdVariants(defaultId).forEach(id => {
-                operations.push(batch => batch.set(getUserSubDocRef(user, 'deletedDefaults', id), {
-                    deleted: false, updatedAt: now
-                }, { merge: true }));
-            });
-        }
-
-        if (!nextWord) return;
-        const previousOverride = previousWord ? getDefaultOverrideFields(previousWord, baseWord, before.settings) : {};
-        const nextOverride = getDefaultOverrideFields(nextWord, baseWord, after.settings);
-        const recoverySource = previousWord?._override || (previous.hiddenWords || []).find(word => word.defaultId === defaultId)?._override || {};
-        ['migrationBackup', 'legacyTagBackup', 'aliasMigrationBackup'].forEach(key => {
-            if (!(key in nextOverride) && key in recoverySource) nextOverride[key] = recoverySource[key];
-        });
-        if (previousWord && sameOverride(previousOverride, nextOverride)) return;
-
-        operations.push(batch => batch.set(getUserSubDocRef(user, 'wordOverrides', defaultId), {
-            ...nextOverride,
-            supersedesLegacyAliases: true,
-            updatedAt: now
-        }));
-    });
-
-    return operations;
-}
-
-async function commitAtomicOperations(operations, user, expectedRevision, rootPatch = {}, assertCurrent = () => {}) {
-    assertCurrent();
-    const rootRef = getUserRef(user);
-    return executeTransaction(db, async transaction => {
-        const rootSnapshot = await transaction.get(rootRef);
-        assertCurrent();
-        const metadata = getCloudMetadata(rootSnapshot);
-        if (metadata.syncLock) throw new CloudSyncInProgressError();
-        if (metadata.revision !== expectedRevision) {
-            throw new CloudRevisionConflictError(expectedRevision, metadata.revision);
-        }
-
-        operations.forEach(apply => apply(transaction));
-        const revision = expectedRevision + 1;
-        transaction.set(rootRef, {
-            ...rootPatch,
-            revision,
-            schemaVersion: 4,
-            updatedAt: new Date().toISOString()
-        }, { merge: true });
-        return { revision, committedChunks: 1, totalChunks: 1 };
-    });
-}
-
-async function beginLargeSync(user, expectedRevision, totalChunks, assertCurrent = () => {}) {
-    assertCurrent();
-    const rootRef = getUserRef(user);
-    const now = new Date().toISOString();
-    const syncLock = {
-        id: createSyncOperationId(),
-        baseRevision: expectedRevision,
-        targetRevision: expectedRevision + 1,
-        totalChunks,
-        completedChunks: 0,
-        startedAt: now,
-        updatedAt: now
-    };
-
-    return executeTransaction(db, async transaction => {
-        const rootSnapshot = await transaction.get(rootRef);
-        assertCurrent();
-        const metadata = getCloudMetadata(rootSnapshot);
-        if (metadata.syncLock) throw new CloudSyncInProgressError();
-        if (metadata.revision !== expectedRevision) {
-            throw new CloudRevisionConflictError(expectedRevision, metadata.revision);
-        }
-        transaction.set(rootRef, { syncLock, updatedAt: now }, { merge: true });
-        return syncLock;
-    });
-}
-
-async function commitLargeSyncChunk(operations, user, syncLock, completedChunks, assertCurrent = () => {}) {
-    const rootRef = getUserRef(user);
-    let lastError = null;
-    for (let attempt = 0; attempt < BATCH_RETRY_LIMIT; attempt += 1) {
-        assertCurrent();
-        const now = new Date().toISOString();
-        const batch = createWriteBatch(db);
-        operations.forEach(apply => apply(batch));
-        batch.set(rootRef, {
-            syncLock: {
-                ...syncLock,
-                completedChunks,
-                updatedAt: now
-            },
-            updatedAt: now
-        }, { merge: true });
-        try {
-            await batch.commit();
-            return;
-        } catch (error) {
-            lastError = error;
-            if (attempt + 1 < BATCH_RETRY_LIMIT) {
-                await waitBeforeRetry(150 * (2 ** attempt));
-            }
-        }
-    }
-    throw lastError || new Error('大型同步批次寫入失敗。');
-}
-
-async function finishLargeSync(user, syncLock, rootPatch = {}, assertCurrent = () => {}) {
-    assertCurrent();
-    const rootRef = getUserRef(user);
-    return executeTransaction(db, async transaction => {
-        const rootSnapshot = await transaction.get(rootRef);
-        assertCurrent();
-        const metadata = getCloudMetadata(rootSnapshot);
-        if (!metadata.syncLock) {
-            if (metadata.revision === syncLock.targetRevision) return metadata.revision;
-            throw new CloudRevisionConflictError(syncLock.baseRevision, metadata.revision);
-        }
-        if (metadata.syncLock.id !== syncLock.id) throw new CloudSyncInProgressError();
-
-        transaction.set(rootRef, {
-            ...rootPatch,
-            revision: syncLock.targetRevision,
-            schemaVersion: 4,
-            syncLock: deleteField(),
-            updatedAt: new Date().toISOString()
-        }, { merge: true });
-        return syncLock.targetRevision;
-    });
-}
-
-async function closeInterruptedLargeSync(user, syncLock, assertCurrent = () => {}) {
-    const rootRef = getUserRef(user);
-    let lastError = null;
-    for (let attempt = 0; attempt < BATCH_RETRY_LIMIT; attempt += 1) {
-        try {
-            assertCurrent();
-            return await executeTransaction(db, async transaction => {
-                const rootSnapshot = await transaction.get(rootRef);
-                assertCurrent();
-                const metadata = getCloudMetadata(rootSnapshot);
-                if (!metadata.syncLock || metadata.syncLock.id !== syncLock.id) {
-                    return metadata.revision;
-                }
-                const revision = Math.max(metadata.revision, syncLock.targetRevision);
-                transaction.set(rootRef, {
-                    revision,
-                    syncLock: deleteField(),
-                    syncInterruptedAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                }, { merge: true });
-                return revision;
-            });
-        } catch (error) {
-            if (error.code === 'stale-user-session') throw error;
-            lastError = error;
-            if (attempt + 1 < BATCH_RETRY_LIMIT) {
-                await waitBeforeRetry(150 * (2 ** attempt));
-            }
-        }
-    }
-    throw lastError || new Error('無法結束中斷的同步作業。');
-}
-
-async function commitBatchOperations(operations, user, expectedRevision, { rootPatch = {}, assertCurrent = null } = {}) {
-    const sessionGeneration = authSessionGeneration;
-    const checkCurrent = assertCurrent || (() => assertCurrentUserSession(user, sessionGeneration));
-    checkCurrent();
-    if (!operations.length && !Object.keys(rootPatch).length) {
-        return { revision: expectedRevision, committedChunks: 0, totalChunks: 0 };
-    }
-    if (operations.length <= ATOMIC_OPERATION_LIMIT) {
-        return commitAtomicOperations(operations, user, expectedRevision, rootPatch, checkCurrent);
-    }
-
-    const chunks = [];
-    for (let index = 0; index < operations.length; index += BATCH_CHUNK_SIZE) {
-        chunks.push(operations.slice(index, index + BATCH_CHUNK_SIZE));
-    }
-    const syncLock = await beginLargeSync(user, expectedRevision, chunks.length, checkCurrent);
-    let committedChunks = 0;
-    try {
-        for (let index = 0; index < chunks.length; index += 1) {
-            await commitLargeSyncChunk(chunks[index], user, syncLock, index + 1, checkCurrent);
-            committedChunks = index + 1;
-        }
-        const revision = await finishLargeSync(user, syncLock, rootPatch, checkCurrent);
-        return { revision, committedChunks, totalChunks: chunks.length };
-    } catch (error) {
-        // The next valid session can recover a stale lock; an old session must not start cleanup writes.
-        if (error.code === 'stale-user-session') throw error;
-        try {
-            await closeInterruptedLargeSync(user, syncLock, checkCurrent);
-        } catch (cleanupError) {
-            console.error('無法清除中斷的雲端同步鎖。', cleanupError);
-        }
-        throw new CloudPartialCommitError('部分資料可能已同步，必須重新載入雲端狀態。', {
-            committedChunks,
-            totalChunks: chunks.length,
-            cause: error
-        });
-    }
-}
-
 async function saveDiffChangesToCloud(previous, next, user = currentUser, options = {}) {
-    if (!user) return { revision: cloudRevision, committedChunks: 0, totalChunks: 0 };
-    const sessionGeneration = authSessionGeneration;
-    assertCurrentUserSession(user, sessionGeneration);
-    const operations = collectDiffOperations(previous, next, user);
-    const now = new Date().toISOString();
-    const rootPatch = options.cleanupLegacy ? getLegacyCleanupPatch(now) : {};
-    const expectedRevision = Number.isSafeInteger(options.expectedRevision)
-        ? options.expectedRevision
-        : cloudRevision;
+    const generation = authSessionGeneration;
+    assertCurrentUserSession(user, generation);
     activeCloudWrites += 1;
     updateAuthUI(currentUser);
     try {
-        const result = await commitBatchOperations(operations, user, expectedRevision, {
-            rootPatch, assertCurrent: () => assertCurrentUserSession(user, sessionGeneration)
+        const result = await getPersistence().save(previous, next, user, {
+            expectedRevision: options.expectedRevision ?? cloudRevision,
+            assertCurrent: () => assertCurrentUserSession(user, generation)
         });
-        if (isCurrentUserSession(user, sessionGeneration)) acknowledgeCloudRevision(result.revision);
+        if (isCurrentUserSession(user, generation)) acknowledgeCloudRevision(result.revision);
         return result;
     } finally {
-        if (isCurrentUserSession(user, sessionGeneration)) {
+        if (isCurrentUserSession(user, generation)) {
             activeCloudWrites = Math.max(0, activeCloudWrites - 1);
             updateAuthUI(currentUser);
         }
     }
 }
 
-async function recoverStaleSyncLock(user, assertCurrent = () => {}) {
-    assertCurrent();
-    const rootRef = getUserRef(user);
-    return executeTransaction(db, async transaction => {
-        const rootSnapshot = await transaction.get(rootRef);
-        assertCurrent();
-        const metadata = getCloudMetadata(rootSnapshot);
-        if (!metadata.syncLock) return metadata.revision;
-        if (!isSyncLockStale(metadata.syncLock)) throw new CloudSyncInProgressError();
-
-        const revision = Math.max(
-            metadata.revision,
-            normalizeCloudRevision(metadata.syncLock.targetRevision)
-        );
-        transaction.set(rootRef, {
-            revision,
-            syncLock: deleteField(),
-            syncRecoveredAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        }, { merge: true });
-        return revision;
-    });
-}
-
-async function getStableUserRootSnapshot(user, assertCurrent = () => {}) {
-    const rootRef = getUserRef(user);
-    for (let attempt = 0; attempt < 20; attempt += 1) {
-        assertCurrent();
-        const snapshot = await getDoc(rootRef);
-        assertCurrent();
-        const metadata = getCloudMetadata(snapshot);
-        if (!metadata.syncLock) return snapshot;
-        if (isSyncLockStale(metadata.syncLock)) {
-            await recoverStaleSyncLock(user, assertCurrent);
-            assertCurrent();
-            return getDoc(rootRef);
-        }
-        await waitBeforeRetry(250);
-    }
-    throw new CloudSyncInProgressError();
-}
-
 async function loadUserDiffData(user, context = {}) {
-    const assertLoadCurrent = () => {
+    const assertCurrent = () => {
         if (context.sessionGeneration !== undefined) assertCurrentUserSession(user, context.sessionGeneration);
         if (context.loadGeneration !== undefined && context.loadGeneration !== cloudLoadGeneration) {
             const error = new Error('這次載入已由新的同步取代。');
@@ -1099,71 +454,8 @@ async function loadUserDiffData(user, context = {}) {
             throw error;
         }
     };
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-        assertLoadCurrent();
-        const rootBefore = await getStableUserRootSnapshot(user, assertLoadCurrent);
-        const beforeMetadata = getCloudMetadata(rootBefore);
-        const [settingsSnap, customWords, wordOverrides, deletedDefaults, folders] = await Promise.all([
-            getDoc(getSettingsRef(user)), readUserCollection(user, 'customWords'),
-            readUserCollection(user, 'wordOverrides'), readUserCollection(user, 'deletedDefaults'), readUserCollection(user, 'folders')
-        ]);
-        const rootAfter = await getDoc(getUserRef(user));
-        assertLoadCurrent();
-        const afterMetadata = getCloudMetadata(rootAfter);
-        if (afterMetadata.syncLock || afterMetadata.revision !== beforeMetadata.revision) {
-            await waitBeforeRetry(100 * (attempt + 1));
-            continue;
-        }
-        const rootData = afterMetadata.data;
-        const migrateRoot = !rootData.migratedToDiffStorageAt && (
-            Array.isArray(rootData.words) || Array.isArray(rootData.folders) || !!rootData.settings
-        );
-        const legacy = migrateRoot ? legacyRootDiffs(rootData) : { wordOverrides: [], customWords: [], folders: [], settings: {}, deletedDefaultIds: [] };
-        // New subcollection records take precedence over retained root snapshots, including partial previous migrations.
-        const combinedOverrides = [...legacy.wordOverrides, ...wordOverrides];
-        const combinedCustom = [...legacy.customWords.filter(old => !customWords.some(item => item.id === old.id)), ...customWords];
-        const combinedFolders = [...legacy.folders.filter(old => !folders.some(item => item.id === old.id)), ...folders];
-        const combinedSettings = { ...legacy.settings, ...(settingsSnap.exists() ? settingsSnap.data() : {}) };
-        const hiddenIds = [...legacy.deletedDefaultIds.filter(id => !deletedDefaults.some(item => resolveDefaultId(item.id) === resolveDefaultId(id))),
-            ...deletedDefaults.filter(item => item.deleted !== false).map(item => item.id)];
-        const operations = [];
-        const now = new Date().toISOString();
-        defaultWordMap.forEach((base, id) => {
-            const sources = combinedOverrides.filter(item => resolveDefaultId(item.id) === id);
-            if (!sources.length) return;
-            const migrated = wordData.coalesceOverrides(base, sources, defaultWordAliases);
-            const persisted = wordOverrides.find(item => item.id === id);
-            if (!persisted || !sameOverride(persisted, migrated)) {
-                operations.push(batch => batch.set(getUserSubDocRef(user, 'wordOverrides', id), { ...migrated, updatedAt: now }));
-            }
-        });
-        if (migrateRoot) {
-            combinedCustom.filter(item => !customWords.some(existing => existing.id === item.id)).forEach(item => {
-                operations.push(batch => batch.set(getUserSubDocRef(user, 'customWords', item.id), item));
-            });
-            combinedFolders.filter(item => !folders.some(existing => existing.id === item.id)).forEach(item => {
-                operations.push(batch => batch.set(getUserSubDocRef(user, 'folders', item.id), item));
-            });
-            if (Object.keys(legacy.settings).length) operations.push(batch => batch.set(getSettingsRef(user), combinedSettings));
-            legacy.deletedDefaultIds.filter(id => !deletedDefaults.some(item => resolveDefaultId(item.id) === resolveDefaultId(id))).forEach(id => {
-                operations.push(batch => batch.set(getUserSubDocRef(user, 'deletedDefaults', resolveDefaultId(id)), { deleted: true, updatedAt: now }));
-            });
-        }
-        let revision = afterMetadata.revision;
-        if (operations.length || migrateRoot) {
-            assertLoadCurrent();
-            const result = await commitBatchOperations(operations, user, revision, {
-                rootPatch: migrateRoot ? getLegacyCleanupPatch(now) : {}, assertCurrent: assertLoadCurrent
-            });
-            assertLoadCurrent();
-            revision = result.revision;
-        }
-        return {
-            ...buildUserDataFromDiffs({ settings: combinedSettings, customWords: combinedCustom,
-                wordOverrides: combinedOverrides, deletedDefaultIds: hiddenIds, folders: combinedFolders }), revision
-        };
-    }
-    throw new Error('雲端資料在載入期間持續更新，請稍後再試。');
+    assertCurrent();
+    return getPersistence().load(user, { assertCurrent });
 }
 
 function requireLoginForChange() {
@@ -1207,9 +499,8 @@ async function commitUserMutation(mutator, { requireAuth = true, afterRollback =
             requireLoginForChange();
             return false;
         }
-        mutator(state);
-        state.words = ensureWordIdentities(state.words);
-        state.folders = normalizeFolders(state.folders, state.words, state.settings);
+        mutator(userWordState);
+        refreshDerivedView();
         refreshFolders();
         refreshSearchSuggestionsForCurrentData();
         return true;
@@ -1219,9 +510,8 @@ async function commitUserMutation(mutator, { requireAuth = true, afterRollback =
     const mutationUser = currentUser;
     const sessionGeneration = authSessionGeneration;
     try {
-        mutator(state);
-        state.words = ensureWordIdentities(state.words);
-        state.folders = normalizeFolders(state.folders, state.words, state.settings);
+        mutator(userWordState);
+        refreshDerivedView();
         refreshFolders();
         await saveDiffChangesToCloud(previous, snapshotUserState(), mutationUser, {
             expectedRevision: cloudRevision
@@ -1266,7 +556,7 @@ async function loadFromCloud(user, generation = ++cloudLoadGeneration) {
     try {
         const data = await withTimeout(
             loadUserDiffData(user, { sessionGeneration, loadGeneration: generation }),
-            SYNC_TIMEOUT_MS,
+            USER_LOAD_TIMEOUT_MS,
             '個人資料載入逾時，請確認網路後重試。'
         );
         if (generation !== cloudLoadGeneration || !isCurrentUserSession(user, sessionGeneration)) return false;
@@ -1298,17 +588,14 @@ function stopUserRevisionListener() {
 
 function startUserRevisionListener(user) {
     stopUserRevisionListener();
-    const sessionGeneration = authSessionGeneration;
-    unsubscribeUserRevision = subscribeToSnapshot(getUserRef(user), snapshot => {
-        if (!isCurrentUserSession(user, sessionGeneration)) return;
-        const observedRevision = getObservedCloudRevision(getCloudMetadata(snapshot));
+    const generation = authSessionGeneration;
+    unsubscribeUserRevision = getPersistence().subscribe(user, observedRevision => {
+        if (!isCurrentUserSession(user, generation)) return;
         if (observedRevision > cloudRevision) {
             pendingRemoteRevision = Math.max(pendingRemoteRevision, observedRevision);
             updateAuthUI(currentUser);
         }
-    }, error => {
-        console.error('監聽雲端資料版本失敗', error);
-    });
+    }, error => console.error('監聽雲端資料版本失敗', error));
 }
 
 function setupAudioSystem() {
@@ -1395,7 +682,7 @@ function speakWord(text) {
 }
 
 function getWordKey(word = {}) {
-    return word.id || word.defaultId || `english:${String(word.english || '').toLowerCase()}`;
+    return word.id;
 }
 
 function wordIsInFolder(word, folderId) {
@@ -1428,7 +715,13 @@ function assertCurrentUserSession(user, generation) {
 
 function clearPersonalSessionData() {
     isUserDataReady = false;
-    restoreUserState({ words: [], folders: [], settings: DEFAULT_SETTINGS });
+    userWordState = null;
+    state.recovery = null;
+    state.words = [];
+    state.hiddenWords = [];
+    state.folders = [];
+    state.folderNames = {};
+    state.settings = cloneSettings(DEFAULT_SETTINGS);
     state.folderIds = [];
     clearPracticeSession();
     state.isEditing = false;
@@ -2164,10 +1457,7 @@ async function confirmNewFolder() {
     }
     const name = validation.name;
 
-    const ok = await commitUserMutation(draft => {
-        if (!draft.folders.includes(name)) draft.folders.push(name);
-        draft.folders = normalizeFolders(draft.folders, draft.words, draft.settings);
-    });
+    const ok = await commitUserMutation(model => createPersonalFolder(model, name));
     if (!ok) return;
 
     closeModal('new-folder-modal');
@@ -2227,16 +1517,13 @@ async function executeRename() {
     const validatedName = validation.name;
 
     const isDefaultLesson = isLessonFolder(oldName);
-    const ok = await commitUserMutation(draft => {
-        draft.settings = cloneSettings(draft.settings);
+    const ok = await commitUserMutation(model => {
+        const group = groupInfo(oldName);
         if (isDefaultLesson) {
-            draft.settings.lessonFolderNames[oldName] = validatedName;
-            if (!draft.folders.includes(oldName)) draft.folders.push(oldName);
+            model.setSettings({ lessonFolderNames: { ...state.settings.lessonFolderNames, [group.id]: validatedName } });
         } else {
-            draft.words = renameFolderInWords(draft.words, oldName, validatedName);
-            draft.folders = draft.folders.map(f => f === oldName ? validatedName : f);
+            model.setFolder(group.id, { name: validatedName });
         }
-        draft.folders = normalizeFolders(draft.folders, draft.words, draft.settings);
     });
     if (!ok) return;
     renderLibrary();
@@ -2311,12 +1598,8 @@ async function executeDelete() {
     const deleteWords = type === 'all';
     if (!oldName || !type) return;
     const isDefaultLesson = isLessonFolder(oldName);
-    const remainingWordKeys = new Set(
-        applyFolderDeletion(state.words, oldName, deleteWords, state.settings).map(getWordKey)
-    );
-    const deletedWordKeys = new Set(
-        state.words.filter(word => !remainingWordKeys.has(getWordKey(word))).map(getWordKey)
-    );
+    const deletedWordKeys = new Set(state.words.filter(word => deleteWords &&
+        getWordSourceFolderIds(word).includes(oldName) && getWordSourceFolderIds(word).length === 1).map(getWordKey));
     const modal = document.getElementById('confirm-modal');
     const cancel = document.getElementById('confirm-cancel');
     const submit = document.getElementById('confirm-submit');
@@ -2330,17 +1613,21 @@ async function executeDelete() {
     }
 
     try {
-        const ok = await commitUserMutation(draft => {
-            const keptWords = applyFolderDeletion(draft.words, oldName, deleteWords, draft.settings);
-            draft.hiddenWords.push(...draft.words.filter(word => word.source === 'default' && !keptWords.some(kept => kept.id === word.id)).map(cloneWord));
-            draft.words = keptWords;
-            draft.folders = draft.folders.filter(f => f !== oldName);
-            draft.settings = cloneSettings(draft.settings);
-            if (isDefaultLesson && !draft.settings.deletedLessonIds.includes(oldName)) {
-                draft.settings.deletedLessonIds.push(oldName);
-                delete draft.settings.lessonFolderNames[oldName];
-            }
-            draft.folders = normalizeFolders(draft.folders, draft.words, draft.settings);
+        const ok = await commitUserMutation(model => {
+            [...state.words, ...state.hiddenWords].forEach(word => {
+                if (!getWordGroupIds(word).includes(oldName)) return;
+                if (deletedWordKeys.has(word.id)) {
+                    if (word.source === 'public') model.hidePublicWord(word.id);
+                    else { model.deleteCustomWord(word.id); return; }
+                }
+                setWordGroups(model, word.id, getWordGroupIds(word).filter(key => key !== oldName));
+            });
+            const group = groupInfo(oldName);
+            if (isDefaultLesson) {
+                const names = { ...state.settings.lessonFolderNames };
+                delete names[group.id];
+                model.setSettings({ hiddenLessonIds: [...new Set([...state.settings.hiddenLessonIds, group.id])], lessonFolderNames: names });
+            } else model.deleteFolder(group.id);
         });
         if (!ok) return;
         if (deleteWords) purgeDeletedWordReferences(deletedWordKeys);
@@ -2373,7 +1660,7 @@ function openAddModal(idx = -1) {
         const w = state.words[idx];
         document.getElementById('new-word').value = w.english;
         document.getElementById('new-meaning').value = w.meaning;
-        if (partOfSpeechInput) partOfSpeechInput.value = normalizePartOfSpeech(w.partOfSpeech);
+        if (partOfSpeechInput) partOfSpeechInput.querySelectorAll('input').forEach(input => { input.checked = w.partOfSpeech.includes(input.value); });
         renderFolderSelection(
             getWordSourceFolderIds(w),
             !!w.isWrong
@@ -2381,7 +1668,7 @@ function openAddModal(idx = -1) {
     } else {
         document.getElementById('new-word').value = '';
         document.getElementById('new-meaning').value = '';
-        if (partOfSpeechInput) partOfSpeechInput.value = '';
+        if (partOfSpeechInput) partOfSpeechInput.querySelectorAll('input').forEach(input => { input.checked = false; });
         let preSelectedFolderId = '';
         const wordListView = document.getElementById('view-word-list');
         const currentTitle = document.getElementById('list-title');
@@ -2411,22 +1698,18 @@ function renderPersonalWordActions(word) {
         button.addEventListener('click', action);
         panel.appendChild(button);
     };
-    if (word.source === 'default') {
-        const base = defaultWordMap.get(word.defaultId);
-        const override = getDefaultOverrideFields(word, base);
+    if (word.source === 'public') {
+        const override = userWordState.getWordOverride(word.id) || {};
         const names = { english: '英文', meaning: '中文意思', partOfSpeech: '詞性', isWrong: '待複習狀態' };
-        wordData.FIELD_NAMES.filter(field => Object.prototype.hasOwnProperty.call(override, field)).forEach(field => {
-            addAction(`恢復公用${names[field]}`, () => changeWordOverride(word.id, current => wordData.clearOverrideField(current, field)));
+        Object.keys(names).filter(field => Object.hasOwn(override, field)).forEach(field => {
+            addAction(`恢復公用${names[field]}`, () => changeWordOverride(word.id, model => model.clearWordOverrideField(word.id, field)));
         });
-        [...override.addedTags, ...override.removedTags].forEach(tag => {
-            addAction(`取消${override.removedTags.includes(tag) ? '移除' : '新增'}「${getFolderDisplayName(tag)}」`,
-                () => changeWordOverride(word.id, current => wordData.clearTagChange(current, tag)));
+        [...(override.addedLessonIds || []), ...(override.removedLessonIds || [])].forEach(id => {
+            addAction(`取消${(override.removedLessonIds || []).includes(id) ? '移除' : '新增'}「${getFolderDisplayName(groupKey('lesson', id))}」`,
+                () => changeWordOverride(word.id, model => model.clearLessonChange(word.id, id)));
         });
-        if (wordData.hasPersonalChanges(override)) {
-            addAction('恢復此字全部公用內容', () => changeWordOverride(word.id, current => {
-                wordData.FIELD_NAMES.forEach(field => { delete current[field]; });
-                return { ...current, addedTags: [], removedTags: [] };
-            }));
+        if (Object.keys(override).length) {
+            addAction('恢復此字全部公用內容', () => changeWordOverride(word.id, model => model.clearWordOverride(word.id)));
         }
         addAction('只對我隱藏此單字', () => deletePersonalWord(word.id), true);
     } else {
@@ -2435,15 +1718,8 @@ function renderPersonalWordActions(word) {
     document.querySelector('#add-modal .space-y-4').appendChild(panel);
 }
 
-async function changeWordOverride(id, transform) {
-    const ok = await commitUserMutation(draft => {
-        const index = draft.words.findIndex(word => word.id === id);
-        if (index < 0) return;
-        const word = draft.words[index];
-        const base = defaultWordMap.get(word.defaultId);
-        const override = transform(getDefaultOverrideFields(word, base));
-        draft.words[index] = cloneWord({ ...wordData.applyOverride(base, override), _override: override });
-    });
+async function changeWordOverride(id, action) {
+    const ok = await commitUserMutation(model => action(model));
     if (!ok) return;
     openAddModal(state.words.findIndex(word => word.id === id));
     rerenderVisibleView();
@@ -2452,11 +1728,11 @@ async function changeWordOverride(id, transform) {
 async function deletePersonalWord(id) {
     const word = state.words.find(item => item.id === id);
     if (!word || !requireLoginForChange()) return;
-    const message = word.source === 'default' ? '只對你隱藏這個公用單字？可在設定中恢復。' : '刪除你新增的這個單字？';
+    const message = word.source === 'public' ? '只對你隱藏這個公用單字？可在設定中恢復。' : '刪除你新增的這個單字？';
     if (!confirm(message)) return;
-    const ok = await commitUserMutation(draft => {
-        if (word.source === 'default') draft.hiddenWords.push(cloneWord(word));
-        draft.words = draft.words.filter(item => item.id !== id);
+    const ok = await commitUserMutation(model => {
+        if (word.source === 'public') model.hidePublicWord(id);
+        else model.deleteCustomWord(id);
     });
     if (!ok) return;
     purgeDeletedWordReferences(new Set([id]));
@@ -2467,10 +1743,7 @@ async function deletePersonalWord(id) {
 async function restoreHiddenWords() {
     if (!requireLoginForChange()) return;
     if (!state.hiddenWords.length) { alert('目前沒有隱藏的公用單字。'); return; }
-    const ok = await commitUserMutation(draft => {
-        draft.words.push(...cloneWords(draft.hiddenWords));
-        draft.hiddenWords = [];
-    });
+    const ok = await commitUserMutation(model => model.restoreAllHidden());
     if (!ok) return;
     closeSettingsModal();
     rerenderVisibleView();
@@ -2512,7 +1785,7 @@ function renderFolderSelection(selectedFolderIds = [], isWrong = false) {
 
         const span = document.createElement('span');
         span.className = 'text-sm text-gray-700 min-w-0 break-all';
-        span.textContent = getFolderDisplayName(folderId);
+        span.textContent = `${isLessonFolder(folderId) ? '課程' : '資料夾'}：${getFolderDisplayName(folderId)}`;
 
         label.append(checkbox, span);
         container.appendChild(label);
@@ -2543,8 +1816,8 @@ async function saveNewWord() {
     if (!requireLoginForChange()) return;
     const eng = document.getElementById('new-word').value.trim();
     const mean = document.getElementById('new-meaning').value.trim();
-    const partOfSpeech = normalizePartOfSpeech(document.getElementById('new-part-of-speech')?.value);
-    const tagInputEl = document.getElementById('new-folder-name');
+    const partOfSpeech = Array.from(document.querySelectorAll('#new-part-of-speech input:checked')).map(input => input.value);
+    const folderInputEl = document.getElementById('new-folder-name');
     if (!eng) {
         alert('請輸入英文；中文意思可以留空。');
         return;
@@ -2552,7 +1825,7 @@ async function saveNewWord() {
 
     const selectedFolderIds = Array.from(document.querySelectorAll('.folder-checkbox:checked'))
         .map(checkbox => checkbox.value);
-    const newFolderName = tagInputEl ? tagInputEl.value.trim() : '';
+    const newFolderName = folderInputEl ? folderInputEl.value.trim() : '';
     if (/[,，]/.test(newFolderName)) {
         alert('一次只能建立一個新資料夾，請勿輸入逗號。');
         return;
@@ -2570,38 +1843,24 @@ async function saveNewWord() {
 
     const editingIndex = state.editingWordIndex;
     const previousWord = editingIndex >= 0 ? cloneWord(state.words[editingIndex]) : null;
-    const previousEnglish = previousWord ? previousWord.english : '';
-    const folderIds = normalizeFolderIds([
-        ...selectedFolderIds,
-        validatedNewFolderName
-    ]);
-    const data = previousWord
-        ? withWordFolderIds({ ...previousWord, english: eng, meaning: mean, partOfSpeech, isWrong }, folderIds)
-        : {
-            id: createCustomWordId(),
-            source: 'custom',
-            english: eng,
-            meaning: mean,
-            partOfSpeech,
-            folderIds,
-            folderId: folderIds[0] || '',
-            isWrong,
-            createdAt: new Date().toISOString()
-        };
-    const ok = await commitUserMutation(draft => {
-        folderIds.forEach(folderId => {
-            if (!draft.folders.includes(folderId)) draft.folders.push(folderId);
-        });
-        if (editingIndex >= 0) {
-            const targetIndex = previousWord && previousWord.id
-                ? draft.words.findIndex(w => w.id === previousWord.id)
-                : draft.words.findIndex(w => w.english.toLowerCase() === previousEnglish.toLowerCase());
-            if (targetIndex >= 0) draft.words[targetIndex] = data;
-            else draft.words.push(data);
+    const ok = await commitUserMutation(model => {
+        const newFolder = validatedNewFolderName ? createPersonalFolder(model, validatedNewFolderName) : '';
+        // Hidden course groups are not editable in this view and must survive an unrelated edit.
+        const unseenGroups = previousWord ? getWordGroupIds(previousWord).filter(key => !state.folderIds.includes(key)) : [];
+        const groups = normalizeFolderIds([...unseenGroups, ...selectedFolderIds, newFolder]);
+        const fields = { english: eng, meaning: mean, partOfSpeech, isWrong };
+        if (previousWord) {
+            const patch = Object.fromEntries(Object.entries(fields).filter(([key, value]) =>
+                JSON.stringify(value) !== JSON.stringify(previousWord[key])));
+            if (Object.keys(patch).length) updatePersonalWord(model, previousWord.id, patch);
+            if (JSON.stringify([...groups].sort()) !== JSON.stringify(getWordGroupIds(previousWord).sort())) {
+                setWordGroups(model, previousWord.id, groups);
+            }
         } else {
-            draft.words.push(data);
+            const id = createCustomWordId();
+            model.createCustomWord({ id, ...fields, lessonIds: [], folderIds: [] });
+            setWordGroups(model, id, groups);
         }
-        draft.folders = normalizeFolders(draft.folders, draft.words, draft.settings);
     });
     if (!ok) return;
     closeAddModal();
@@ -2811,34 +2070,13 @@ function createWordCard(w) {
     return card;
 }
 
-function parseMeaning(raw, partOfSpeech = '') {
-    const results = [];
-    if (!raw) return results;
-    const structuredPos = getPartOfSpeechShort(partOfSpeech);
-
-    raw.split('/').map(b => b.trim()).filter(Boolean).forEach(block => {
-        const idx = block.lastIndexOf('(');
-        let textPart = block;
-        let posPart = '';
-        if (idx !== -1) {
-            textPart = block.substring(0, idx).trim();
-            posPart = block.substring(idx).trim();
-        }
-        const subTexts = textPart.split(/[;；]/).map(s => s.trim()).filter(Boolean);
-        if (!subTexts.length) {
-            results.push({ text: textPart, pos: posPart || structuredPos });
-        } else {
-            subTexts.forEach(t => results.push({ text: t, pos: posPart || structuredPos }));
-        }
-    });
-    return results;
+function parseMeaning(raw, partOfSpeech = []) {
+    const pos = getPartOfSpeechShort(partOfSpeech);
+    return String(raw || '').split(/[;；]/).map(text => text.trim()).filter(Boolean).map(text => ({ text, pos }));
 }
 
 function getMeaningWithPartOfSpeech(word) {
-    const meaning = String(word && word.meaning ? word.meaning : '');
-    const structuredPos = getPartOfSpeechShort(word && word.partOfSpeech);
-    if (!structuredPos || /\([^)]*\)/.test(meaning)) return meaning;
-    return `${meaning} ${structuredPos}`;
+    return [word?.meaning || '', getPartOfSpeechShort(word?.partOfSpeech || [])].filter(Boolean).join(' ');
 }
 
 function renderPracticeOptions() {
@@ -2955,6 +2193,7 @@ function startGame(mode) {
         }
     }
 
+    gameGeneration += 1;
     state.game.mode = mode;
     state.game.currentWords = shuffleArray(pool);
     state.game.index = 0;
@@ -3107,7 +2346,7 @@ function checkSpellingAnswer() {
             result: state.game.currentHadMistake ? 'correct-after-wrong' : 'correct',
             userAnswer: input.value.trim()
         }));
-        setTimeout(nextQuestion, 600);
+        scheduleGameAdvance( 600);
     } else {
         handleWrongAnswer(input.parentElement);
     }
@@ -3127,7 +2366,7 @@ function skipSpellingWord() {
         result: 'skipped',
         userAnswer: ''
     }));
-    setTimeout(nextQuestion, 1500);
+    scheduleGameAdvance( 1500);
 }
 
 function loadChoiceQuestion() {
@@ -3184,7 +2423,7 @@ function renderChoiceOptions(word, options, isEnToCh) {
                         isSelected: choice === opt
                     }))
                 }));
-                setTimeout(nextQuestion, 800);
+                scheduleGameAdvance( 800);
             } else {
                 btn.classList.add('choice-wrong');
                 allBtns.forEach(b => {
@@ -3207,7 +2446,7 @@ function renderChoiceOptions(word, options, isEnToCh) {
                         isSelected: choice === opt
                     }))
                 }));
-                setTimeout(nextQuestion, 1500);
+                scheduleGameAdvance( 1500);
             }
         });
         optionsContainer.appendChild(btn);
@@ -3318,18 +2557,9 @@ function navigateHistory(direction) {
     showHistoryEntry(target);
 }
 
-function formatMeaning(raw, partOfSpeech = '') {
-    const firstBlock = String(raw || '').split('/')[0].trim();
-    const idx = firstBlock.lastIndexOf('(');
-    let text = firstBlock;
-    let pos = '';
-    if (idx !== -1) {
-        text = firstBlock.substring(0, idx).trim();
-        pos = firstBlock.substring(idx).trim();
-    }
-    if (!pos) pos = getPartOfSpeechShort(partOfSpeech);
-    const shortText = text.length > 15 ? text.substring(0, 15) + '...' : text;
-    return pos ? `${shortText} ${pos}` : shortText;
+function formatMeaning(raw, partOfSpeech = []) {
+    const text = String(raw || '').trim();
+    return [(text.length > 15 ? text.substring(0, 15) + '...' : text), getPartOfSpeechShort(partOfSpeech)].filter(Boolean).join(' ');
 }
 
 function handleWrongAnswer(element) {
@@ -3341,6 +2571,15 @@ function handleWrongAnswer(element) {
     setTimeout(() => element.classList.remove('shake'), 400);
     state.game.currentHadMistake = true;
     state.game.wrongWords.add(state.game.currentWords[state.game.index]);
+}
+
+// Delayed answers from an old game/account cannot advance the current game.
+function scheduleGameAdvance(delay) {
+    const generation = gameGeneration;
+    const session = authSessionGeneration;
+    setTimeout(() => {
+        if (generation === gameGeneration && session === authSessionGeneration) nextQuestion();
+    }, delay);
 }
 
 function nextQuestion() {
@@ -3522,12 +2761,8 @@ async function saveReviewWords() {
     const alreadyApplied = new Set(state.words
         .filter(word => selectedWordIds.has(getWordKey(word)) && word.isWrong)
         .map(getWordKey));
-    const ok = await commitUserMutation(draft => {
-        draft.words.forEach(word => {
-            if (!selectedWordIds.has(getWordKey(word))) return;
-            word.isWrong = true;
-        });
-        draft.folders = normalizeFolders(draft.folders, draft.words, draft.settings);
+    const ok = await commitUserMutation(model => {
+        selectedWordIds.forEach(id => updatePersonalWord(model, id, { isWrong: true }));
     });
     if (!ok) return;
     syncResultWordReferences();
@@ -3584,14 +2819,12 @@ async function saveResultWordsToFolder() {
     const addedCount = state.words.filter(word =>
         selectedWordIds.has(getWordKey(word)) && !getWordSourceFolderIds(word).includes(targetFolderId)
     ).length;
-    const ok = await commitUserMutation(draft => {
-        if (createdFolder && !draft.folders.includes(targetFolderId)) draft.folders.push(targetFolderId);
-        draft.words = draft.words.map(word => (
-            selectedWordIds.has(getWordKey(word))
-                ? addWordFolderId(word, targetFolderId)
-                : word
-        ));
-        draft.folders = normalizeFolders(draft.folders, draft.words, draft.settings);
+    const ok = await commitUserMutation(model => {
+        if (createdFolder) targetFolderId = createPersonalFolder(model, targetFolderId);
+        selectedWordIds.forEach(id => {
+            const word = model.getEffectiveWord(id);
+            if (word) setWordGroups(model, id, [...getWordGroupIds(word), targetFolderId]);
+        });
     });
     if (!ok) return;
 
@@ -3636,7 +2869,30 @@ function openSettingsModal() {
         if (speechVolumeLabel) speechVolumeLabel.textContent = v + '%';
     }
     if (bgmSelectEl) bgmSelectEl.value = state.settings.selectedBgmId;
+    const recovery = document.getElementById('btn-export-recovery');
+    setElementVisible(recovery, !!state.recovery?.backupId);
+    const recoveryNote = document.getElementById('recovery-note');
+    if (recoveryNote) recoveryNote.textContent = state.recovery?.conflictCount
+        ? `有 ${state.recovery.conflictCount} 項舊資料合併或不確定紀錄，原始內容已保留，可下載備份檢查。`
+        : '舊資料的原始內容已保留，可下載備份。';
+    setElementVisible(recoveryNote, !!state.recovery?.backupId);
     openModal(modal, '#settings-bgm-enabled');
+}
+
+async function exportMigrationRecovery() {
+    if (!requireLoginForChange()) return;
+    const user = currentUser, generation = authSessionGeneration;
+    try {
+        const backup = await getPersistence().exportRecovery(user, { assertCurrent: () => assertCurrentUserSession(user, generation) });
+        assertCurrentUserSession(user, generation);
+        if (!backup) { alert('目前沒有需要下載的遷移備份。'); return; }
+        const url = URL.createObjectURL(new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }));
+        const link = document.createElement('a');
+        link.href = url; link.download = 'wordking-personal-recovery.json'; link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+        if (isCurrentUserSession(user, generation)) alert('下載備份失敗：' + error.message);
+    }
 }
 
 async function closeSettingsModal() {
@@ -3667,10 +2923,7 @@ function getSettingsDraftFromUI() {
 
 async function saveSettingsFromUI() {
     const nextSettings = getSettingsDraftFromUI();
-    const ok = await commitUserMutation(draft => {
-        draft.settings = cloneSettings(nextSettings);
-        draft.folders = normalizeFolders(draft.folders, draft.words, draft.settings);
-    }, {
+    const ok = await commitUserMutation(model => model.setSettings(nextSettings), {
         requireAuth: false,
         afterRollback: applyBgmSettingsToElement
     });
@@ -3709,13 +2962,7 @@ function changeBgmTrackFromSelect() {
 async function confirmReset() {
     if (!requireLoginForChange()) return;
     if (!confirm('確定要重置全部雲端個人資料？這會清除新增單字、待複習狀態、資料夾與設定。')) return;
-    const ok = await commitUserMutation(draft => {
-        const resetSettings = cloneSettings(DEFAULT_SETTINGS);
-        draft.settings = resetSettings;
-        draft.words = getDefaultWords();
-        draft.hiddenWords = [];
-        draft.folders = normalizeFolders([], draft.words, resetSettings);
-    });
+    const ok = await commitUserMutation(model => model.reset({ settings: cloneSettings(DEFAULT_SETTINGS) }));
     if (!ok) return;
     clearPracticeSession();
     applyBgmSettingsToElement();
@@ -3875,6 +3122,7 @@ function bindStaticEvents() {
 
     document.getElementById('btn-reset-all')?.addEventListener('click', confirmReset);
     document.getElementById('btn-restore-hidden')?.addEventListener('click', restoreHiddenWords);
+    document.getElementById('btn-export-recovery')?.addEventListener('click', exportMigrationRecovery);
 
     document.getElementById('btn-home-library')?.addEventListener('click', () => navigateTo('library'));
     document.getElementById('btn-home-practice')?.addEventListener('click', () => navigateTo('practice'));

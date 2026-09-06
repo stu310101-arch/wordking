@@ -5,7 +5,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const repoRoot = path.resolve(__dirname, '../..');
 const words = JSON.parse(fs.readFileSync(path.join(repoRoot, 'data/words.json'), 'utf8'));
-const find = english => words.find(word => word.english === english);
+const legacyWords = JSON.parse(fs.readFileSync(path.join(repoRoot, 'migration/legacy-catalog.json'), 'utf8'));
+const find = english => legacyWords.find(word => word.english === english);
 const records = {};
 const put = (uid, collection, id, value) => { records[`users/${uid}/${collection}/${id}`] = value; };
 records['users/fixture-account-a'] = { revision: 0, schemaVersion: 4 };
@@ -25,8 +26,8 @@ put('fixture-account-a', 'folders', 'fixture-folder-legacy', { name: 'Fixture A 
 function mockFirebase() {
     return `
 const seed = ${JSON.stringify(records)};
-const KEY = 'wordking-ui-fixture-cloud-v1';
-const USER_KEY = 'wordking-ui-fixture-user-v1';
+const KEY = 'wordking-ui-fixture-cloud-v5';
+const USER_KEY = 'wordking-ui-fixture-user-v5';
 const copy = value => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
 let documents;
 try { documents = JSON.parse(sessionStorage.getItem(KEY)) || copy(seed); } catch { documents = copy(seed); }
@@ -54,7 +55,7 @@ window.alert = message => toast(message);
 window.confirm = message => { toast('測試環境已確認：' + message); return true; };
 function toolbar() {
  const style = document.createElement('style');
- style.textContent = '#fixture-toolbar{position:relative;z-index:5000;background:#152b45;color:#fff;padding:6px 8px;font:11px/1.25 sans-serif;display:flex;gap:4px;flex-wrap:wrap;align-items:center}#fixture-toolbar button{background:#fff;color:#152b45;border:0;border-radius:4px;padding:5px 7px;font:11px/1 sans-serif}#fixture-status{flex:1 0 120px}#fixture-toast{position:fixed;bottom:12px;left:10px;right:10px;z-index:9000;background:#102b3f;color:#fff;padding:12px;border-radius:8px;font:14px/1.4 sans-serif;box-shadow:0 2px 10px #0005}';
+ style.textContent = '#fixture-toolbar{position:relative;z-index:10001;background:#152b45;color:#fff;padding:6px 8px;font:11px/1.25 sans-serif;display:flex;gap:4px;flex-wrap:wrap;align-items:center}#fixture-toolbar button{background:#fff;color:#152b45;border:0;border-radius:4px;padding:5px 7px;font:11px/1 sans-serif}#fixture-status{flex:1 0 120px}#fixture-toast{position:fixed;bottom:12px;left:10px;right:10px;z-index:9000;background:#102b3f;color:#fff;padding:12px;border-radius:8px;font:14px/1.4 sans-serif;box-shadow:0 2px 10px #0005}';
  document.head.append(style); const bar = document.createElement('div'); bar.id = 'fixture-toolbar'; bar.setAttribute('aria-label','本機測試控制');
  bar.innerHTML = '<span id="fixture-status"></span><button id="fixture-a">帳號 A</button><button id="fixture-b">帳號 B</button><button id="fixture-guest">訪客</button><button id="fixture-fail">模擬故障</button><button id="fixture-recover">恢復網路</button>';
  document.body.prepend(bar);
@@ -109,7 +110,7 @@ const server = http.createServer((request, response) => {
     if (url.pathname === '/__fixture-info') { response.setHeader('Content-Type', mime['.json']); response.end(JSON.stringify({ fixture: true, seededWords: ['penetrate', 'penetrating', 'penetration', 'exclaim', 'absurd', 'fixtureword'] })); return; }
     let decoded;
     try { decoded = decodeURIComponent(url.pathname); } catch { response.writeHead(400); response.end('Bad path'); return; }
-    if (decoded !== '/' && decoded !== '/index.html' && !/^\/(assets|data|background music)\//.test(decoded)) { response.writeHead(404); response.end(); return; }
+    if (decoded !== '/' && decoded !== '/index.html' && !/^\/(assets|data|migration|background music)\//.test(decoded)) { response.writeHead(404); response.end(); return; }
     if (decoded.includes('\\') || decoded.split('/').some(part => part.startsWith('.'))) { response.writeHead(404); response.end(); return; }
     const target = path.resolve(repoRoot, '.' + (decoded === '/' ? '/index.html' : decoded));
     if (!target.toLowerCase().startsWith(path.resolve(repoRoot).toLowerCase() + path.sep)) { response.writeHead(403); response.end('Forbidden'); return; }

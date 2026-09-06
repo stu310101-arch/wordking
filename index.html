@@ -73,8 +73,8 @@
         }
     </style>
 
-    <link rel="stylesheet" href="./assets/tailwind.css?v=20260905-diff-v4">
-    <link rel="stylesheet" href="./assets/styles.css?v=20260905-diff-v4">
+    <link rel="stylesheet" href="./assets/tailwind.css?v=20260906-schema-v5">
+    <link rel="stylesheet" href="./assets/styles.css?v=20260906-schema-v5">
 </head>
 <body class="bg-gray-50 min-h-screen font-sans pb-24" aria-busy="true">
 
@@ -416,23 +416,27 @@
             </div>
             <div>
                 <label class="text-xs text-gray-500 font-bold ml-1">詞性</label>
-                <select id="new-part-of-speech" class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 outline-none text-base bg-white">
-                    <option value="">未指定</option>
-                    <option value="noun">名詞</option>
-                    <option value="verb">動詞</option>
-                    <option value="adjective">形容詞</option>
-                    <option value="adverb">副詞</option>
-                    <option value="pronoun">代名詞</option>
-                    <option value="preposition">介系詞</option>
-                    <option value="conjunction">連接詞</option>
-                    <option value="interjection">感嘆詞</option>
-                    <option value="other">其他</option>
-                </select>
+                <div id="new-part-of-speech" role="group" aria-label="詞性（可複選）" class="grid grid-cols-3 gap-2 border-2 border-gray-200 p-3 rounded-xl">
+                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="noun">名詞</label>
+                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="verb">動詞</label>
+                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="adjective">形容詞</label>
+                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="adverb">副詞</label>
+                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="pronoun">代名詞</label>
+                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="preposition">介系詞</label>
+                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="conjunction">連接詞</label>
+                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="interjection">感嘆詞</label>
+                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="other">其他</label>
+                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="determiner">限定詞</label>
+                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="article">冠詞</label>
+                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="numeral">數詞</label>
+                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="auxiliary">助動詞</label>
+                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="phrase">片語</label>
+                </div>
             </div>
             <div>
-                <p id="word-folder-selection-label" class="text-xs text-gray-500 font-bold ml-1">資料夾（可複選）</p>
+                <p id="word-folder-selection-label" class="text-xs text-gray-500 font-bold ml-1">課程與個人資料夾（可複選）</p>
 
-                <!-- 已合併個人標籤差異，可取消任一課程勾選 -->
+                <!-- View combines distinct lesson and folder selections; storage stays separate. -->
                 <div
                     id="folder-selection-container"
                     role="group"
@@ -517,6 +521,9 @@
 
         <div class="space-y-6">
             <button id="btn-restore-hidden" type="button" class="w-full p-2 bg-indigo-50 text-indigo-700 rounded-lg font-bold">恢復隱藏的公用單字</button>
+            <p id="recovery-note" hidden class="text-sm text-gray-500"></p>
+            <button id="btn-export-recovery" hidden class="w-full p-2 rounded-lg bg-indigo-50 text-indigo-700 font-bold">下載我的遷移備份</button>
+
             <!-- 背景音樂開關 + 曲目選擇 -->
             <div class="border-b pb-4 space-y-3">
                 <label class="flex items-center justify-between">
@@ -576,7 +583,9 @@
 </div>
 
 <!-- 共用資料合併規則與主程式 -->
-<script src="./assets/word-data.js?v=20260905-diff-v4"></script>
-<script type="module" src="./assets/app.js?v=20260905-diff-v4"></script>
+<script src="./assets/word-data.js?v=20260906-schema-v5"></script>
+<script src="./assets/migration.js?v=20260906-schema-v5"></script>
+<script src="./assets/persistence.js?v=20260906-schema-v5"></script>
+<script type="module" src="./assets/app.js?v=20260906-schema-v5"></script>
 </body>
 </html>
