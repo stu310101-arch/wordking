@@ -8,7 +8,7 @@ function element(id) {
     const classes = new Set();
     const attributes = new Map();
     return {
-        id, hidden: false, inert: false, dataset: {}, value: '', textContent: '', children: [],
+        id, hidden: false, inert: false, dataset: {}, value: '', textContent: '', children: [], checked: false,
         classList: {
             add: (...names) => names.forEach(name => classes.add(name)),
             remove: (...names) => names.forEach(name => classes.delete(name)),
@@ -19,7 +19,12 @@ function element(id) {
         getAttribute(name) { return attributes.get(name); },
         toggleAttribute(name, force = !attributes.has(name)) { if (force) attributes.set(name, ''); else attributes.delete(name); },
         removeAttribute(name) { attributes.delete(name); },
-        querySelectorAll: () => [], querySelector: () => null,
+        querySelectorAll(selector) {
+            return this.children.flatMap(child => [child, ...child.querySelectorAll('*')]).filter(child =>
+                selector === '*' || (selector.includes('word-pos') && child.name === 'word-pos' &&
+                    (!selector.includes(':checked') || child.checked)));
+        },
+        querySelector(selector) { return this.querySelectorAll(selector)[0] || null; },
         replaceChildren(...children) { this.children = children; this.textContent = ''; },
         addEventListener() {}, removeEventListener() {}, focus() {}, pause() {},
         appendChild(child) { this.children.push(child); },
@@ -27,21 +32,21 @@ function element(id) {
     };
 }
 
-function createAppHarness({ firebase = {} } = {}) {
+function createAppHarness({ firebase = {}, persistence: injectedPersistence } = {}) {
     const elements = new Map();
     const getElement = id => {
         if (!elements.has(id)) elements.set(id, element(id));
         return elements.get(id);
     };
-    const events = { views: [], alerts: [], errors: [], authCallback: null };
+    const events = { views: [], renders: [], alerts: [], errors: [], authCallback: null };
     const auth = { currentUser: null };
     const syncTimeouts = new Map();
     let nextTimer = 1;
     const emptySnapshot = { exists: () => false, data: () => ({}) };
     const context = vm.createContext({
         console: { log() {}, warn() {}, error: (...args) => events.errors.push(args) },
-        URL, Date, Promise, setTimeout(callback, delay) {
-            if (delay === 15000) { const id = nextTimer++; syncTimeouts.set(id, callback); return id; }
+        URL, TextEncoder, Date, Promise, crypto: require('node:crypto').webcrypto, queueMicrotask, setTimeout(callback, delay) {
+            if (delay === 15000 || delay === 120000) { const id = nextTimer++; syncTimeouts.set(id, callback); return id; }
             const timer = setTimeout(callback, delay); timer.unref(); return timer;
         },
         clearTimeout(id) { if (syncTimeouts.has(id)) syncTimeouts.delete(id); else clearTimeout(id); },
@@ -50,7 +55,8 @@ function createAppHarness({ firebase = {} } = {}) {
         history: { replaceState() {}, pushState() {} },
         document: {
             body: getElement('body'), getElementById: getElement,
-            querySelectorAll: () => [], querySelector: () => null,
+            querySelectorAll: selector => getElement('new-part-of-speech').querySelectorAll(selector),
+            querySelector: selector => getElement('new-part-of-speech').querySelector(selector),
             addEventListener() {}, createElement: tag => element(tag)
         },
         window: {
@@ -62,8 +68,8 @@ function createAppHarness({ firebase = {} } = {}) {
         GoogleAuthProvider: function GoogleAuthProvider() {},
         onAuthStateChanged: (_auth, callback, error) => { events.authCallback = callback; events.authError = error; },
         signInWithPopup: async () => ({}), signOut: async () => {},
-        collection: (_db, ...parts) => ({ path: parts.join('/') }),
-        doc: (_db, ...parts) => ({ path: parts.join('/') }),
+        collection: (db, ...parts) => ({ path: [db?.path, ...parts].filter(Boolean).join('/') }),
+        doc: (db, ...parts) => ({ path: [db?.path, ...parts].filter(Boolean).join('/') }),
         getDoc: async () => emptySnapshot, getDocs: async () => ({ docs: [] }),
         onSnapshot: () => () => {},
         runTransaction: async () => { throw new Error('Unexpected live transaction in test'); },
@@ -74,16 +80,21 @@ function createAppHarness({ firebase = {} } = {}) {
         __events: events
     });
     const run = code => vm.runInContext(code, context, { filename: 'app-test-harness.js' });
-    vm.runInContext(fs.readFileSync(path.join(root, 'assets/word-data.js'), 'utf8'), context);
-    const source = fs.readFileSync(path.join(root, 'assets/app.js'), 'utf8').replace(/^import[\s\S]*?from\s+"[^"]+";\s*/gm, '');
+    for (const filename of ['word-data.js', 'migration.js', 'persistence.js']) {
+        vm.runInContext(fs.readFileSync(path.join(root, 'assets', filename), 'utf8'), context, { filename: `assets/${filename}` });
+    }
+    const source = fs.readFileSync(path.join(root, 'assets/app.js'), 'utf8').replace(/^import[\s\S]*?from\s+["'][^"']+["'];\s*/gm, '');
     vm.runInContext(source, context, { filename: 'assets/app.js' });
+    if (injectedPersistence !== undefined) {
+        context.__injectedPersistence = injectedPersistence;
+        run('persistence = __injectedPersistence;');
+    }
     run(`
-        refreshFolders = () => {};
         refreshSearchSuggestionsForCurrentData = () => {};
         closeSearchSuggestions = () => { searchSuggestions = []; };
         updateAuthUI = () => {};
         applyBgmSettingsToElement = () => {};
-        rerenderVisibleView = () => {};
+        rerenderVisibleView = () => __events.renders.push(JSON.parse(JSON.stringify(state.words)));
         showView = page => __events.views.push({page, words: JSON.parse(JSON.stringify(state.words))});
         initializeModalAccessibility = () => {};
         setupAudioSystem = () => {};
@@ -92,10 +103,14 @@ function createAppHarness({ firebase = {} } = {}) {
     `);
     return {
         context, run, elements, auth, events,
+        setPartOfSpeech(values) {
+            getElement('new-part-of-speech').replaceChildren(...values.map(value =>
+                Object.assign(element(`pos-${value}`), { name: 'word-pos', value, checked: true })));
+        },
         fireSyncTimeouts() {
             const callbacks = [...syncTimeouts.values()]; syncTimeouts.clear(); callbacks.forEach(callback => callback());
         },
-        async flush() { for (let step = 0; step < 25; step += 1) await Promise.resolve(); }
+        async flush() { for (let step = 0; step < 100; step += 1) await Promise.resolve(); }
     };
 }
 
@@ -106,4 +121,58 @@ function deferred() {
     return { promise, resolve, reject };
 }
 
-module.exports = { createAppHarness, deferred };
+// Firestore-shaped in-memory storage: no SDK credentials or network are used.
+// Recursive merges and deleteField sentinels preserve real sparse-write semantics.
+function createMemoryFirestore(initialDocuments = {}) {
+    const copy = value => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
+    const documents = new Map(Object.entries(copy(initialDocuments)));
+    const writes = [];
+    const reads = [];
+    const snapshot = reference => {
+        const data = copy(documents.get(reference.path));
+        return { id: reference.path.split('/').pop(), ref: reference, exists: () => data !== undefined, data: () => copy(data) };
+    };
+    const merge = (target, source) => {
+        const result = copy(target || {});
+        for (const [key, value] of Object.entries(source)) {
+            if (value?.__deleteField) delete result[key];
+            else if (value && typeof value === 'object' && !Array.isArray(value)) {
+                result[key] = Object.keys(value).length ? merge(result[key], value) : {};
+            } else result[key] = copy(value);
+        }
+        return result;
+    };
+    const apply = operation => {
+        writes.push(copy(operation));
+        if (operation.type === 'delete') documents.delete(operation.path);
+        else documents.set(operation.path, merge(operation.merge ? documents.get(operation.path) : {}, operation.data));
+    };
+    const writer = pending => ({
+        set(reference, data, options = {}) { pending.push({ type: 'set', path: reference.path, data: copy(data), merge: !!options.merge }); return this; },
+        delete(reference) { pending.push({ type: 'delete', path: reference.path }); return this; },
+        update(reference, data) { pending.push({ type: 'set', path: reference.path, data: copy(data), merge: true }); return this; }
+    });
+    const firebase = {
+        getDoc: async reference => { reads.push(reference.path); return snapshot(reference); },
+        getDocs: async reference => {
+            reads.push(reference.path);
+            const prefix = `${reference.path}/`;
+            const docs = [...documents.keys()].filter(key => key.startsWith(prefix) && !key.slice(prefix.length).includes('/'))
+                .map(path => snapshot({ path }));
+            return { docs, size: docs.length, empty: docs.length === 0 };
+        },
+        runTransaction: async (_db, callback) => {
+            const pending = [];
+            const result = await callback({ ...writer(pending), get: firebase.getDoc });
+            pending.forEach(apply);
+            return result;
+        },
+        writeBatch: () => {
+            const pending = [];
+            return { ...writer(pending), async commit() { pending.forEach(apply); } };
+        }
+    };
+    return { firebase, documents, writes, reads };
+}
+
+module.exports = { createAppHarness, createMemoryFirestore, deferred };

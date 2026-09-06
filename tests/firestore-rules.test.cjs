@@ -13,11 +13,12 @@ const BASE = `http://${EMULATOR_HOST}/v1/projects/${PROJECT_ID}/databases/(defau
 const nonce = randomUUID();
 const owner = `owner-${nonce}`;
 const other = `other-${nonce}`;
-const COLLECTIONS = ['customWords', 'wordOverrides', 'deletedDefaults', 'folders', 'settings', 'migrationBackups'];
+const COLLECTIONS = ['customWords', 'wordOverrides', 'hiddenWords', 'deletedDefaults', 'folders', 'settings', 'migrationBackups'];
 const paths = [
     `users/${owner}`,
     ...COLLECTIONS.map(name => `users/${owner}/${name}/rules-test`),
-    `users/${owner}/migrationBackups/rules-test/entries/nested`
+    `users/${owner}/migrationBackups/rules-test/entries/nested`,
+    `users/${owner}/migrationBackups/rules-test/chunks/000001`
 ];
 
 function token(uid) {
@@ -34,8 +35,11 @@ function token(uid) {
 function body(value) {
     return { fields: {
         meaning: { stringValue: value },
-        addedTags: { arrayValue: { values: [{ stringValue: 'personal' }] } },
-        removedTags: { arrayValue: {} },
+        schemaVersion: { integerValue: '5' },
+        addedLessonIds: { arrayValue: { values: [{ stringValue: 'unit-1' }] } },
+        removedLessonIds: { arrayValue: {} },
+        folderIds: { arrayValue: { values: [{ stringValue: 'f_personal' }] } },
+        partOfSpeech: { arrayValue: {} },
         isWrong: { booleanValue: false }
     } };
 }
@@ -103,17 +107,74 @@ test('collection listing is limited to the owner, and user enumeration is denied
             expectStatus(await request(path, { uid }), [401, 403], `${path}: foreign list`);
         }
     }
+    for (const name of ['entries', 'chunks']) {
+        const path = `users/${owner}/migrationBackups/rules-test/${name}`;
+        expectStatus(await request(path, { uid: owner }), [200], `${path}: owner checkpoint list`);
+        for (const uid of [other, undefined]) {
+            expectStatus(await request(path, { uid }), [401, 403], `${path}: foreign checkpoint list`);
+        }
+    }
     for (const uid of [owner, undefined]) {
         expectStatus(await request('users', { uid }), [401, 403], 'cannot enumerate other accounts');
     }
 });
 
+test('migration completion, sync lease checkpoints and hidden-word markers remain private', async () => {
+    const rootPath = `users/${owner}`;
+    const checkpoint = { fields: {
+        schemaVersion: { integerValue: '5' }, revision: { integerValue: '7' }, syncFence: { integerValue: '2' },
+        migrationV5: { mapValue: { fields: { status: { stringValue: 'complete' }, backupId: { stringValue: 'rules-test' } } } },
+        syncLock: { mapValue: { fields: {
+            protocol: { integerValue: '5' }, id: { stringValue: 'test-lease' }, owner: { stringValue: owner },
+            kind: { stringValue: 'migration' }, fence: { integerValue: '2' }, cursor: { integerValue: '1' },
+            total: { integerValue: '3' }, expiresAt: { integerValue: String(Date.now() + 60000) }
+        } } }
+    } };
+    const hiddenPath = `users/${owner}/hiddenWords/w_000001`;
+    try {
+        expectStatus(await request(rootPath, { method: 'PATCH', uid: owner, data: checkpoint }), [200], 'owner saves migration checkpoint');
+        expectStatus(await request(hiddenPath, { method: 'PATCH', uid: owner, data: { fields: { schemaVersion: { integerValue: '5' } } } }), [200], 'owner hides public word');
+        for (const path of [rootPath, hiddenPath]) {
+            for (const uid of [other, undefined]) {
+                expectStatus(await request(path, { uid }), [401, 403], 'foreign checkpoint read');
+                expectStatus(await request(path, { method: 'PATCH', uid, data: checkpoint }), [401, 403], 'foreign checkpoint overwrite');
+                expectStatus(await request(path, { method: 'DELETE', uid }), [401, 403], 'foreign checkpoint delete');
+            }
+        }
+        const read = await request(rootPath, { uid: owner });
+        expectStatus(read, [200], 'owner reads preserved checkpoint');
+        assert.deepEqual(JSON.parse(read.body).fields, checkpoint.fields);
+    } finally {
+        for (const path of [hiddenPath, rootPath]) expectStatus(await request(path, { method: 'DELETE', uid: owner }), [200], 'checkpoint cleanup');
+    }
+});
+
 test('no client can read or write a shared cloud catalog outside users/{uid}', async () => {
-    for (const path of ['words/public', 'wordOverrides/public', 'public/words', 'settings/main']) {
+    for (const path of ['words/public', 'wordOverrides/public', 'hiddenWords/w_000001', 'migrationBackups/shared', 'public/words', 'settings/main']) {
         for (const uid of [owner, undefined]) {
             expectStatus(await request(path, { uid }), [401, 403], `${path}: shared read denied`);
             expectStatus(await request(path, { method: 'PATCH', uid, data: body('forbidden') }), [401, 403], `${path}: shared write denied`);
             expectStatus(await request(path, { method: 'DELETE', uid }), [401, 403], `${path}: shared delete denied`);
         }
     }
+});
+
+test('v5 migration fences old clients while canonical changes and atomic batches remain usable', async () => {
+ const uid=`v5-${nonce}`,path=`users/${uid}`;
+ const marker={schemaVersion:{integerValue:'5'},revision:{integerValue:'0'},migrationV5:{mapValue:{fields:{status:{stringValue:'complete'}}}}};
+ expectStatus(await request(path,{method:'PATCH',uid,data:{fields:marker}}),[200],'v5 marker');
+ expectStatus(await request(path,{method:'PATCH',uid,data:{fields:{...marker,schemaVersion:{integerValue:'4'}}}}),[403],'old root downgrade denied');
+ expectStatus(await request(`${path}/wordOverrides/old`,{method:'PATCH',uid,data:{fields:{meaning:{stringValue:'old'},schemaVersion:{integerValue:'2'},tags:{arrayValue:{}}}}}),[403],'old override denied');
+ expectStatus(await request(`${path}/deletedDefaults/old`,{method:'PATCH',uid,data:{fields:{deleted:{booleanValue:true}}}}),[403],'old hide path denied');
+ expectStatus(await request(path,{method:'PATCH',uid,data:{fields:{...marker,syncRecoveredAt:{stringValue:'old protocol'}}}}),[403],'old lease recovery denied');
+ expectStatus(await request(path,{method:'PATCH',uid,data:{fields:{...marker,syncLock:{mapValue:{fields:{id:{stringValue:'old-lease'},targetRevision:{integerValue:'1'}}}}}}}),[403],'old lease acquisition denied');
+ const name=relative=>`projects/${PROJECT_ID}/databases/(default)/documents/${relative}`;
+ const writes=[{update:{name:name(`${path}/wordOverrides/w_000001`),fields:body('canonical').fields}},
+  {update:{name:name(`${path}/hiddenWords/w_000002`),fields:{schemaVersion:{integerValue:'5'}}}},
+  {update:{name:name(path),fields:{...marker,revision:{integerValue:'1'}}}}];
+ const response=await fetch(`${BASE}:commit`,{method:'POST',headers:{Authorization:`Bearer ${token(uid)}`,'Content-Type':'application/json'},body:JSON.stringify({writes})});
+ assert.equal(response.status,200,await response.text());
+ expectStatus(await request(`${path}/wordOverrides/w_000001`,{uid}),[200],'canonical transaction persisted');
+ expectStatus(await request(`${path}/wordOverrides/w_000001`,{method:'DELETE',uid}),[200],'empty override deletion permitted');
+ for(const item of [`${path}/hiddenWords/w_000002`,path]) expectStatus(await request(item,{method:'DELETE',uid}),[200],'cleanup');
 });
