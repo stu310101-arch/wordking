@@ -1,238 +1,356 @@
-/* Shared catalog + private differences. No Firebase, DOM, or generated identity. */
+/* Schema v5. Pure catalog and per-account state; storage and migration live elsewhere. */
 (function (root, factory) {
     const api = factory();
     if (typeof module === 'object' && module.exports) module.exports = api;
-    root.WordKingData = api;
+    else root.WordKingData = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
     'use strict';
-
+    const SCHEMA_VERSION = 5;
+    const PARTS_OF_SPEECH = Object.freeze(['noun', 'verb', 'adjective', 'adverb', 'pronoun',
+        'preposition', 'conjunction', 'interjection', 'other', 'determiner', 'article', 'numeral', 'auxiliary', 'phrase']);
     const FIELD_NAMES = Object.freeze(['english', 'meaning', 'partOfSpeech', 'isWrong']);
-    const LEGACY_TAG_FIELDS = ['folderIds', 'folderId', 'tags'];
-    const own = (object, key) => Object.prototype.hasOwnProperty.call(object || {}, key);
-    const copy = value => Array.isArray(value)
-        ? value.map(copy)
-        : value && typeof value === 'object'
-            ? Object.fromEntries(Object.entries(value).map(([key, item]) => [key, copy(item)]))
-            : value;
+    const OVERRIDE_FIELDS = Object.freeze([...FIELD_NAMES, 'addedLessonIds', 'removedLessonIds', 'folderIds']);
+    const CUSTOM_FIELDS = Object.freeze([...FIELD_NAMES, 'lessonIds', 'folderIds']);
+    const own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
     const equal = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-
-    function normalizeTags(values) {
-        return Array.from(new Set((Array.isArray(values) ? values : [])
-            .filter(value => typeof value === 'string')
-            .map(value => value.trim())
-            .filter(value => value && value !== '錯題區' && value !== '未分類' && !/^[a-z]$/i.test(value))));
+    const englishKey = value => value.trim().toLowerCase();
+    const unsafeKey = key => ['__proto__', 'prototype', 'constructor'].includes(key);
+    function fail(message, code = 'INVALID_DATA') {
+        const error = new Error(message);
+        error.code = code;
+        throw error;
     }
-
-    function baseTags(word) {
-        return normalizeTags(Array.isArray(word.tags) ? word.tags : word.folderIds);
+    function object(value, label) {
+        if (!value || Object.prototype.toString.call(value) !== '[object Object]') fail(`${label} must be an object.`);
+        return value;
     }
-
-    function legacyTags(word) {
-        if (own(word, 'folderIds')) return normalizeTags(word.folderIds);
-        if (own(word, 'folderId')) return normalizeTags([word.folderId]);
-        return normalizeTags(word.tags);
+    // Detached JSON copies prevent both caller mutation and sharing across accounts.
+    function copy(value) {
+        if (value === null || typeof value === 'string' || typeof value === 'boolean') return value;
+        if (typeof value === 'number' && Number.isFinite(value)) return value;
+        if (Array.isArray(value)) return Array.from(value, copy);
+        object(value, 'JSON value');
+        return Object.fromEntries(Object.entries(value).map(([key, item]) => {
+            if (unsafeKey(key)) fail(`Unsafe key: ${key}`);
+            return [key, copy(item)];
+        }));
     }
-
+    function fields(value, allowed, label) {
+        object(value, label);
+        for (const key of Object.keys(value)) if (!allowed.includes(key)) fail(`Unknown ${label} field: ${key}`);
+    }
+    function identifier(value, label = 'ID') {
+        if (typeof value !== 'string' || !value || value !== value.trim() ||
+            /[\/\u0000-\u001f\u007f]/.test(value) || ['.', '..'].includes(value) || unsafeKey(value)) fail(`Invalid ${label}: ${value}`);
+        return value;
+    }
+    function publicId(value) {
+        if (typeof value !== 'string' || !/^w_\d{6}$/.test(value) || value === 'w_000000') fail(`Invalid public ID: ${value}`);
+        return value;
+    }
+    function customId(value) {
+        identifier(value, 'custom ID');
+        if (value.startsWith('w_')) fail(`Reserved public ID namespace: ${value}`);
+        return value;
+    }
+    function stringList(value, label) {
+        if (!Array.isArray(value)) fail(`${label} must be an array.`);
+        return [...new Set(Array.from(value, item => identifier(item, label)))];
+    }
+    function normalizePartOfSpeech(value) {
+        const pos = stringList(value, 'partOfSpeech');
+        if (pos.some(item => !PARTS_OF_SPEECH.includes(item))) fail('partOfSpeech must contain canonical values.');
+        return PARTS_OF_SPEECH.filter(item => pos.includes(item));
+    }
+    function scalar(field, value) {
+        if (field === 'english') {
+            if (typeof value !== 'string' || !value.trim()) fail('English must be a nonempty string.');
+            return value.trim();
+        }
+        if (field === 'meaning') {
+            if (typeof value !== 'string') fail('Meaning must be a string.');
+            return value;
+        }
+        if (field === 'isWrong') {
+            if (typeof value !== 'boolean') fail('isWrong must be a boolean.');
+            return value;
+        }
+        return normalizePartOfSpeech(value);
+    }
     function normalizeCatalog(rawWords) {
-        if (!Array.isArray(rawWords)) throw new Error('公用單字庫必須是單字陣列。');
-        const ids = new Set();
-        const englishKeys = new Set();
-        return rawWords.map((raw, index) => {
-            if (!raw || typeof raw !== 'object' || typeof raw.id !== 'string' || !raw.id.trim()) {
-                throw new Error(`公用單字第 ${index + 1} 筆缺少固定 ID。`);
+        if (!Array.isArray(rawWords)) fail('Public catalog must be an array.');
+        const ids = new Set(), englishKeys = new Set();
+        return Array.from(rawWords, raw => {
+            fields(raw, ['id', ...FIELD_NAMES, 'lessonIds'], 'catalog');
+            const id = publicId(raw.id);
+            if (ids.has(id)) fail(`Duplicate public ID: ${id}`);
+            const english = scalar('english', raw.english);
+            if (englishKeys.has(englishKey(english))) fail(`Duplicate public English: ${english}`);
+            const partOfSpeech = normalizePartOfSpeech(raw.partOfSpeech);
+            const lessonIds = stringList(raw.lessonIds, 'lessonIds');
+            if (new Set(raw.partOfSpeech).size !== raw.partOfSpeech.length || !equal(lessonIds, raw.lessonIds)) {
+                fail(`Duplicate catalog memberships or partOfSpeech: ${id}`);
             }
-            if (raw.id.includes('/') || raw.id === '.' || raw.id === '..') throw new Error(`公用單字 ID 不合法：${raw.id}`);
-            if (ids.has(raw.id)) throw new Error(`公用單字 ID 重複：${raw.id}`);
-            if (typeof raw.english !== 'string' || !raw.english.trim()) throw new Error(`公用單字 ${raw.id} 缺少英文。`);
-            const englishKey = raw.english.trim().toLowerCase();
-            if (englishKeys.has(englishKey)) throw new Error(`公用單字英文重複：${raw.english}`);
-            if (typeof raw.meaning !== 'string' || !Array.isArray(raw.tags)) throw new Error(`公用單字 ${raw.id} 的解釋或標籤格式不正確。`);
-            const tags = normalizeTags(raw.tags);
-            if (tags.length !== raw.tags.length || tags.some((tag, i) => tag !== raw.tags[i])) throw new Error(`公用單字 ${raw.id} 包含重複或無效標籤。`);
-            ids.add(raw.id);
-            englishKeys.add(englishKey);
-            return {
-                ...copy(raw),
-                id: raw.id,
-                defaultId: raw.id,
-                source: 'default',
-                tags,
-                folderIds: [...tags],
-                folderId: tags[0] || '',
-                lessonIds: [...tags],
-                partOfSpeech: own(raw, 'partOfSpeech') ? raw.partOfSpeech : '',
-                isWrong: own(raw, 'isWrong') ? raw.isWrong : false
-            };
+            ids.add(id);
+            englishKeys.add(englishKey(english));
+            return { id, english, meaning: scalar('meaning', raw.meaning), partOfSpeech, lessonIds,
+                isWrong: own(raw, 'isWrong') ? scalar('isWrong', raw.isWrong) : false };
         });
     }
-
-    function resolveId(id, aliasData = {}) {
-        const aliases = aliasData.aliases || aliasData;
-        let resolved = id;
-        const seen = new Set();
-        while (own(aliases, resolved)) {
-            if (seen.has(resolved)) throw new Error(`單字 ID 別名形成循環：${id}`);
-            seen.add(resolved);
-            resolved = aliases[resolved];
+    function normalizeOverride(raw) {
+        fields(raw, OVERRIDE_FIELDS, 'override');
+        const result = {};
+        for (const field of Object.keys(raw)) {
+            const value = FIELD_NAMES.includes(field) ? scalar(field, raw[field]) : stringList(raw[field], field);
+            if (FIELD_NAMES.includes(field) || value.length) result[field] = value;
         }
-        return resolved;
-    }
-
-    // A malformed overlap always resolves to removal; writing helpers prevent it.
-    function normalizeTagChanges(override = {}) {
-        const removedTags = normalizeTags(override.removedTags);
-        const removed = new Set(removedTags);
-        return { addedTags: normalizeTags(override.addedTags).filter(tag => !removed.has(tag)), removedTags };
-    }
-
-    function mergeTags(publicTags, addedTags = [], removedTags = []) {
-        const removed = new Set(normalizeTags(removedTags));
-        return normalizeTags([...normalizeTags(publicTags), ...normalizeTags(addedTags)])
-            .filter(tag => !removed.has(tag));
-    }
-
-    function migrateOverride(base, rawOverride = {}, options = {}) {
-        const override = copy(rawOverride);
-        const modern = override.tagDiffVersion === 2 || override.schemaVersion === 2 ||
-            own(override, 'addedTags') || own(override, 'removedTags');
-        if (!modern && LEGACY_TAG_FIELDS.some(field => own(override, field))) {
-            // This frozen baseline makes the conversion repeatable after catalog updates.
-            // Old full snapshots cannot prove whether an absent tag was intentionally removed.
-            const baseline = normalizeTags(options.legacyBaseTags || baseTags(base));
-            const desired = legacyTags(override);
-            const desiredSet = new Set(desired);
-            const baselineSet = new Set(baseline);
-            override.addedTags = desired.filter(tag => !baselineSet.has(tag));
-            override.removedTags = baseline.filter(tag => !desiredSet.has(tag));
-            override.legacyTagBackup = {
-                ...(override.legacyTagBackup || {}),
-                original: Object.fromEntries(LEGACY_TAG_FIELDS.filter(field => own(rawOverride, field))
-                    .map(field => [field, copy(rawOverride[field])])),
-                baseTagsAtMigration: baseline,
-                policy: 'preserve-snapshot-against-frozen-baseline',
-                intentUncertain: true
-            };
+        if ((result.addedLessonIds || []).some(id => (result.removedLessonIds || []).includes(id))) {
+            fail('Lesson additions and removals must not overlap.');
         }
-        if (!modern && !own(override, 'isWrong')) {
-            const legacyValues = [override.folderId, ...(Array.isArray(override.folderIds) ? override.folderIds : []),
-                ...(Array.isArray(override.tags) ? override.tags : [])];
-            if (legacyValues.includes('錯題區')) override.isWrong = true;
-        }
-        return { ...override, ...normalizeTagChanges(override), schemaVersion: 2, tagDiffVersion: 2 };
-    }
-
-    function applyOverride(base, rawOverride = {}) {
-        const override = migrateOverride(base, rawOverride);
-        const result = copy(base);
-        FIELD_NAMES.forEach(field => {
-            if (own(override, field)) result[field] = copy(override[field]);
-        });
-        const tags = mergeTags(baseTags(base), override.addedTags, override.removedTags);
-        return {
-            ...result,
-            id: base.defaultId || base.id,
-            defaultId: base.defaultId || base.id,
-            source: 'default',
-            tags,
-            folderIds: [...tags],
-            folderId: tags[0] || '',
-            lessonIds: [...baseTags(base)]
-        };
-    }
-
-    function updateOverride(base, rawOverride = {}, editedWord = {}, previousWord) {
-        const override = migrateOverride(base, rawOverride);
-        const before = previousWord || applyOverride(base, override);
-        const result = copy(override);
-        FIELD_NAMES.forEach(field => {
-            if (!own(editedWord, field) || equal(editedWord[field], before[field])) return;
-            if (equal(editedWord[field], base[field])) delete result[field];
-            else result[field] = copy(editedWord[field]);
-        });
-        const beforeTags = normalizeTags(own(before, 'folderIds') ? before.folderIds : before.tags);
-        const afterTags = own(editedWord, 'folderIds') ? normalizeTags(editedWord.folderIds)
-            : own(editedWord, 'tags') ? normalizeTags(editedWord.tags) : beforeTags;
-        const previousSet = new Set(beforeTags);
-        const nextSet = new Set(afterTags);
-        const publicSet = new Set(baseTags(base));
-        const added = new Set(override.addedTags);
-        const removed = new Set(override.removedTags);
-        beforeTags.filter(tag => !nextSet.has(tag)).forEach(tag => {
-            added.delete(tag);
-            if (publicSet.has(tag)) removed.add(tag);
-        });
-        afterTags.filter(tag => !previousSet.has(tag)).forEach(tag => {
-            removed.delete(tag);
-            if (!publicSet.has(tag)) added.add(tag);
-        });
-        return { ...result, ...normalizeTagChanges({ addedTags: [...added], removedTags: [...removed] }) };
-    }
-
-    function clearOverrideField(rawOverride, field) {
-        const result = copy(rawOverride || {});
-        if (FIELD_NAMES.includes(field)) delete result[field];
         return result;
     }
-
-    function clearTagChange(rawOverride, tag) {
-        const result = { ...copy(rawOverride || {}), ...normalizeTagChanges(rawOverride) };
-        result.addedTags = result.addedTags.filter(value => value !== tag);
-        result.removedTags = result.removedTags.filter(value => value !== tag);
-        return result;
+    function normalizeCustom(raw) {
+        fields(raw, CUSTOM_FIELDS, 'custom word');
+        return { english: scalar('english', raw.english), meaning: scalar('meaning', own(raw, 'meaning') ? raw.meaning : ''),
+            partOfSpeech: normalizePartOfSpeech(own(raw, 'partOfSpeech') ? raw.partOfSpeech : []),
+            lessonIds: stringList(own(raw, 'lessonIds') ? raw.lessonIds : [], 'lessonIds'),
+            folderIds: stringList(own(raw, 'folderIds') ? raw.folderIds : [], 'folderIds'),
+            isWrong: scalar('isWrong', own(raw, 'isWrong') ? raw.isWrong : false) };
     }
-
-    function timestampValue(value) {
-        if (typeof value === 'number') return value;
-        if (value && typeof value.toMillis === 'function') return value.toMillis();
-        if (value && typeof value === 'object') return (value.seconds || value._seconds || 0) * 1000 + (value.nanoseconds || value._nanoseconds || 0) / 1e6;
-        const parsed = typeof value === 'string' ? Date.parse(value) : NaN;
-        return Number.isFinite(parsed) ? parsed : 0;
+    function normalizeFolder(raw) {
+        fields(raw, ['name'], 'folder');
+        if (typeof raw.name !== 'string' || !raw.name.trim()) fail('Folder name must be a nonempty string.');
+        return { name: raw.name.trim() };
     }
-
-    function coalesceOverrides(base, rawOverrides = [], aliasData = {}) {
-        const id = base.defaultId || base.id;
-        const records = rawOverrides.filter(record => record && resolveId(record.id, aliasData) === id);
-        // Retained legacy documents must never resurrect an override after reset.
-        const authoritative = records.find(record => record.id === id && record.schemaVersion === 2 && record.supersedesLegacyAliases === true);
-        if (authoritative) return migrateOverride(base, authoritative);
-        const sorted = [...records].sort((a, b) => timestampValue(a.updatedAt) - timestampValue(b.updatedAt) ||
-            Number(a.id === id) - Number(b.id === id) || String(a.id).localeCompare(String(b.id)));
-        let result = migrateOverride(base, {});
-        const backups = [];
-        sorted.forEach(record => {
-            const migrated = migrateOverride(base, record, {
-                legacyBaseTags: aliasData.legacyTagsById && aliasData.legacyTagsById[record.id]
+    /**
+     * One instance belongs to one account. Initial/export shape:
+     * {userOverrides:{id:sparseFields}, customWords:{id:fullFields},
+     *  hiddenWordIds:[], userFolders:{id:{name}}, settings:{}}
+     * No IDs/source or persistence metadata inside stored word documents.
+     * Orphaned public references are retained. Imports/catalog refreshes reject
+     * English collisions without writing, deleting, or renaming the source data.
+     */
+    function createUserWordState(catalog, initial = {}) {
+        let publicWords = new Map(normalizeCatalog(catalog).map(word => [word.id, word]));
+        const userOverrides = new Map(), customWords = new Map(), userFolders = new Map();
+        const hiddenWordIds = new Set();
+        fields(initial, ['userOverrides', 'customWords', 'hiddenWordIds', 'userFolders', 'settings'], 'state');
+        const initialField = (key, fallback) => own(initial, key) ? initial[key] : fallback;
+        for (const [id, raw] of Object.entries(object(initialField('userOverrides', {}), 'userOverrides'))) {
+            publicId(id);
+            const override = normalizeOverride(raw);
+            // Preserve unpatched scalar intent when the public value has caught up.
+            if (Object.keys(override).length) userOverrides.set(id, override);
+        }
+        for (const [id, raw] of Object.entries(object(initialField('customWords', {}), 'customWords'))) {
+            customWords.set(customId(id), normalizeCustom(raw));
+        }
+        for (const id of stringList(initialField('hiddenWordIds', []), 'hiddenWordIds')) hiddenWordIds.add(publicId(id));
+        for (const [id, raw] of Object.entries(object(initialField('userFolders', {}), 'userFolders'))) {
+            userFolders.set(identifier(id), normalizeFolder(raw));
+        }
+        let settings = copy(object(initialField('settings', {}), 'settings'));
+        function requirePublic(id) {
+            const word = publicWords.get(id);
+            if (!word) fail(`Unknown public word: ${id}`, 'WORD_NOT_FOUND');
+            return word;
+        }
+        function requireCustom(id) {
+            if (!customWords.has(id)) fail(`Unknown custom word: ${id}`, 'WORD_NOT_FOUND');
+            return customWords.get(id);
+        }
+        function effectivePublic(base, override = {}) {
+            const result = { id: base.id, source: 'public' };
+            for (const field of FIELD_NAMES) result[field] = copy(own(override, field) ? override[field] : base[field]);
+            const removed = new Set(override.removedLessonIds || []);
+            result.lessonIds = [...new Set([...base.lessonIds, ...(override.addedLessonIds || [])])].filter(id => !removed.has(id));
+            result.folderIds = [...(override.folderIds || [])];
+            return result;
+        }
+        function getPublicWord(id) { return publicWords.has(id) ? copy(publicWords.get(id)) : null; }
+        function getWordOverride(id) { return copy(userOverrides.get(id) || {}); }
+        function getEffectiveWord(id, { includeHidden = true } = {}) {
+            if (publicWords.has(id)) {
+                if (!includeHidden && hiddenWordIds.has(id)) return null;
+                return effectivePublic(publicWords.get(id), userOverrides.get(id));
+            }
+            return customWords.has(id) ? { id, source: 'custom', ...copy(customWords.get(id)) } : null;
+        }
+        function deriveEffectiveWords({ includeHidden = false } = {}) {
+            return [...publicWords.keys(), ...customWords.keys()]
+                .map(id => getEffectiveWord(id, { includeHidden })).filter(Boolean);
+        }
+        function getEnglishConflicts() {
+            const groups = new Map();
+            for (const word of deriveEffectiveWords({ includeHidden: true })) {
+                const key = englishKey(word.english);
+                if (!groups.has(key)) groups.set(key, []);
+                groups.get(key).push(word.id);
+            }
+            return [...groups].filter(([, ids]) => ids.length > 1).map(([key, ids]) => ({ englishKey: key, wordIds: ids }));
+        }
+        function checkEnglish(id, english) {
+            const before = getEffectiveWord(id, { includeHidden: true });
+            // Existing imported conflicts must not prevent unrelated edits.
+            if (before && englishKey(before.english) === englishKey(english)) return;
+            const conflict = deriveEffectiveWords({ includeHidden: true })
+                .find(word => word.id !== id && englishKey(word.english) === englishKey(english));
+            if (conflict) fail(`Duplicate effective English: ${english} (${conflict.id})`, 'DUPLICATE_ENGLISH');
+        }
+        function saveOverride(id, override) {
+            if (Object.keys(override).length) userOverrides.set(id, override);
+            else userOverrides.delete(id);
+            return getWordOverride(id);
+        }
+        function updateWordOverride(id, patch) {
+            const base = requirePublic(id);
+            fields(patch, OVERRIDE_FIELDS, 'override');
+            const next = getWordOverride(id);
+            for (const field of Object.keys(patch)) {
+                const value = FIELD_NAMES.includes(field) ? scalar(field, patch[field]) : stringList(patch[field], field);
+                if (FIELD_NAMES.includes(field) ? equal(value, base[field]) : !value.length) delete next[field];
+                else next[field] = value;
+            }
+            const normalized = normalizeOverride(next);
+            checkEnglish(id, effectivePublic(base, normalized).english);
+            return saveOverride(id, normalized);
+        }
+        function clearWordOverrideField(id, field) {
+            const base = requirePublic(id);
+            if (!OVERRIDE_FIELDS.includes(field)) fail(`Unknown override field: ${field}`);
+            const next = getWordOverride(id);
+            delete next[field];
+            checkEnglish(id, effectivePublic(base, next).english);
+            return saveOverride(id, next);
+        }
+        function clearWordOverride(id) {
+            const base = requirePublic(id);
+            checkEnglish(id, base.english);
+            return saveOverride(id, {});
+        }
+        function setWordLessons(id, lessonIds) {
+            const desired = stringList(lessonIds, 'lessonIds');
+            if (customWords.has(id)) return updateCustomWord(id, { lessonIds: desired });
+            const base = requirePublic(id), override = getWordOverride(id);
+            const before = effectivePublic(base, override).lessonIds;
+            const added = new Set(override.addedLessonIds || []), removed = new Set(override.removedLessonIds || []);
+            // Keep dormant diffs unless this call explicitly changes that membership.
+            for (const lesson of before.filter(value => !desired.includes(value))) {
+                added.delete(lesson);
+                if (base.lessonIds.includes(lesson)) removed.add(lesson);
+            }
+            for (const lesson of desired.filter(value => !before.includes(value))) {
+                removed.delete(lesson);
+                if (!base.lessonIds.includes(lesson)) added.add(lesson);
+            }
+            return updateWordOverride(id, { addedLessonIds: [...added], removedLessonIds: [...removed] });
+        }
+        function clearLessonChange(id, lessonId) {
+            requirePublic(id);
+            identifier(lessonId, 'lesson ID');
+            const override = getWordOverride(id);
+            return updateWordOverride(id, {
+                addedLessonIds: (override.addedLessonIds || []).filter(value => value !== lessonId),
+                removedLessonIds: (override.removedLessonIds || []).filter(value => value !== lessonId)
             });
-            FIELD_NAMES.forEach(field => { if (own(migrated, field)) result[field] = copy(migrated[field]); });
-            const added = new Set(result.addedTags);
-            const removed = new Set(result.removedTags);
-            if (migrated.legacyTagBackup && record.tagDiffVersion !== 2 && record.schemaVersion !== 2 &&
-                LEGACY_TAG_FIELDS.some(field => own(record, field))) {
-                // A newer full snapshot explicitly includes its present tags, so it can
-                // cancel an older alias record's removal of the same historical tag.
-                const desired = new Set(legacyTags(record));
-                migrated.legacyTagBackup.baseTagsAtMigration.forEach(tag => {
-                    if (desired.has(tag)) { removed.delete(tag); added.delete(tag); }
-                });
+        }
+        function setWordFolders(id, folderIds) {
+            return customWords.has(id) ? updateCustomWord(id, { folderIds }) : updateWordOverride(id, { folderIds });
+        }
+        function hidePublicWord(id) { requirePublic(id); hiddenWordIds.add(id); }
+        function restorePublicWord(id) { requirePublic(id); hiddenWordIds.delete(id); }
+        function restoreAllHidden() { hiddenWordIds.clear(); }
+        function createCustomWord(id, fields) {
+            if (id && typeof id === 'object') {
+                const { id: suppliedId, ...suppliedFields } = id;
+                id = suppliedId;
+                fields = suppliedFields;
             }
-            migrated.addedTags.forEach(tag => { removed.delete(tag); added.add(tag); });
-            migrated.removedTags.forEach(tag => { added.delete(tag); removed.add(tag); });
-            result = { ...result, addedTags: [...added], removedTags: [...removed] };
-            if (migrated.legacyTagBackup) result.legacyTagBackup = copy(migrated.legacyTagBackup);
-            if (record.id !== id || records.length > 1) backups.push(copy(record));
-            else LEGACY_TAG_FIELDS.forEach(field => { if (own(record, field)) result[field] = copy(record[field]); });
-        });
-        if (backups.length) result.aliasMigrationBackup = backups;
-        if (records.length === 1) result.migrationBackup = copy(records[0].migrationBackup || records[0]);
-        return { ...result, id, supersedesLegacyAliases: true };
+            customId(id);
+            if (customWords.has(id)) fail(`Duplicate custom ID: ${id}`, 'DUPLICATE_ID');
+            const word = normalizeCustom(fields);
+            checkEnglish(id, word.english);
+            customWords.set(id, word);
+            return getEffectiveWord(id);
+        }
+        function updateCustomWord(id, patch) {
+            const before = requireCustom(id);
+            fields(patch, CUSTOM_FIELDS, 'custom word');
+            const word = normalizeCustom({ ...before, ...patch });
+            checkEnglish(id, word.english);
+            customWords.set(id, word);
+            return getEffectiveWord(id);
+        }
+        function deleteCustomWord(id) { customId(id); return customWords.delete(id); }
+        function getUserFolder(id) { return userFolders.has(id) ? copy(userFolders.get(id)) : null; }
+        function getUserFolders() { return copy(Object.fromEntries(userFolders)); }
+        function setFolder(id, folder) {
+            identifier(id, 'folder ID');
+            userFolders.set(id, normalizeFolder(folder));
+            return getUserFolder(id);
+        }
+        function createUserFolder(id, folder) {
+            if (userFolders.has(id)) fail(`Duplicate folder ID: ${id}`, 'DUPLICATE_ID');
+            return setFolder(id, folder);
+        }
+        function updateUserFolder(id, patch) {
+            if (!userFolders.has(id)) fail(`Unknown folder: ${id}`, 'FOLDER_NOT_FOUND');
+            fields(patch, ['name'], 'folder');
+            return setFolder(id, { ...userFolders.get(id), ...patch });
+        }
+        function deleteFolder(id) {
+            identifier(id, 'folder ID');
+            const existed = userFolders.delete(id);
+            for (const [wordId, raw] of userOverrides) {
+                if (!(raw.folderIds || []).includes(id)) continue;
+                const next = copy(raw);
+                next.folderIds = next.folderIds.filter(value => value !== id);
+                if (!next.folderIds.length) delete next.folderIds;
+                saveOverride(wordId, next);
+            }
+            for (const [wordId, raw] of customWords) {
+                if (raw.folderIds.includes(id)) customWords.set(wordId, { ...raw, folderIds: raw.folderIds.filter(value => value !== id) });
+            }
+            return existed;
+        }
+        function getSettings() { return copy(settings); }
+        function setSettings(patch) {
+            settings = { ...settings, ...copy(object(patch, 'settings patch')) };
+            return getSettings();
+        }
+        function clearSetting(key) {
+            identifier(key, 'setting key');
+            delete settings[key];
+            return getSettings();
+        }
+        function setPublicCatalog(nextCatalog) {
+            const next = normalizeCatalog(nextCatalog);
+            const previous = publicWords;
+            publicWords = new Map(next.map(word => [word.id, word]));
+            if (getEnglishConflicts().length) { publicWords = previous; fail('Catalog update conflicts with personal English; preserve sources for review.', 'DUPLICATE_ENGLISH'); }
+        }
+        function exportState() {
+            return copy({ userOverrides: Object.fromEntries(userOverrides), customWords: Object.fromEntries(customWords),
+                hiddenWordIds: [...hiddenWordIds], userFolders: Object.fromEntries(userFolders), settings });
+        }
+        function reset(options = {}) {
+            fields(options, ['settings'], 'reset options');
+            const nextSettings = copy(object(own(options, 'settings') ? options.settings : {}, 'settings'));
+            userOverrides.clear();
+            customWords.clear();
+            hiddenWordIds.clear();
+            userFolders.clear();
+            settings = nextSettings;
+            return exportState();
+        }
+        if (getEnglishConflicts().length) fail('Duplicate effective English in stored account data; migration or recovery is required.', 'DUPLICATE_ENGLISH');
+        return Object.freeze({ getPublicWord, getWordOverride, getEffectiveWord, deriveEffectiveWords,
+            getEnglishConflicts, setPublicCatalog, updateWordOverride, clearWordOverrideField, clearWordOverride,
+            setWordLessons, clearLessonChange, setWordFolders, hidePublicWord, restorePublicWord, restoreAllHidden,
+            createCustomWord, updateCustomWord, deleteCustomWord, getUserFolder, getUserFolders,
+            setFolder, deleteFolder, createUserFolder, updateUserFolder, deleteUserFolder: deleteFolder,
+            getSettings, setSettings, updateSettings: setSettings, clearSetting, reset, exportState });
     }
-
-    function hasPersonalChanges(override = {}) {
-        return FIELD_NAMES.some(field => own(override, field)) ||
-            normalizeTags(override.addedTags).length > 0 || normalizeTags(override.removedTags).length > 0;
-    }
-
-    return Object.freeze({ FIELD_NAMES, own, normalizeTags, normalizeCatalog, resolveId, normalizeTagChanges,
-        mergeTags, migrateOverride, applyOverride, updateOverride, clearOverrideField, clearTagChange,
-        coalesceOverrides, hasPersonalChanges });
+    return Object.freeze({ SCHEMA_VERSION, PARTS_OF_SPEECH, FIELD_NAMES, OVERRIDE_FIELDS,
+        normalizePartOfSpeech, normalizeCatalog, createUserWordState });
 });

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 5,
+  "sha256": {
+    "legacy-catalog.json": "dcee67779a6fd08bc4bb0f35aa90829841fb85ea13cc8b11696a6479f1efdbdd",
+    "legacy-word-id-aliases.json": "98d180973038b3a52460c860e58a8bb73783b078263ab1592bb625c9ae2c3f05",
+    "legacy-lessons/manifest.json": "32ff1bf9d66a3a3eb4d2976bb5bc45c39d4597b4d5ce8b8987adc6da66a8d0ea",
+    "legacy-lessons/晟景Lv5U10.json": "1187655ec63105456575d8d72db8f28d0f2a6ab52b82fc811e1a697afc49f726",
+    "legacy-lessons/晟景Lv5U11.json": "a3c628b7b7bb55b4e0ec9f1294cfb35b214a735032b44b3d9ab5ad3cea838a10",
+    "legacy-lessons/晟景Lv5U12.json": "38b1c647888903e495ea07b7e37024976f07f8ef166b0924c5df1243b3fa4be8",
+    "legacy-lessons/晟景Lv5U13.json": "a13be4a0c67555697d5ccb029b2a66c2e2e0c2a810e3f2087462ee6b02ff424d",
+    "legacy-lessons/晟景Lv5U6.json": "5459c3fb67bce847e7711fc973d8a4f09fb8940cfc75cdcbe31fbbba6b284725",
+    "legacy-lessons/晟景Lv5U7.json": "88fa1e1720d7a8179528bd08a65633039b5dca670fd6fc10cb39faa775c0c98e",
+    "legacy-lessons/晟景Lv5U8.json": "6ce23b923780619ccd70acb28ccc9ef3f5db63ca8128215b97d80644687d662a",
+    "legacy-lessons/晟景Lv5U9.json": "54327658f36a2b6dd09fdda2b88a176ba86b9b6d4082da27aa3b29c585c38310",
+    "legacy-lessons/死神單字Lv5 a.json": "47cf2aed86be243a8928f95b2a9d3fee63bb56a1407b698b4b6eeee7dcd44910",
+    "legacy-word-id-map.json": "d0ef3f4a3f3665ce8511eac659c01d95be51026af92928bf8cf99026f3e72128",
+    "legacy-tag-baseline.json": "08eb87f8e3fca651714425a12ff51f4f7cbc669a1b68c0aaf8bd02444e5dc3fb"
+  }
+}
