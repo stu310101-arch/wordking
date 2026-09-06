@@ -18,7 +18,9 @@ import {
     deleteField
 } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
-const LESSON_MANIFEST_URL = './data/lessons/manifest.json';
+const WORD_DATABASE_URL = './data/words.json';
+const WORD_ALIASES_URL = './data/word-id-aliases.json';
+const wordData = globalThis.WordKingData;
 const WRONG_FOLDER = '錯題區';
 const REVIEW_FOLDER_LABEL = '待複習';
 const UNFILED_FOLDER = '未分類';
@@ -77,8 +79,15 @@ const bgmDucking = {
 let defaultWordDatabase = [];
 let defaultWordMap = new Map();
 let defaultWordEnglishMap = new Map();
+let defaultWordAliases = { aliases: {}, legacyTagsById: {} };
+let catalogLoadGeneration = 0;
 let currentUser = null;
 let authReady = false;
+let authSessionGeneration = 0;
+let isUserDataReady = false;
+let publicDataPromise = null;
+let publicDataReady = false;
+let hasDisplayedSession = false;
 let isCloudLoading = false;
 let cloudLoadGeneration = 0;
 let isSyncing = false;
@@ -135,6 +144,7 @@ class CloudPartialCommitError extends Error {
 
 const state = {
     words: [],
+    hiddenWords: [],
     categories: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(''),
     folderIds: [WRONG_FOLDER],
     folders: [WRONG_FOLDER],
@@ -166,10 +176,6 @@ window.state = state;
 function safeDocId(value) {
     const raw = String(value || '').trim();
     return encodeURIComponent(raw || `id-${Date.now()}`).replace(/\./g, '%2E');
-}
-
-function createDefaultWordId(lessonId, english) {
-    return safeDocId(`${lessonId}::${String(english || '').trim().toLowerCase()}`);
 }
 
 function createCustomWordId() {
@@ -232,6 +238,7 @@ function withWordFolderIds(word = {}, folderIds = []) {
     const normalizedFolderIds = normalizeFolderIds(folderIds);
     return {
         ...word,
+        tags: normalizedFolderIds,
         folderIds: normalizedFolderIds,
         folderId: normalizedFolderIds[0] || ''
     };
@@ -265,6 +272,7 @@ function cloneWord(word = {}) {
         meaning: word.meaning || '',
         partOfSpeech: normalizePartOfSpeech(word.partOfSpeech),
         folderIds: folderData.folderIds,
+        tags: [...folderData.folderIds],
         folderId: folderData.folderId,
         isWrong: folderData.isWrong
     };
@@ -274,6 +282,7 @@ function cloneWord(word = {}) {
     if (word.source === 'custom' || word.source === 'default') cloned.source = word.source;
     if (word.createdAt) cloned.createdAt = word.createdAt;
     if (word.updatedAt) cloned.updatedAt = word.updatedAt;
+    if (word._override) cloned._override = JSON.parse(JSON.stringify(word._override));
     return cloned;
 }
 
@@ -299,6 +308,7 @@ function cloneSettings(settings = {}) {
 function snapshotUserState(source = state) {
     return {
         words: cloneWords(source.words),
+        hiddenWords: cloneWords(source.hiddenWords),
         folders: Array.isArray(source.folders) ? [...source.folders] : [],
         settings: cloneSettings(source.settings)
     };
@@ -306,12 +316,14 @@ function snapshotUserState(source = state) {
 
 function restoreUserState(snapshot) {
     state.words = cloneWords(snapshot.words);
+    state.hiddenWords = cloneWords(snapshot.hiddenWords);
     state.folders = Array.isArray(snapshot.folders) ? [...snapshot.folders] : [];
     state.settings = cloneSettings(snapshot.settings);
 }
 
 function applyUserData(data) {
     state.words = cloneWords(data.words);
+    state.hiddenWords = cloneWords(data.hiddenWords);
     state.settings = cloneSettings(data.settings);
     state.folders = normalizeFolders(data.folders || [], state.words, state.settings);
     clearPracticeSession();
@@ -359,29 +371,11 @@ function getFolderDisplayName(folderId, settings = state.settings) {
     return (settings && settings.lessonFolderNames && settings.lessonFolderNames[folderId]) || folderId;
 }
 
-function getDefaultWordLessonIds(word = {}) {
-    if (word.source !== 'default' || !word.defaultId) return [];
-    const defaultWord = defaultWordMap.get(word.defaultId);
-    if (!defaultWord) return [];
-    const lessonIds = Array.isArray(defaultWord.lessonIds) && defaultWord.lessonIds.length
-        ? defaultWord.lessonIds
-        : [defaultWord.folderId];
-    return Array.from(new Set(lessonIds.filter(folderId => isLessonFolder(folderId))));
-}
-
-function getDefaultWordActiveLessonIds(word = {}, settings = state.settings, excludedFolderId = '') {
-    const deletedLessonIds = new Set((settings && settings.deletedLessonIds) || []);
-    return getDefaultWordLessonIds(word).filter(folderId => (
-        folderId !== excludedFolderId && !deletedLessonIds.has(folderId)
-    ));
-}
-
 function getWordSourceFolderIds(word = {}, settings = state.settings) {
     const deletedLessonIds = new Set((settings && settings.deletedLessonIds) || []);
-    const activeLessonIds = getDefaultWordActiveLessonIds(word, settings);
     const storedFolderIds = getStoredWordFolderIds(word)
         .filter(folderId => !deletedLessonIds.has(folderId));
-    return normalizeFolderIds([...activeLessonIds, ...storedFolderIds]);
+    return normalizeFolderIds(storedFolderIds);
 }
 
 function folderNameExists(name, exceptFolderId = '') {
@@ -416,90 +410,31 @@ function getCurrentBgmTrack(trackId = state.settings.selectedBgmId) {
     return BGM_TRACKS.find(t => t.id === trackId) || BGM_TRACKS[0] || null;
 }
 
-function validateLessonWord(rawWord, lessonId, index, fileName) {
-    if (!rawWord || typeof rawWord !== 'object') {
-        console.warn(`Skipped invalid word object in ${fileName} at index ${index}`);
-        return null;
-    }
-
-    const english = typeof rawWord.english === 'string' ? rawWord.english.trim() : '';
-    if (!english) {
-        console.warn(`Skipped word with empty english in ${fileName} at index ${index}`);
-        return null;
-    }
-
-    const meaning = typeof rawWord.meaning === 'string' ? rawWord.meaning : '';
-    const partOfSpeech = normalizePartOfSpeech(rawWord.partOfSpeech);
-    const rawTags = Array.isArray(rawWord.tags) ? rawWord.tags : [];
-    const lessonIds = normalizeLegacyTags([lessonId, ...rawTags])
-        .map(normalizeFolderId)
-        .filter(Boolean);
-    const folderIds = normalizeFolderIds(lessonIds);
-    const folderId = folderIds[0] || lessonId;
-
-    const defaultId = createDefaultWordId(lessonId, english);
-    return {
-        id: defaultId,
-        defaultId,
-        source: 'default',
-        english,
-        meaning,
-        partOfSpeech,
-        folderIds,
-        folderId,
-        lessonIds,
-        isWrong: false
-    };
-}
-
-function validateLessonData(rawLesson, manifestItem) {
-    const fileName = manifestItem && manifestItem.file ? manifestItem.file : 'unknown lesson file';
-    if (!rawLesson || typeof rawLesson !== 'object') {
-        throw new Error(`${fileName} is not a lesson object`);
-    }
-
-    const id = typeof rawLesson.id === 'string' && rawLesson.id.trim()
-        ? rawLesson.id.trim()
-        : (typeof manifestItem.id === 'string' ? manifestItem.id.trim() : '');
-    if (!id) throw new Error(`${fileName} has no lesson id`);
-    if (!Array.isArray(rawLesson.words)) throw new Error(`${fileName} words must be an array`);
-
-    const words = rawLesson.words
-        .map((word, index) => validateLessonWord(word, id, index, fileName))
-        .filter(Boolean);
-    return { id, words };
-}
-
 async function loadDefaultWordDatabase() {
-    const manifestRes = await fetch(LESSON_MANIFEST_URL, { cache: 'no-cache' });
-    if (!manifestRes.ok) throw new Error('無法載入單字課程清單');
-    const manifest = await manifestRes.json();
-    const lessonFiles = Array.isArray(manifest.lessons) ? manifest.lessons : [];
-    const results = await Promise.allSettled(lessonFiles.map(async lesson => {
-        if (!lesson || typeof lesson.file !== 'string' || !lesson.file.trim()) {
-            throw new Error('Lesson manifest entry is missing file');
-        }
-        const res = await fetch(`./data/lessons/${encodeURIComponent(lesson.file)}`, { cache: 'no-cache' });
-        if (!res.ok) throw new Error(`Failed to fetch ${lesson.file}: ${res.status}`);
-        const data = await res.json();
-        return validateLessonData(data, lesson);
-    }));
-
-    const lessons = [];
-    results.forEach((result, index) => {
-        if (result.status === 'fulfilled') {
-            lessons.push(result.value);
-        } else {
-            const file = lessonFiles[index] && lessonFiles[index].file ? lessonFiles[index].file : `lesson #${index + 1}`;
-            console.warn(`Skipped lesson ${file}:`, result.reason);
-        }
-    });
-
-    state.lessonFolderIds = lessons.map(l => l.id).filter(Boolean);
-    defaultWordDatabase = lessons.flatMap(l => cloneWords(l.words));
+    const generation = ++catalogLoadGeneration;
+    const [wordsResponse, aliasesResponse] = await Promise.all([
+        fetch(WORD_DATABASE_URL, { cache: 'no-cache' }),
+        fetch(WORD_ALIASES_URL, { cache: 'no-cache' })
+    ]);
+    if (!wordsResponse.ok || !aliasesResponse.ok) throw new Error('無法載入公用單字庫或相容資料，請重試。');
+    const [rawWords, aliases] = await Promise.all([wordsResponse.json(), aliasesResponse.json()]);
+    const catalog = wordData.normalizeCatalog(rawWords);
+    if (!catalog.length) throw new Error('公用單字庫是空的，請稍後重試。');
+    if (generation !== catalogLoadGeneration) throw new Error('公用單字載入已由新的請求取代。');
+    defaultWordAliases = aliases;
+    defaultWordDatabase = catalog.map(cloneWord);
     defaultWordMap = new Map(defaultWordDatabase.map(word => [word.defaultId, cloneWord(word)]));
     defaultWordEnglishMap = new Map(defaultWordDatabase.map(word => [word.english.toLowerCase(), cloneWord(word)]));
+    state.lessonFolderIds = normalizeFolderIds(defaultWordDatabase.flatMap(word => word.tags));
     window.defaultWordDatabase = defaultWordDatabase;
+}
+
+function resolveDefaultId(id) {
+    return wordData.resolveId(id, defaultWordAliases);
+}
+
+function getDefaultIdVariants(defaultId) {
+    return [defaultId, ...Object.keys(defaultWordAliases.aliases || {}).filter(id => resolveDefaultId(id) === defaultId)];
 }
 
 function clearPracticeSession() {
@@ -518,6 +453,7 @@ function clearPracticeSession() {
 function resetToDefaultState() {
     state.settings = cloneSettings(DEFAULT_SETTINGS);
     state.words = getDefaultWords();
+    state.hiddenWords = [];
     state.folders = normalizeFolders([], state.words, state.settings);
     clearPracticeSession();
     refreshFolders();
@@ -588,39 +524,21 @@ function sameCustomWordData(a, b) {
         !!a.isWrong === !!b.isWrong;
 }
 
-function getDefaultOverrideFields(word, baseWord, settings = state.settings) {
+function getDefaultOverrideFields(word, baseWord) {
     if (!word || !baseWord) return {};
-    const override = {};
-    if ((word.english || '') !== (baseWord.english || '')) override.english = word.english || '';
-    if ((word.meaning || '') !== (baseWord.meaning || '')) override.meaning = word.meaning || '';
-    if (normalizePartOfSpeech(word.partOfSpeech) !== normalizePartOfSpeech(baseWord.partOfSpeech)) {
-        override.partOfSpeech = normalizePartOfSpeech(word.partOfSpeech);
-    }
-    const deletedLessonIds = new Set((settings && settings.deletedLessonIds) || []);
-    const wordFolderIds = getStoredWordFolderIds(word).filter(folderId => !deletedLessonIds.has(folderId));
-    const baseFolderIds = getStoredWordFolderIds(baseWord).filter(folderId => !deletedLessonIds.has(folderId));
-    if (!sameFolderIds(wordFolderIds, baseFolderIds)) {
-        override.folderIds = wordFolderIds;
-        override.folderId = wordFolderIds[0] || '';
-    }
-    if (!!word.isWrong !== !!baseWord.isWrong) override.isWrong = !!word.isWrong;
-    return override;
+    const previous = word._override || {};
+    return wordData.updateOverride(baseWord, previous, word, wordData.applyOverride(baseWord, previous));
 }
 
 function sameOverride(a = {}, b = {}) {
-    const aKeys = Object.keys(a).filter(key => key !== 'updatedAt').sort();
-    const bKeys = Object.keys(b).filter(key => key !== 'updatedAt').sort();
-    if (aKeys.length !== bKeys.length) return false;
-    return aKeys.every(key => {
-        if (key === 'folderIds') return sameFolderIds(a[key], b[key]);
-        return a[key] === b[key];
-    });
+    const comparable = value => Object.fromEntries(Object.entries(value).filter(([key]) => !['updatedAt', 'id'].includes(key)).sort(([a], [b]) => a.localeCompare(b)));
+    return JSON.stringify(comparable(a)) === JSON.stringify(comparable(b));
 }
 
 function ensureWordIdentities(words) {
     return cloneWords(words).map(word => {
-        if (word.defaultId && defaultWordMap.has(word.defaultId)) {
-            return { ...word, id: word.defaultId, source: 'default' };
+        if (word.defaultId && defaultWordMap.has(resolveDefaultId(word.defaultId))) {
+            return { ...word, defaultId: resolveDefaultId(word.defaultId), id: resolveDefaultId(word.defaultId), source: 'default' };
         }
         if (word.source === 'default' && word.id && defaultWordMap.has(word.id)) {
             return { ...word, defaultId: word.id, source: 'default' };
@@ -763,115 +681,69 @@ function acknowledgeCloudRevision(revision) {
 }
 
 function getLegacyCleanupPatch(now) {
-    return {
-        words: deleteField(),
-        folders: deleteField(),
-        settings: deleteField(),
-        schemaVersion: 3,
-        migratedToDiffStorageAt: now
-    };
+    // Keep the original root snapshot as a recovery source. The marker makes migration repeatable.
+    return { schemaVersion: 4, migratedToDiffStorageAt: now, legacySnapshotRetained: true };
 }
 
 async function readUserCollection(user, collectionName) {
     const snap = await getDocs(collection(db, 'users', user.uid, collectionName));
-    return snap.docs.map(item => ({ id: item.id, ...(item.data() || {}) }));
+    return snap.docs.map(item => ({ ...(item.data() || {}), id: item.id }));
+}
+
+function legacyRootDiffs(data = {}) {
+    const wordOverrides = [], customWords = [];
+    (Array.isArray(data.words) ? data.words : []).forEach((raw, index) => {
+        if (!raw || typeof raw !== 'object') return;
+        const legacyId = raw.defaultId || raw.id;
+        const base = raw.source !== 'custom' && (
+            defaultWordMap.get(resolveDefaultId(legacyId)) ||
+            (!legacyId && defaultWordEnglishMap.get(String(raw.english || '').toLowerCase()))
+        );
+        if (base) {
+            const override = { id: legacyId || base.defaultId };
+            wordData.FIELD_NAMES.forEach(field => {
+                if (Object.prototype.hasOwnProperty.call(raw, field) && raw[field] !== base[field]) override[field] = raw[field];
+            });
+            ['folderIds', 'folderId', 'tags'].forEach(field => {
+                if (Object.prototype.hasOwnProperty.call(raw, field)) override[field] = raw[field];
+            });
+            if (Object.keys(override).length > 1) wordOverrides.push(override);
+        } else {
+            customWords.push({ ...raw, id: raw.id || safeDocId(`legacy-custom::${index}::${raw.english || ''}`), source: 'custom' });
+        }
+    });
+    return {
+        wordOverrides, customWords,
+        folders: Array.isArray(data.folders) ? data.folders.map(name => ({ id: safeDocId(name), name })) : [],
+        settings: data.settings || {},
+        deletedDefaultIds: Array.isArray(data.deletedDefaults) ? data.deletedDefaults.filter(id => typeof id === 'string') : []
+    };
 }
 
 function normalizeUserData(data = {}) {
-    const settings = hydrateSettings(data.settings || null);
-    const deleted = new Set(settings.deletedLessonIds || []);
-    const baseWords = new Map(getDefaultWords().map(word => [word.defaultId, cloneWord(word)]));
-    const customWords = [];
-
-    cloneWords(data.words || []).forEach(word => {
-        const matchedDefault = (word.defaultId && defaultWordMap.get(word.defaultId)) ||
-            (word.source === 'default' && word.id && defaultWordMap.get(word.id)) ||
-            defaultWordEnglishMap.get((word.english || '').toLowerCase());
-        const storedFolderIds = getStoredWordFolderIds(word)
-            .filter(folderId => !deleted.has(folderId));
-        if (matchedDefault && baseWords.has(matchedDefault.defaultId)) {
-            baseWords.set(matchedDefault.defaultId, cloneWord(withWordFolderIds({
-                ...matchedDefault,
-                ...word,
-                lessonIds: matchedDefault.lessonIds,
-                id: matchedDefault.defaultId,
-                defaultId: matchedDefault.defaultId,
-                source: 'default'
-            }, [...getDefaultWordLessonIds(matchedDefault), ...storedFolderIds])));
-        } else {
-            customWords.push(cloneWord(withWordFolderIds({
-                ...word,
-                id: word.id || createCustomWordId(),
-                source: 'custom'
-            }, storedFolderIds)));
-        }
-    });
-
-    const words = [...baseWords.values(), ...customWords];
-    const folders = normalizeFolders(data.folders || [], words, settings);
-    return { words, folders, settings };
+    return buildUserDataFromDiffs(legacyRootDiffs(data));
 }
 
 function buildUserDataFromDiffs(diffData = {}) {
     const settings = cloneSettings(diffData.settings || DEFAULT_SETTINGS);
-    const deletedLessonIds = new Set(settings.deletedLessonIds || []);
-    const deletedDefaults = new Set(diffData.deletedDefaultIds || []);
-    const overrides = new Map((diffData.wordOverrides || []).map(item => [item.id, item]));
-    const defaultWords = getDefaultWords()
-        .filter(word => !deletedDefaults.has(word.defaultId))
-        .map(word => {
-            const override = overrides.get(word.defaultId) || {};
-            const hasLegacyTags = Object.prototype.hasOwnProperty.call(override, 'tags');
-            const legacyData = hasLegacyTags ? getLegacyFolderData(override) : null;
-            const hasFolderIds = Object.prototype.hasOwnProperty.call(override, 'folderIds');
-            const requestedFolderIds = hasFolderIds
-                ? normalizeFolderIds(override.folderIds)
-                : (Object.prototype.hasOwnProperty.call(override, 'folderId')
-                    ? normalizeFolderIds([override.folderId])
-                : (legacyData
-                    ? legacyData.folderIds
-                    : getStoredWordFolderIds(word)));
-            const folderIds = normalizeFolderIds([
-                ...getDefaultWordLessonIds(word),
-                ...requestedFolderIds.filter(folderId => !deletedLessonIds.has(folderId))
-            ]);
-            const isWrong = Object.prototype.hasOwnProperty.call(override, 'isWrong')
-                ? !!override.isWrong
-                : (legacyData ? legacyData.isWrong : !!word.isWrong);
-            const partOfSpeech = Object.prototype.hasOwnProperty.call(override, 'partOfSpeech')
-                ? normalizePartOfSpeech(override.partOfSpeech)
-                : normalizePartOfSpeech(word.partOfSpeech);
-            return cloneWord({
-                ...word,
-                english: Object.prototype.hasOwnProperty.call(override, 'english') ? override.english : word.english,
-                meaning: Object.prototype.hasOwnProperty.call(override, 'meaning') ? override.meaning : word.meaning,
-                partOfSpeech,
-                folderIds,
-                folderId: folderIds[0] || '',
-                isWrong,
-                id: word.defaultId,
-                defaultId: word.defaultId,
-                source: 'default'
-            });
-        });
-    const customWords = (diffData.customWords || []).map(word => cloneWord({
-        ...word,
-        id: word.id,
-        source: 'custom'
-    }));
-    const folderNames = (diffData.folders || [])
-        .map(folder => typeof folder.name === 'string' ? folder.name : folder.id)
-        .filter(Boolean);
+    const hidden = new Set((diffData.deletedDefaultIds || []).map(resolveDefaultId));
+    const mergedWords = getDefaultWords().map(word => {
+        const override = wordData.coalesceOverrides(word, diffData.wordOverrides || [], defaultWordAliases);
+        return cloneWord({ ...wordData.applyOverride(word, override), _override: override });
+    });
+    const defaultWords = mergedWords.filter(word => !hidden.has(word.defaultId));
+    const hiddenWords = mergedWords.filter(word => hidden.has(word.defaultId));
+    const customWords = (diffData.customWords || []).map(word => cloneWord({ ...word, id: word.id, source: 'custom' }));
+    const folderNames = (diffData.folders || []).map(folder => typeof folder === 'string' ? folder : (folder.name || folder.id)).filter(Boolean);
     const words = [...defaultWords, ...customWords];
-    const folders = normalizeFolders(folderNames, words, settings);
-    return { words, folders, settings };
+    return { words, hiddenWords, folders: normalizeFolders(folderNames, words, settings), settings };
 }
 
 function createDefaultUserData(settings = DEFAULT_SETTINGS) {
     const nextSettings = cloneSettings(settings);
     const words = getDefaultWords();
     const folders = normalizeFolders([], words, nextSettings);
-    return { words, folders, settings: nextSettings };
+    return { words, hiddenWords: [], folders, settings: nextSettings };
 }
 
 function collectDiffOperations(previous, next, user) {
@@ -946,33 +818,39 @@ function collectDiffOperations(previous, next, user) {
                 deleted: true,
                 updatedAt: now
             }, { merge: true }));
-            operations.push(batch => batch.delete(getUserSubDocRef(user, 'wordOverrides', defaultId)));
         } else if (!previousWord && nextWord) {
-            operations.push(batch => batch.delete(getUserSubDocRef(user, 'deletedDefaults', defaultId)));
+            getDefaultIdVariants(defaultId).forEach(id => {
+                operations.push(batch => batch.set(getUserSubDocRef(user, 'deletedDefaults', id), {
+                    deleted: false, updatedAt: now
+                }, { merge: true }));
+            });
         }
 
         if (!nextWord) return;
         const previousOverride = previousWord ? getDefaultOverrideFields(previousWord, baseWord, before.settings) : {};
         const nextOverride = getDefaultOverrideFields(nextWord, baseWord, after.settings);
-        if (sameOverride(previousOverride, nextOverride)) return;
+        const recoverySource = previousWord?._override || (previous.hiddenWords || []).find(word => word.defaultId === defaultId)?._override || {};
+        ['migrationBackup', 'legacyTagBackup', 'aliasMigrationBackup'].forEach(key => {
+            if (!(key in nextOverride) && key in recoverySource) nextOverride[key] = recoverySource[key];
+        });
+        if (previousWord && sameOverride(previousOverride, nextOverride)) return;
 
-        if (!Object.keys(nextOverride).length) {
-            operations.push(batch => batch.delete(getUserSubDocRef(user, 'wordOverrides', defaultId)));
-        } else {
-            operations.push(batch => batch.set(getUserSubDocRef(user, 'wordOverrides', defaultId), {
-                ...nextOverride,
-                updatedAt: now
-            }));
-        }
+        operations.push(batch => batch.set(getUserSubDocRef(user, 'wordOverrides', defaultId), {
+            ...nextOverride,
+            supersedesLegacyAliases: true,
+            updatedAt: now
+        }));
     });
 
     return operations;
 }
 
-async function commitAtomicOperations(operations, user, expectedRevision, rootPatch = {}) {
+async function commitAtomicOperations(operations, user, expectedRevision, rootPatch = {}, assertCurrent = () => {}) {
+    assertCurrent();
     const rootRef = getUserRef(user);
     return executeTransaction(db, async transaction => {
         const rootSnapshot = await transaction.get(rootRef);
+        assertCurrent();
         const metadata = getCloudMetadata(rootSnapshot);
         if (metadata.syncLock) throw new CloudSyncInProgressError();
         if (metadata.revision !== expectedRevision) {
@@ -984,14 +862,15 @@ async function commitAtomicOperations(operations, user, expectedRevision, rootPa
         transaction.set(rootRef, {
             ...rootPatch,
             revision,
-            schemaVersion: 3,
+            schemaVersion: 4,
             updatedAt: new Date().toISOString()
         }, { merge: true });
         return { revision, committedChunks: 1, totalChunks: 1 };
     });
 }
 
-async function beginLargeSync(user, expectedRevision, totalChunks) {
+async function beginLargeSync(user, expectedRevision, totalChunks, assertCurrent = () => {}) {
+    assertCurrent();
     const rootRef = getUserRef(user);
     const now = new Date().toISOString();
     const syncLock = {
@@ -1006,6 +885,7 @@ async function beginLargeSync(user, expectedRevision, totalChunks) {
 
     return executeTransaction(db, async transaction => {
         const rootSnapshot = await transaction.get(rootRef);
+        assertCurrent();
         const metadata = getCloudMetadata(rootSnapshot);
         if (metadata.syncLock) throw new CloudSyncInProgressError();
         if (metadata.revision !== expectedRevision) {
@@ -1016,10 +896,11 @@ async function beginLargeSync(user, expectedRevision, totalChunks) {
     });
 }
 
-async function commitLargeSyncChunk(operations, user, syncLock, completedChunks) {
+async function commitLargeSyncChunk(operations, user, syncLock, completedChunks, assertCurrent = () => {}) {
     const rootRef = getUserRef(user);
     let lastError = null;
     for (let attempt = 0; attempt < BATCH_RETRY_LIMIT; attempt += 1) {
+        assertCurrent();
         const now = new Date().toISOString();
         const batch = createWriteBatch(db);
         operations.forEach(apply => apply(batch));
@@ -1044,10 +925,12 @@ async function commitLargeSyncChunk(operations, user, syncLock, completedChunks)
     throw lastError || new Error('大型同步批次寫入失敗。');
 }
 
-async function finishLargeSync(user, syncLock, rootPatch = {}) {
+async function finishLargeSync(user, syncLock, rootPatch = {}, assertCurrent = () => {}) {
+    assertCurrent();
     const rootRef = getUserRef(user);
     return executeTransaction(db, async transaction => {
         const rootSnapshot = await transaction.get(rootRef);
+        assertCurrent();
         const metadata = getCloudMetadata(rootSnapshot);
         if (!metadata.syncLock) {
             if (metadata.revision === syncLock.targetRevision) return metadata.revision;
@@ -1058,7 +941,7 @@ async function finishLargeSync(user, syncLock, rootPatch = {}) {
         transaction.set(rootRef, {
             ...rootPatch,
             revision: syncLock.targetRevision,
-            schemaVersion: 3,
+            schemaVersion: 4,
             syncLock: deleteField(),
             updatedAt: new Date().toISOString()
         }, { merge: true });
@@ -1066,13 +949,15 @@ async function finishLargeSync(user, syncLock, rootPatch = {}) {
     });
 }
 
-async function closeInterruptedLargeSync(user, syncLock) {
+async function closeInterruptedLargeSync(user, syncLock, assertCurrent = () => {}) {
     const rootRef = getUserRef(user);
     let lastError = null;
     for (let attempt = 0; attempt < BATCH_RETRY_LIMIT; attempt += 1) {
         try {
+            assertCurrent();
             return await executeTransaction(db, async transaction => {
                 const rootSnapshot = await transaction.get(rootRef);
+                assertCurrent();
                 const metadata = getCloudMetadata(rootSnapshot);
                 if (!metadata.syncLock || metadata.syncLock.id !== syncLock.id) {
                     return metadata.revision;
@@ -1087,6 +972,7 @@ async function closeInterruptedLargeSync(user, syncLock) {
                 return revision;
             });
         } catch (error) {
+            if (error.code === 'stale-user-session') throw error;
             lastError = error;
             if (attempt + 1 < BATCH_RETRY_LIMIT) {
                 await waitBeforeRetry(150 * (2 ** attempt));
@@ -1096,30 +982,35 @@ async function closeInterruptedLargeSync(user, syncLock) {
     throw lastError || new Error('無法結束中斷的同步作業。');
 }
 
-async function commitBatchOperations(operations, user, expectedRevision, { rootPatch = {} } = {}) {
+async function commitBatchOperations(operations, user, expectedRevision, { rootPatch = {}, assertCurrent = null } = {}) {
+    const sessionGeneration = authSessionGeneration;
+    const checkCurrent = assertCurrent || (() => assertCurrentUserSession(user, sessionGeneration));
+    checkCurrent();
     if (!operations.length && !Object.keys(rootPatch).length) {
         return { revision: expectedRevision, committedChunks: 0, totalChunks: 0 };
     }
     if (operations.length <= ATOMIC_OPERATION_LIMIT) {
-        return commitAtomicOperations(operations, user, expectedRevision, rootPatch);
+        return commitAtomicOperations(operations, user, expectedRevision, rootPatch, checkCurrent);
     }
 
     const chunks = [];
     for (let index = 0; index < operations.length; index += BATCH_CHUNK_SIZE) {
         chunks.push(operations.slice(index, index + BATCH_CHUNK_SIZE));
     }
-    const syncLock = await beginLargeSync(user, expectedRevision, chunks.length);
+    const syncLock = await beginLargeSync(user, expectedRevision, chunks.length, checkCurrent);
     let committedChunks = 0;
     try {
         for (let index = 0; index < chunks.length; index += 1) {
-            await commitLargeSyncChunk(chunks[index], user, syncLock, index + 1);
+            await commitLargeSyncChunk(chunks[index], user, syncLock, index + 1, checkCurrent);
             committedChunks = index + 1;
         }
-        const revision = await finishLargeSync(user, syncLock, rootPatch);
+        const revision = await finishLargeSync(user, syncLock, rootPatch, checkCurrent);
         return { revision, committedChunks, totalChunks: chunks.length };
     } catch (error) {
+        // The next valid session can recover a stale lock; an old session must not start cleanup writes.
+        if (error.code === 'stale-user-session') throw error;
         try {
-            await closeInterruptedLargeSync(user, syncLock);
+            await closeInterruptedLargeSync(user, syncLock, checkCurrent);
         } catch (cleanupError) {
             console.error('無法清除中斷的雲端同步鎖。', cleanupError);
         }
@@ -1133,6 +1024,8 @@ async function commitBatchOperations(operations, user, expectedRevision, { rootP
 
 async function saveDiffChangesToCloud(previous, next, user = currentUser, options = {}) {
     if (!user) return { revision: cloudRevision, committedChunks: 0, totalChunks: 0 };
+    const sessionGeneration = authSessionGeneration;
+    assertCurrentUserSession(user, sessionGeneration);
     const operations = collectDiffOperations(previous, next, user);
     const now = new Date().toISOString();
     const rootPatch = options.cleanupLegacy ? getLegacyCleanupPatch(now) : {};
@@ -1142,19 +1035,25 @@ async function saveDiffChangesToCloud(previous, next, user = currentUser, option
     activeCloudWrites += 1;
     updateAuthUI(currentUser);
     try {
-        const result = await commitBatchOperations(operations, user, expectedRevision, { rootPatch });
-        acknowledgeCloudRevision(result.revision);
+        const result = await commitBatchOperations(operations, user, expectedRevision, {
+            rootPatch, assertCurrent: () => assertCurrentUserSession(user, sessionGeneration)
+        });
+        if (isCurrentUserSession(user, sessionGeneration)) acknowledgeCloudRevision(result.revision);
         return result;
     } finally {
-        activeCloudWrites = Math.max(0, activeCloudWrites - 1);
-        updateAuthUI(currentUser);
+        if (isCurrentUserSession(user, sessionGeneration)) {
+            activeCloudWrites = Math.max(0, activeCloudWrites - 1);
+            updateAuthUI(currentUser);
+        }
     }
 }
 
-async function recoverStaleSyncLock(user) {
+async function recoverStaleSyncLock(user, assertCurrent = () => {}) {
+    assertCurrent();
     const rootRef = getUserRef(user);
     return executeTransaction(db, async transaction => {
         const rootSnapshot = await transaction.get(rootRef);
+        assertCurrent();
         const metadata = getCloudMetadata(rootSnapshot);
         if (!metadata.syncLock) return metadata.revision;
         if (!isSyncLockStale(metadata.syncLock)) throw new CloudSyncInProgressError();
@@ -1173,14 +1072,17 @@ async function recoverStaleSyncLock(user) {
     });
 }
 
-async function getStableUserRootSnapshot(user) {
+async function getStableUserRootSnapshot(user, assertCurrent = () => {}) {
     const rootRef = getUserRef(user);
     for (let attempt = 0; attempt < 20; attempt += 1) {
+        assertCurrent();
         const snapshot = await getDoc(rootRef);
+        assertCurrent();
         const metadata = getCloudMetadata(snapshot);
         if (!metadata.syncLock) return snapshot;
         if (isSyncLockStale(metadata.syncLock)) {
-            await recoverStaleSyncLock(user);
+            await recoverStaleSyncLock(user, assertCurrent);
+            assertCurrent();
             return getDoc(rootRef);
         }
         await waitBeforeRetry(250);
@@ -1188,60 +1090,88 @@ async function getStableUserRootSnapshot(user) {
     throw new CloudSyncInProgressError();
 }
 
-async function loadUserDiffData(user) {
+async function loadUserDiffData(user, context = {}) {
+    const assertLoadCurrent = () => {
+        if (context.sessionGeneration !== undefined) assertCurrentUserSession(user, context.sessionGeneration);
+        if (context.loadGeneration !== undefined && context.loadGeneration !== cloudLoadGeneration) {
+            const error = new Error('這次載入已由新的同步取代。');
+            error.code = 'stale-user-session';
+            throw error;
+        }
+    };
     for (let attempt = 0; attempt < 3; attempt += 1) {
-        const rootBefore = await getStableUserRootSnapshot(user);
+        assertLoadCurrent();
+        const rootBefore = await getStableUserRootSnapshot(user, assertLoadCurrent);
         const beforeMetadata = getCloudMetadata(rootBefore);
         const [settingsSnap, customWords, wordOverrides, deletedDefaults, folders] = await Promise.all([
-            getDoc(getSettingsRef(user)),
-            readUserCollection(user, 'customWords'),
-            readUserCollection(user, 'wordOverrides'),
-            readUserCollection(user, 'deletedDefaults'),
-            readUserCollection(user, 'folders')
+            getDoc(getSettingsRef(user)), readUserCollection(user, 'customWords'),
+            readUserCollection(user, 'wordOverrides'), readUserCollection(user, 'deletedDefaults'), readUserCollection(user, 'folders')
         ]);
         const rootAfter = await getDoc(getUserRef(user));
+        assertLoadCurrent();
         const afterMetadata = getCloudMetadata(rootAfter);
-
         if (afterMetadata.syncLock || afterMetadata.revision !== beforeMetadata.revision) {
             await waitBeforeRetry(100 * (attempt + 1));
             continue;
         }
-
-        if (rootAfter.exists()) {
-            const legacyData = afterMetadata.data;
-            const hasLegacyData = Array.isArray(legacyData.words) ||
-                Array.isArray(legacyData.folders) ||
-                !!legacyData.settings;
-            if (hasLegacyData && !legacyData.migratedToDiffStorageAt) {
-                const migratedData = normalizeUserData(legacyData);
-                const result = await saveDiffChangesToCloud(
-                    createDefaultUserData(),
-                    migratedData,
-                    user,
-                    { cleanupLegacy: true, expectedRevision: afterMetadata.revision }
-                );
-                return { ...migratedData, revision: result.revision };
+        const rootData = afterMetadata.data;
+        const migrateRoot = !rootData.migratedToDiffStorageAt && (
+            Array.isArray(rootData.words) || Array.isArray(rootData.folders) || !!rootData.settings
+        );
+        const legacy = migrateRoot ? legacyRootDiffs(rootData) : { wordOverrides: [], customWords: [], folders: [], settings: {}, deletedDefaultIds: [] };
+        // New subcollection records take precedence over retained root snapshots, including partial previous migrations.
+        const combinedOverrides = [...legacy.wordOverrides, ...wordOverrides];
+        const combinedCustom = [...legacy.customWords.filter(old => !customWords.some(item => item.id === old.id)), ...customWords];
+        const combinedFolders = [...legacy.folders.filter(old => !folders.some(item => item.id === old.id)), ...folders];
+        const combinedSettings = { ...legacy.settings, ...(settingsSnap.exists() ? settingsSnap.data() : {}) };
+        const hiddenIds = [...legacy.deletedDefaultIds.filter(id => !deletedDefaults.some(item => resolveDefaultId(item.id) === resolveDefaultId(id))),
+            ...deletedDefaults.filter(item => item.deleted !== false).map(item => item.id)];
+        const operations = [];
+        const now = new Date().toISOString();
+        defaultWordMap.forEach((base, id) => {
+            const sources = combinedOverrides.filter(item => resolveDefaultId(item.id) === id);
+            if (!sources.length) return;
+            const migrated = wordData.coalesceOverrides(base, sources, defaultWordAliases);
+            const persisted = wordOverrides.find(item => item.id === id);
+            if (!persisted || !sameOverride(persisted, migrated)) {
+                operations.push(batch => batch.set(getUserSubDocRef(user, 'wordOverrides', id), { ...migrated, updatedAt: now }));
             }
+        });
+        if (migrateRoot) {
+            combinedCustom.filter(item => !customWords.some(existing => existing.id === item.id)).forEach(item => {
+                operations.push(batch => batch.set(getUserSubDocRef(user, 'customWords', item.id), item));
+            });
+            combinedFolders.filter(item => !folders.some(existing => existing.id === item.id)).forEach(item => {
+                operations.push(batch => batch.set(getUserSubDocRef(user, 'folders', item.id), item));
+            });
+            if (Object.keys(legacy.settings).length) operations.push(batch => batch.set(getSettingsRef(user), combinedSettings));
+            legacy.deletedDefaultIds.filter(id => !deletedDefaults.some(item => resolveDefaultId(item.id) === resolveDefaultId(id))).forEach(id => {
+                operations.push(batch => batch.set(getUserSubDocRef(user, 'deletedDefaults', resolveDefaultId(id)), { deleted: true, updatedAt: now }));
+            });
         }
-
+        let revision = afterMetadata.revision;
+        if (operations.length || migrateRoot) {
+            assertLoadCurrent();
+            const result = await commitBatchOperations(operations, user, revision, {
+                rootPatch: migrateRoot ? getLegacyCleanupPatch(now) : {}, assertCurrent: assertLoadCurrent
+            });
+            assertLoadCurrent();
+            revision = result.revision;
+        }
         return {
-            ...buildUserDataFromDiffs({
-                settings: settingsSnap.exists() ? settingsSnap.data() : null,
-                customWords,
-                wordOverrides,
-                deletedDefaultIds: deletedDefaults
-                    .filter(item => item.deleted !== false)
-                    .map(item => item.id),
-                folders
-            }),
-            revision: afterMetadata.revision
+            ...buildUserDataFromDiffs({ settings: combinedSettings, customWords: combinedCustom,
+                wordOverrides: combinedOverrides, deletedDefaultIds: hiddenIds, folders: combinedFolders }), revision
         };
     }
     throw new Error('雲端資料在載入期間持續更新，請稍後再試。');
 }
 
 function requireLoginForChange() {
-    if (currentUser) return true;
+    if (currentUser && authReady && isUserDataReady && !isCloudLoading) return true;
+    if (currentUser) {
+        alert('個人資料尚未載入完成，請等待或使用畫面上的「重試載入」。');
+        return false;
+    }
     alert('請先登入 Google 帳號，才能新增、編輯、管理資料夾、儲存待複習狀態或同步個人資料。');
     return false;
 }
@@ -1268,8 +1198,8 @@ function getCloudRecoveryMessage(error, reloaded) {
 }
 
 async function commitUserMutation(mutator, { requireAuth = true, afterRollback = null } = {}) {
-    if (isCloudLoading) {
-        alert('雲端資料仍在載入，請稍候再試。');
+    if (!authReady || !isUserDataReady || isCloudLoading || activeCloudWrites > 0) {
+        alert('資料尚未載入或儲存完成，請稍候再試；載入失敗時請使用「重試載入」。');
         return false;
     }
     if (!currentUser) {
@@ -1287,6 +1217,7 @@ async function commitUserMutation(mutator, { requireAuth = true, afterRollback =
 
     const previous = snapshotUserState();
     const mutationUser = currentUser;
+    const sessionGeneration = authSessionGeneration;
     try {
         mutator(state);
         state.words = ensureWordIdentities(state.words);
@@ -1295,9 +1226,11 @@ async function commitUserMutation(mutator, { requireAuth = true, afterRollback =
         await saveDiffChangesToCloud(previous, snapshotUserState(), mutationUser, {
             expectedRevision: cloudRevision
         });
+        if (!isCurrentUserSession(mutationUser, sessionGeneration)) return false;
         refreshSearchSuggestionsForCurrentData();
         return true;
     } catch (err) {
+        if (!isCurrentUserSession(mutationUser, sessionGeneration)) return false;
         let reloaded = false;
         if (isCloudConsistencyError(err) && currentUser && currentUser.uid === mutationUser.uid) {
             try {
@@ -1306,7 +1239,8 @@ async function commitUserMutation(mutator, { requireAuth = true, afterRollback =
                 console.error('重新載入雲端狀態失敗', reloadError);
             }
         }
-        if (!reloaded) restoreUserState(previous);
+        if (!isCurrentUserSession(mutationUser, sessionGeneration)) return false;
+        if (!reloaded && isUserDataReady) restoreUserState(previous);
         refreshFolders();
         refreshSearchSuggestionsForCurrentData();
         console.error('使用者資料儲存失敗', err);
@@ -1317,21 +1251,40 @@ async function commitUserMutation(mutator, { requireAuth = true, afterRollback =
         }
         if (typeof afterRollback === 'function') afterRollback();
         rerenderVisibleView();
+        if (isUserDataReady) finishAppLoading();
         return false;
     }
 }
 
 async function loadFromCloud(user, generation = ++cloudLoadGeneration) {
+    const sessionGeneration = authSessionGeneration;
+    if (!isCurrentUserSession(user, sessionGeneration)) return false;
     isCloudLoading = true;
+    isUserDataReady = false;
+    beginAppLoading('正在載入個人修改與設定，請稍等。');
     updateAuthUI(currentUser);
     try {
-        const data = await loadUserDiffData(user);
-        if (generation !== cloudLoadGeneration || !currentUser || currentUser.uid !== user.uid) return false;
+        const data = await withTimeout(
+            loadUserDiffData(user, { sessionGeneration, loadGeneration: generation }),
+            SYNC_TIMEOUT_MS,
+            '個人資料載入逾時，請確認網路後重試。'
+        );
+        if (generation !== cloudLoadGeneration || !isCurrentUserSession(user, sessionGeneration)) return false;
         acknowledgeCloudRevision(data.revision);
         applyUserData(data);
+        isUserDataReady = true;
         return true;
+    } catch (error) {
+        if (generation !== cloudLoadGeneration || !isCurrentUserSession(user, sessionGeneration)) return false;
+        // Invalidate the request even when its network work completes after a timeout.
+        cloudLoadGeneration += 1;
+        isCloudLoading = false;
+        clearPersonalSessionData();
+        failAppLoading('個人資料未能載入，尚未完成同步。' + (error.message || '請確認網路後重試。'));
+        updateAuthUI(currentUser);
+        throw error;
     } finally {
-        if (generation === cloudLoadGeneration) {
+        if (isCurrentUserSession(user, sessionGeneration) && generation === cloudLoadGeneration) {
             isCloudLoading = false;
             updateAuthUI(currentUser);
         }
@@ -1345,8 +1298,9 @@ function stopUserRevisionListener() {
 
 function startUserRevisionListener(user) {
     stopUserRevisionListener();
+    const sessionGeneration = authSessionGeneration;
     unsubscribeUserRevision = subscribeToSnapshot(getUserRef(user), snapshot => {
-        if (!currentUser || currentUser.uid !== user.uid) return;
+        if (!isCurrentUserSession(user, sessionGeneration)) return;
         const observedRevision = getObservedCloudRevision(getCloudMetadata(snapshot));
         if (observedRevision > cloudRevision) {
             pendingRemoteRevision = Math.max(pendingRemoteRevision, observedRevision);
@@ -1382,6 +1336,10 @@ function setupAudioSystem() {
 function applyBgmSettingsToElement(settings = state.settings) {
     const audio = state.audio && state.audio.bgmElement;
     if (!audio) return;
+    if (!isUserDataReady) {
+        audio.pause();
+        return;
+    }
     const track = getCurrentBgmTrack(settings.selectedBgmId);
     if (track && audio.getAttribute('src') !== track.url) audio.src = track.url;
     audio.volume = clamp01(settings.bgmVolume);
@@ -1396,15 +1354,15 @@ function setupBgmAutoplayUnlock() {
     const audio = state.audio && state.audio.bgmElement;
     if (!audio) return;
     const tryPlay = () => {
-        if (!state.settings || !state.settings.bgmEnabled) return;
+        if (!isUserDataReady || !state.settings || !state.settings.bgmEnabled) return;
         audio.play().catch(() => {});
         window.removeEventListener('click', tryPlay);
         window.removeEventListener('touchstart', tryPlay);
         window.removeEventListener('keydown', tryPlay);
     };
-    window.addEventListener('click', tryPlay, { once: true });
-    window.addEventListener('touchstart', tryPlay, { once: true });
-    window.addEventListener('keydown', tryPlay, { once: true });
+    window.addEventListener('click', tryPlay);
+    window.addEventListener('touchstart', tryPlay);
+    window.addEventListener('keydown', tryPlay);
 }
 
 function speakWord(text) {
@@ -1457,6 +1415,79 @@ function setElementVisible(element, visible) {
     if ('inert' in element) element.inert = !visible;
 }
 
+function isCurrentUserSession(user, generation) {
+    return generation === authSessionGeneration && (currentUser?.uid || null) === (user?.uid || null);
+}
+
+function assertCurrentUserSession(user, generation) {
+    if (isCurrentUserSession(user, generation)) return;
+    const error = new Error('登入帳號已變更，已取消舊帳號的操作。');
+    error.code = 'stale-user-session';
+    throw error;
+}
+
+function clearPersonalSessionData() {
+    isUserDataReady = false;
+    restoreUserState({ words: [], folders: [], settings: DEFAULT_SETTINGS });
+    state.folderIds = [];
+    clearPracticeSession();
+    state.isEditing = false;
+    state.editingWordIndex = -1;
+    state.targetFolderAction = '';
+    state.pendingDeleteType = null;
+    closeSearchSuggestions({ clearResults: true });
+    if (state.audio.bgmElement) state.audio.bgmElement.pause();
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    document.querySelectorAll('[role="dialog"]').forEach(modal => {
+        delete modal.dataset.busy;
+        setElementVisible(modal, false);
+        modal.querySelectorAll('input, textarea').forEach(input => {
+            if (input.type === 'checkbox' || input.type === 'radio') input.checked = false;
+            else input.value = '';
+        });
+    });
+    ['search-input', 'spelling-input', 'result-new-folder-name'].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) input.value = '';
+    });
+    ['category-grid', 'words-container', 'practice-scope', 'practice-word-selection', 'spelling-definition-area',
+        'spelling-hint', 'spelling-feedback', 'spelling-review-answer', 'choice-feedback',
+        'choice-options', 'choice-question', 'result-skipped-items', 'result-folder-select',
+        'action-folder-name', 'confirm-desc', 'folder-selection-container'].forEach(id => {
+        document.getElementById(id)?.replaceChildren();
+    });
+    const listTitle = document.getElementById('list-title');
+    if (listTitle) {
+        listTitle.textContent = '單字';
+        delete listTitle.dataset.folderId;
+    }
+    document.querySelectorAll('main > div').forEach(view => setElementVisible(view, false));
+}
+
+function setAppContentBlocked(blocked) {
+    document.querySelectorAll('body > nav, body > main, body > [role="dialog"]').forEach(element => {
+        element.toggleAttribute('inert', blocked || element.hidden);
+        if ('inert' in element) element.inert = blocked || element.hidden;
+    });
+}
+
+function beginAppLoading(message) {
+    const loading = document.getElementById('app-loading');
+    const title = document.getElementById('app-loading-title');
+    document.body.setAttribute('aria-busy', 'true');
+    setAppContentBlocked(true);
+    if (loading) {
+        loading.hidden = false;
+        loading.classList.remove('is-ready', 'is-error');
+        loading.setAttribute('role', 'status');
+        loading.setAttribute('aria-hidden', 'false');
+    }
+    if (title) title.textContent = '單字王載入中';
+    const retry = document.getElementById('app-loading-retry');
+    if (retry) retry.hidden = true;
+    updateAppLoading(message);
+}
+
 function updateAppLoading(message) {
     const loadingMessage = document.getElementById('app-loading-message');
     if (loadingMessage) loadingMessage.textContent = message;
@@ -1465,16 +1496,19 @@ function updateAppLoading(message) {
 function finishAppLoading() {
     const loading = document.getElementById('app-loading');
     document.body.setAttribute('aria-busy', 'false');
+    setAppContentBlocked(false);
     if (!loading) return;
     loading.classList.add('is-ready');
     loading.setAttribute('aria-hidden', 'true');
-    setTimeout(() => loading.remove(), 200);
+    // Keep the overlay available for account changes and retryable sync failures.
+    loading.hidden = true;
 }
 
 function failAppLoading(message) {
     const loading = document.getElementById('app-loading');
     const title = document.getElementById('app-loading-title');
     document.body.setAttribute('aria-busy', 'false');
+    setAppContentBlocked(true);
     if (!loading) {
         const fallback = document.createElement('main');
         fallback.className = 'p-6 text-center text-red-600 font-bold';
@@ -1483,9 +1517,14 @@ function failAppLoading(message) {
         return;
     }
     loading.classList.add('is-error');
+    loading.classList.remove('is-ready');
+    loading.hidden = false;
+    loading.setAttribute('aria-hidden', 'false');
     loading.setAttribute('role', 'alert');
     if (title) title.textContent = '載入失敗';
     updateAppLoading(message);
+    const retry = document.getElementById('app-loading-retry');
+    if (retry) retry.hidden = false;
 }
 
 function getFocusableElements(container) {
@@ -2215,8 +2254,8 @@ function getFolderDeleteConfirmation(folderId, deleteAll) {
     const folderDisplayName = getFolderDisplayName(folderId);
     if (deleteAll) {
         return {
-            title: `永久刪除「${folderDisplayName}」？`,
-            description: `此資料夾共有 ${wordCount} 個單字：\n• ${exclusiveCount} 個僅屬於此資料夾，將永久刪除\n• ${sharedCount} 個同時屬於其他資料夾，會保留在那些資料夾中\n\n永久刪除的單字也會從待複習與目前練習資料中移除。\n\n此操作無法復原。`,
+            title: `刪除「${folderDisplayName}」與專屬單字？`,
+            description: `此資料夾共有 ${wordCount} 個單字：\n• ${exclusiveCount} 個僅屬於此資料夾，公用單字只對你隱藏，個人新增單字會刪除\n• ${sharedCount} 個同時屬於其他資料夾，會保留在那些資料夾中\n\n移除的單字也會從待複習與目前練習資料中移除。\n\n隱藏的公用單字可在設定中恢復。`,
             submitLabel: exclusiveCount
                 ? `刪除資料夾與 ${exclusiveCount} 個專屬單字`
                 : '刪除資料夾（保留共享單字）',
@@ -2292,7 +2331,9 @@ async function executeDelete() {
 
     try {
         const ok = await commitUserMutation(draft => {
-            draft.words = applyFolderDeletion(draft.words, oldName, deleteWords, draft.settings);
+            const keptWords = applyFolderDeletion(draft.words, oldName, deleteWords, draft.settings);
+            draft.hiddenWords.push(...draft.words.filter(word => word.source === 'default' && !keptWords.some(kept => kept.id === word.id)).map(cloneWord));
+            draft.words = keptWords;
             draft.folders = draft.folders.filter(f => f !== oldName);
             draft.settings = cloneSettings(draft.settings);
             if (isDefaultLesson && !draft.settings.deletedLessonIds.includes(oldName)) {
@@ -2321,6 +2362,7 @@ async function executeDelete() {
 
 function openAddModal(idx = -1) {
     if (!requireLoginForChange()) return;
+    closeSearchSuggestions({ clearResults: true });
     state.editingWordIndex = idx;
     const modal = document.getElementById('add-modal');
     const tagInput = document.getElementById('new-folder-name');
@@ -2334,8 +2376,7 @@ function openAddModal(idx = -1) {
         if (partOfSpeechInput) partOfSpeechInput.value = normalizePartOfSpeech(w.partOfSpeech);
         renderFolderSelection(
             getWordSourceFolderIds(w),
-            !!w.isWrong,
-            getDefaultWordActiveLessonIds(w)
+            !!w.isWrong
         );
     } else {
         document.getElementById('new-word').value = '';
@@ -2352,7 +2393,88 @@ function openAddModal(idx = -1) {
         renderFolderSelection(preSelectedFolderId ? [preSelectedFolderId] : [], current === WRONG_FOLDER);
     }
     if (tagInput) tagInput.value = '';
+    renderPersonalWordActions(idx >= 0 ? state.words[idx] : null);
     openModal(modal, '#new-word');
+}
+
+function renderPersonalWordActions(word) {
+    document.getElementById('personal-word-actions')?.remove();
+    if (!word) return;
+    const panel = document.createElement('div');
+    panel.id = 'personal-word-actions';
+    panel.className = 'space-y-2 border-t pt-3 text-sm';
+    const addAction = (label, action, danger = false) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = danger ? 'w-full p-2 rounded-lg bg-red-50 text-red-600 font-bold' : 'w-full p-2 rounded-lg bg-indigo-50 text-indigo-700 font-bold';
+        button.textContent = label;
+        button.addEventListener('click', action);
+        panel.appendChild(button);
+    };
+    if (word.source === 'default') {
+        const base = defaultWordMap.get(word.defaultId);
+        const override = getDefaultOverrideFields(word, base);
+        const names = { english: '英文', meaning: '中文意思', partOfSpeech: '詞性', isWrong: '待複習狀態' };
+        wordData.FIELD_NAMES.filter(field => Object.prototype.hasOwnProperty.call(override, field)).forEach(field => {
+            addAction(`恢復公用${names[field]}`, () => changeWordOverride(word.id, current => wordData.clearOverrideField(current, field)));
+        });
+        [...override.addedTags, ...override.removedTags].forEach(tag => {
+            addAction(`取消${override.removedTags.includes(tag) ? '移除' : '新增'}「${getFolderDisplayName(tag)}」`,
+                () => changeWordOverride(word.id, current => wordData.clearTagChange(current, tag)));
+        });
+        if (wordData.hasPersonalChanges(override)) {
+            addAction('恢復此字全部公用內容', () => changeWordOverride(word.id, current => {
+                wordData.FIELD_NAMES.forEach(field => { delete current[field]; });
+                return { ...current, addedTags: [], removedTags: [] };
+            }));
+        }
+        addAction('只對我隱藏此單字', () => deletePersonalWord(word.id), true);
+    } else {
+        addAction('刪除我的新增單字', () => deletePersonalWord(word.id), true);
+    }
+    document.querySelector('#add-modal .space-y-4').appendChild(panel);
+}
+
+async function changeWordOverride(id, transform) {
+    const ok = await commitUserMutation(draft => {
+        const index = draft.words.findIndex(word => word.id === id);
+        if (index < 0) return;
+        const word = draft.words[index];
+        const base = defaultWordMap.get(word.defaultId);
+        const override = transform(getDefaultOverrideFields(word, base));
+        draft.words[index] = cloneWord({ ...wordData.applyOverride(base, override), _override: override });
+    });
+    if (!ok) return;
+    openAddModal(state.words.findIndex(word => word.id === id));
+    rerenderVisibleView();
+}
+
+async function deletePersonalWord(id) {
+    const word = state.words.find(item => item.id === id);
+    if (!word || !requireLoginForChange()) return;
+    const message = word.source === 'default' ? '只對你隱藏這個公用單字？可在設定中恢復。' : '刪除你新增的這個單字？';
+    if (!confirm(message)) return;
+    const ok = await commitUserMutation(draft => {
+        if (word.source === 'default') draft.hiddenWords.push(cloneWord(word));
+        draft.words = draft.words.filter(item => item.id !== id);
+    });
+    if (!ok) return;
+    purgeDeletedWordReferences(new Set([id]));
+    closeAddModal();
+    rerenderVisibleView();
+}
+
+async function restoreHiddenWords() {
+    if (!requireLoginForChange()) return;
+    if (!state.hiddenWords.length) { alert('目前沒有隱藏的公用單字。'); return; }
+    const ok = await commitUserMutation(draft => {
+        draft.words.push(...cloneWords(draft.hiddenWords));
+        draft.hiddenWords = [];
+    });
+    if (!ok) return;
+    closeSettingsModal();
+    rerenderVisibleView();
+    alert('已恢復隱藏的公用單字，保留原有個人修改。');
 }
 
 function closeAddModal() {
@@ -2360,13 +2482,12 @@ function closeAddModal() {
     state.editingWordIndex = -1;
 }
 
-function renderFolderSelection(selectedFolderIds = [], isWrong = false, requiredFolderIds = []) {
+function renderFolderSelection(selectedFolderIds = [], isWrong = false) {
     const container = document.getElementById('folder-selection-container');
     if (!container) return;
     container.replaceChildren();
 
     const selected = new Set(normalizeFolderIds(selectedFolderIds));
-    const required = new Set(normalizeFolderIds(requiredFolderIds));
     const normalFolderIds = state.folderIds.filter(folderId => (
         folderId !== WRONG_FOLDER && folderId !== UNFILED_FOLDER
     ));
@@ -2387,25 +2508,13 @@ function renderFolderSelection(selectedFolderIds = [], isWrong = false, required
         checkbox.className = 'folder-checkbox w-4 h-4 text-indigo-600 rounded flex-none';
         checkbox.value = folderId;
         checkbox.id = `folder-checkbox-${index}`;
-        checkbox.checked = selected.has(folderId) || required.has(folderId);
-        checkbox.disabled = required.has(folderId);
-        if (checkbox.disabled) {
-            checkbox.dataset.requiredSource = 'true';
-            checkbox.setAttribute('aria-describedby', `folder-source-badge-${index}`);
-        }
+        checkbox.checked = selected.has(folderId);
 
         const span = document.createElement('span');
         span.className = 'text-sm text-gray-700 min-w-0 break-all';
         span.textContent = getFolderDisplayName(folderId);
 
         label.append(checkbox, span);
-        if (required.has(folderId)) {
-            const badge = document.createElement('span');
-            badge.id = `folder-source-badge-${index}`;
-            badge.className = 'ml-auto text-xs text-indigo-600 bg-indigo-100 rounded-full px-2 py-0.5 flex-none';
-            badge.textContent = '課程來源';
-            label.appendChild(badge);
-        }
         container.appendChild(label);
     });
 
@@ -2436,8 +2545,8 @@ async function saveNewWord() {
     const mean = document.getElementById('new-meaning').value.trim();
     const partOfSpeech = normalizePartOfSpeech(document.getElementById('new-part-of-speech')?.value);
     const tagInputEl = document.getElementById('new-folder-name');
-    if (!eng || !mean) {
-        alert('請輸入英文與中文意思。');
+    if (!eng) {
+        alert('請輸入英文；中文意思可以留空。');
         return;
     }
 
@@ -2462,9 +2571,7 @@ async function saveNewWord() {
     const editingIndex = state.editingWordIndex;
     const previousWord = editingIndex >= 0 ? cloneWord(state.words[editingIndex]) : null;
     const previousEnglish = previousWord ? previousWord.english : '';
-    const requiredFolderIds = previousWord ? getDefaultWordActiveLessonIds(previousWord) : [];
     const folderIds = normalizeFolderIds([
-        ...requiredFolderIds,
         ...selectedFolderIds,
         validatedNewFolderName
     ]);
@@ -3606,6 +3713,7 @@ async function confirmReset() {
         const resetSettings = cloneSettings(DEFAULT_SETTINGS);
         draft.settings = resetSettings;
         draft.words = getDefaultWords();
+        draft.hiddenWords = [];
         draft.folders = normalizeFolders([], draft.words, resetSettings);
     });
     if (!ok) return;
@@ -3704,24 +3812,26 @@ async function syncCloudNow() {
         return;
     }
     isSyncing = true;
+    const syncUser = currentUser;
+    const sessionGeneration = authSessionGeneration;
     updateAuthUI(currentUser);
     try {
-        const loaded = await withTimeout(
-            loadFromCloud(currentUser),
-            SYNC_TIMEOUT_MS,
-            '重新載入逾時，請確認網路後再試。'
-        );
+        const loaded = await loadFromCloud(syncUser);
+        if (!isCurrentUserSession(syncUser, sessionGeneration)) return;
         if (loaded) {
             applyBgmSettingsToElement();
             rerenderVisibleView();
+            finishAppLoading();
             alert('已重新載入雲端最新資料。');
         }
     } catch (err) {
+        if (!isCurrentUserSession(syncUser, sessionGeneration)) return;
         console.error('重新載入雲端資料失敗', err);
-        alert(err.message || '重新載入失敗，請稍後再試。');
     } finally {
-        isSyncing = false;
-        updateAuthUI(currentUser);
+        if (isCurrentUserSession(syncUser, sessionGeneration)) {
+            isSyncing = false;
+            updateAuthUI(currentUser);
+        }
     }
 }
 
@@ -3740,6 +3850,7 @@ function rerenderVisibleView() {
 }
 
 function bindStaticEvents() {
+    document.getElementById('app-loading-retry')?.addEventListener('click', retryAppLoading);
     document.getElementById('btn-home-brand')?.addEventListener('click', () => navigateTo('home'));
     document.getElementById('btn-settings')?.addEventListener('click', openSettingsModal);
     const searchInput = document.getElementById('search-input');
@@ -3763,6 +3874,7 @@ function bindStaticEvents() {
     navButtons[2]?.addEventListener('click', () => navigateTo('practice'));
 
     document.getElementById('btn-reset-all')?.addEventListener('click', confirmReset);
+    document.getElementById('btn-restore-hidden')?.addEventListener('click', restoreHiddenWords);
 
     document.getElementById('btn-home-library')?.addEventListener('click', () => navigateTo('library'));
     document.getElementById('btn-home-practice')?.addEventListener('click', () => navigateTo('practice'));
@@ -3832,58 +3944,109 @@ function bindStaticEvents() {
     document.getElementById('settings-bgm-select')?.addEventListener('change', event => changeBgmTrackFromSelect(event.currentTarget.value));
     document.getElementById('settings-bgm-volume')?.addEventListener('input', event => updateBgmVolumeFromSlider(event.currentTarget.value));
     document.getElementById('settings-speech-volume')?.addEventListener('input', event => updateSpeechVolumeFromSlider(event.currentTarget.value));
-    document.querySelector('#settings-modal button')?.addEventListener('click', closeSettingsModal);
+    document.querySelector('#settings-modal .space-y-6 > button:last-child')?.addEventListener('click', closeSettingsModal);
+}
+
+function ensurePublicDataLoaded() {
+    if (publicDataReady) return Promise.resolve();
+    if (!publicDataPromise) {
+        publicDataPromise = withTimeout(
+            loadDefaultWordDatabase(),
+            SYNC_TIMEOUT_MS,
+            '公用單字資料載入逾時，請確認網路後重試。'
+        ).then(() => {
+            publicDataReady = true;
+        }).catch(error => {
+            publicDataPromise = null;
+            throw error;
+        });
+    }
+    return publicDataPromise;
+}
+
+async function handleAuthStateChanged(user) {
+    const sessionGeneration = ++authSessionGeneration;
+    cloudLoadGeneration += 1;
+    stopUserRevisionListener();
+    authReady = true;
+    currentUser = user;
+    cloudRevision = 0;
+    pendingRemoteRevision = 0;
+    activeCloudWrites = 0;
+    isCloudLoading = true;
+    isSyncing = false;
+    isLoggingIn = false;
+    isLoggingOut = false;
+    isFolderDeleting = false;
+    beginAppLoading('正在確認公用單字與個人資料，請稍等。');
+    clearPersonalSessionData();
+    updateAuthUI(user);
+    try {
+        // Both requests may start early, but personal migration always waits for the catalog.
+        await ensurePublicDataLoaded();
+        if (!isCurrentUserSession(user, sessionGeneration)) return;
+        if (user) {
+            const loaded = await loadFromCloud(user);
+            if (!loaded || !isCurrentUserSession(user, sessionGeneration)) return;
+            startUserRevisionListener(user);
+        } else {
+            resetToDefaultState();
+            isUserDataReady = true;
+            isCloudLoading = false;
+        }
+        if (!isCurrentUserSession(user, sessionGeneration)) return;
+        applyBgmSettingsToElement();
+        const requestedPage = new URL(window.location).searchParams.get('page') || 'home';
+        const page = !hasDisplayedSession && ['home', 'library', 'practice'].includes(requestedPage)
+            ? requestedPage : 'home';
+        hasDisplayedSession = true;
+        showView(page);
+        history.replaceState({ viewId: page }, '', `?page=${page}`);
+        updateAuthUI(currentUser);
+        finishAppLoading();
+    } catch (error) {
+        if (!isCurrentUserSession(user, sessionGeneration)) return;
+        isCloudLoading = false;
+        clearPersonalSessionData();
+        updateAuthUI(currentUser);
+        console.error('載入帳號資料失敗', error);
+        failAppLoading((publicDataReady && user ? '個人資料未能載入，尚未完成同步。' : '公用單字資料未能載入。') +
+            (error.message || '請確認網路後重試。'));
+    }
+}
+
+function retryAppLoading() {
+    if (!authReady) {
+        window.location.reload();
+        return;
+    }
+    if (isCloudLoading) return;
+    void handleAuthStateChanged(auth.currentUser);
 }
 
 async function bootstrap() {
     try {
-        updateAppLoading('正在載入單字資料，請稍等。');
-        await loadDefaultWordDatabase();
-        resetToDefaultState();
         initializeModalAccessibility();
         bindStaticEvents();
         setupAudioSystem();
         setupBgmAutoplayUnlock();
-
-        const page = new URL(window.location).searchParams.get('page') || 'home';
-        showView(page);
-        history.replaceState({ viewId: page }, '', window.location);
-        updateAppLoading('正在確認登入與同步資料，請稍等。');
-
-        onAuthStateChanged(auth, async user => {
-            const generation = ++cloudLoadGeneration;
+        beginAppLoading('正在載入公用單字並確認登入狀態，請稍等。');
+        void ensurePublicDataLoaded().catch(() => {});
+        onAuthStateChanged(auth, user => void handleAuthStateChanged(user), error => {
+            authSessionGeneration += 1;
+            cloudLoadGeneration += 1;
             stopUserRevisionListener();
-            closeSearchSuggestions({ clearResults: true });
-            authReady = true;
-            currentUser = user;
-            cloudRevision = 0;
-            pendingRemoteRevision = 0;
-            if (user) isLoggingIn = false;
-            else isLoggingOut = false;
-            updateAuthUI(user);
-            if (user) {
-                try {
-                    const loaded = await loadFromCloud(user, generation);
-                    if (generation !== cloudLoadGeneration) return;
-                    if (loaded) startUserRevisionListener(user);
-                    applyBgmSettingsToElement();
-                } catch (err) {
-                    if (generation !== cloudLoadGeneration) return;
-                    console.error('載入雲端資料失敗', err);
-                    alert('載入雲端資料失敗：' + (err.message || err));
-                }
-            } else {
-                isCloudLoading = false;
-                resetToDefaultState();
-            }
-            if (generation !== cloudLoadGeneration) return;
-            updateAuthUI(currentUser);
-            rerenderVisibleView();
-            finishAppLoading();
+            authReady = false;
+            currentUser = null;
+            isCloudLoading = false;
+            clearPersonalSessionData();
+            updateAuthUI(null);
+            console.error('確認登入狀態失敗', error);
+            failAppLoading('無法確認登入狀態，請確認網路後重試。');
         });
-    } catch (err) {
-        console.error(err);
-        failAppLoading('單字資料載入失敗，請重新整理或稍後再試。');
+    } catch (error) {
+        console.error(error);
+        failAppLoading('網站初始化失敗，請重試載入。');
     }
 }
 

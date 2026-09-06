@@ -1,3 +1,12 @@
+#btn-home-brand, #user-controls button { white-space: nowrap; }
+@media (max-width: 639px) {
+    #header-top { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.5rem; }
+    #header-actions { display: contents; }
+    #search-control { min-width: 0; }
+    #search-input, #search-input:focus { width: 100%; min-width: 0; }
+    #user-controls { grid-column: 1 / -1; justify-content: flex-end; flex-wrap: wrap; }
+}
+
 html, body {
             overflow-x: hidden;
             width: 100%;

@@ -26,6 +26,18 @@
             opacity: 0;
             pointer-events: none;
         }
+        #app-loading[hidden], #app-loading-retry[hidden] { display: none; }
+        #app-loading-retry {
+            margin-top: 1.25rem;
+            padding: 0.75rem 1.5rem;
+            border: 0;
+            border-radius: 0.75rem;
+            background: #4f46e5;
+            color: white;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
         #app-loading.is-error {
             color: #b91c1c;
         }
@@ -61,8 +73,8 @@
         }
     </style>
 
-    <link rel="stylesheet" href="./assets/tailwind.css?v=20260830-multi-folder-membership-v2">
-    <link rel="stylesheet" href="./assets/styles.css?v=20260830-multi-folder-membership-v2">
+    <link rel="stylesheet" href="./assets/tailwind.css?v=20260905-diff-v4">
+    <link rel="stylesheet" href="./assets/styles.css?v=20260905-diff-v4">
 </head>
 <body class="bg-gray-50 min-h-screen font-sans pb-24" aria-busy="true">
 
@@ -71,6 +83,7 @@
         <div class="app-loading-spinner" aria-hidden="true"></div>
         <h2 id="app-loading-title">單字王載入中</h2>
         <p id="app-loading-message">正在準備單字資料，請稍等。</p>
+        <button id="app-loading-retry" type="button" hidden>重試載入</button>
     </div>
 </div>
 
@@ -81,9 +94,9 @@
 <!-- 導覽列 -->
 <nav class="bg-indigo-600 text-white p-4 shadow-lg sticky top-0 z-50">
     <div class="flex flex-col gap-3">
-        <div class="flex justify-between items-center w-full">
+        <div id="header-top" class="flex justify-between items-center w-full">
             <!-- 左側：Logo + 標題 + 設定 -->
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-none">
                 <!-- Logo：連到首頁「分頁」 -->
                 <h1 class="text-2xl font-bold tracking-tight">
                     <button id="btn-home-brand" type="button" class="flex items-center gap-2 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white" aria-label="單字王，回到首頁">
@@ -102,7 +115,7 @@
             </div>
 
             <!-- 右側：搜尋 ＋ 登入/登出/同步 -->
-            <div class="flex items-center gap-2">
+            <div id="header-actions" class="flex items-center gap-2">
                 <!-- 搜尋框 -->
                 <div id="search-control" class="relative flex items-center">
                     <input
@@ -129,7 +142,7 @@
                 </div>
 
                 <!-- 使用者資訊 ＋ 登入 / 登出 / 同步 -->
-                <div class="flex items-center gap-1">
+                <div id="user-controls" class="flex items-center gap-1">
                     <span
                         id="user-email"
                         class="hidden text-xs sm:text-sm bg-indigo-500/40 px-2 py-1 rounded-full max-w-[120px] sm:max-w-[200px] truncate">
@@ -390,7 +403,7 @@
 
 <!-- 新增/編輯單字 Modal -->
 <div id="add-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center p-4 z-[100]" role="dialog" aria-modal="true" hidden inert>
-    <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+    <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl max-h-[90dvh] overflow-y-auto">
         <h3 id="modal-title" class="text-xl font-bold mb-4 text-center">新增單字</h3>
         <div class="space-y-4">
             <div>
@@ -419,7 +432,7 @@
             <div>
                 <p id="word-folder-selection-label" class="text-xs text-gray-500 font-bold ml-1">資料夾（可複選）</p>
 
-                <!-- 多資料夾選擇；原始課程來源固定保留 -->
+                <!-- 已合併個人標籤差異，可取消任一課程勾選 -->
                 <div
                     id="folder-selection-container"
                     role="group"
@@ -436,7 +449,7 @@
                     class="mt-2 w-full border-2 border-gray-200 p-2 rounded-xl focus:border-indigo-500 outline-none text-sm">
 
                 <p class="text-xs text-gray-400 mt-1 ml-1">
-                    * 可同時加入多個資料夾；標示「課程來源」者會固定保留
+                    * 可同時加入多個資料夾；取消勾選只移除你的課程歸屬，不會隱藏整個單字。
                 </p>
             </div>
             <div class="grid grid-cols-2 gap-3 pt-2">
@@ -503,6 +516,7 @@
         <h3 class="text-xl font-bold mb-4 text-center">系統設定</h3>
 
         <div class="space-y-6">
+            <button id="btn-restore-hidden" type="button" class="w-full p-2 bg-indigo-50 text-indigo-700 rounded-lg font-bold">恢復隱藏的公用單字</button>
             <!-- 背景音樂開關 + 曲目選擇 -->
             <div class="border-b pb-4 space-y-3">
                 <label class="flex items-center justify-between">
@@ -561,7 +575,8 @@
     </div>
 </div>
 
-<!-- 主程式腳本（非 module，掛在 window 上） -->
-<script type="module" src="./assets/app.js?v=20260830-multi-folder-membership-v2"></script>
+<!-- 共用資料合併規則與主程式 -->
+<script src="./assets/word-data.js?v=20260905-diff-v4"></script>
+<script type="module" src="./assets/app.js?v=20260905-diff-v4"></script>
 </body>
 </html>

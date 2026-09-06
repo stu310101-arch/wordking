@@ -2,7 +2,12 @@
   "name": "wordking",
   "private": true,
   "scripts": {
-    "build:css": "tailwindcss -i ../assets/tailwind-input.css -o ../assets/tailwind.css --minify"
+    "build:css": "tailwindcss -i ../assets/tailwind-input.css -o ../assets/tailwind.css --minify",
+    "test": "node --test ../tests/word-data.test.cjs ../tests/auth-loading.test.cjs ../tests/app-data.test.cjs",
+    "validate:data": "node validate-words.cjs",
+    "test:rules": "node test-firestore-rules.cjs",
+    "preview": "node serve-preview.cjs",
+    "preview:demo": "node ../tests/helpers/ui-fixture-server.cjs"
   },
   "devDependencies": {
     "tailwindcss": "3.4.17"

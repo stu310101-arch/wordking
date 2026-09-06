@@ -1,0 +1,1380 @@
+{
+  "schemaVersion": 1,
+  "description": "Frozen compatibility map from legacy lesson-based IDs. Do not regenerate when changing public English or tags. legacyTagsById is the migration baseline, not current catalog membership.",
+  "aliases": {
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aabsurd": "%E6%99%9F%E6%99%AFLv5U6%3A%3Aabsurd",
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aadolescent": "%E6%99%9F%E6%99%AFLv5U8%3A%3Aadolescent",
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aabolish": "%E6%99%9F%E6%99%AFLv5U8%3A%3Aabolish",
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aagenda": "%E6%99%9F%E6%99%AFLv5U8%3A%3Aagenda",
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aagony": "%E6%99%9F%E6%99%AFLv5U8%3A%3Aagony",
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aaisle": "%E6%99%9F%E6%99%AFLv5U8%3A%3Aaisle",
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aallergy": "%E6%99%9F%E6%99%AFLv5U8%3A%3Aallergy",
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aallergic": "%E6%99%9F%E6%99%AFLv5U8%3A%3Aallergic",
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aalternate": "%E6%99%9F%E6%99%AFLv5U8%3A%3Aalternate",
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aalliance": "%E6%99%9F%E6%99%AFLv5U11%3A%3Aalliance",
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aabortion": "%E6%99%9F%E6%99%AFLv5U11%3A%3Aabortion",
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aabort": "%E6%99%9F%E6%99%AFLv5U11%3A%3Aabort",
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aadore": "%E6%99%9F%E6%99%AFLv5U11%3A%3Aadore",
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aadorable": "%E6%99%9F%E6%99%AFLv5U11%3A%3Aadorable",
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aadministration": "%E6%99%9F%E6%99%AFLv5U13%3A%3Aadministration",
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aadministrative": "%E6%99%9F%E6%99%AFLv5U13%3A%3Aadministrative",
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aadministrator": "%E6%99%9F%E6%99%AFLv5U13%3A%3Aadministrator"
+  },
+  "legacyTagsById": {
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Apenetrate": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Apenetrating": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Apenetration": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Aexclaim": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Aexclamation": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Acontemplate": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Acontemplation": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Anaive": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Aexceptional": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Acurriculum": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Asupervise": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Asupervisor": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Asupervision": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Asteer": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Aconfession": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Aworkshop": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Abehalf": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Asole": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Aminimal": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Aminimize": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Aminiature": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Aoptimism": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Aoptimistic": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Aoptimist": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Ascan": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Acommodity": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Ayield": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Acaution": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Acautious": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Aprecaution": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Averbal": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Apeasant": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Acontempt": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Aconceal": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Aconcealment": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Atempt": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Atempting": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Atemptation": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Ainfinite": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Ainfinity": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Asober": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Aridiculous": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Aridicule": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Abeloved": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Acontinental": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Asturdy": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Astructural": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Astartle": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Astartling": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Apreference": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Apreferable": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Ahaul": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Abulk": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Avia": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Apatron": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Acompromise": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Aabsurd": [
+      "晟景Lv5U6",
+      "死神單字Lv5 a"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U6%3A%3Aabsurdity": [
+      "晟景Lv5U6"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Aodds": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Aapt": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Aaptitude": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Ablast": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Adoorway": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Adriveway": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Aslap": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Acommute": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Acommuter": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Aindulge": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Aconsent": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Aconsensus": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Ahostile": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Ahostility": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Aquest": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Aego": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Aresort": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Acorridor": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Aimmense": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Aimmensity": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Acarbon": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Acarbohydrate": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Aapplause": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Asaddle": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Aassault": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Aslam": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Acurrency": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Acurrent": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Alikelihood": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Ashiver": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Aquiver": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Acounsel": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Acounselor": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Acounseling": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Aconsultation": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Aconsult": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Avertical": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Ahorizontal": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Ascrap": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Adialect": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Acreek": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Amuscular": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Amasculine": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Aprofile": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Agrim": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Astack": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Anoticeable": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Acluster": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Atournament": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U7%3A%3Aasset": [
+      "晟景Lv5U7"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Ajournalist": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Ajournalism": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Amock": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Aintent": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Aintend": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Aintention": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Asoak": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Asoaked": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Atin": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Adelegate": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Adelegation": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Atrim": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Athigh": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Astatistical": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Astatistic": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Aalien": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Astereotype": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Amolecule": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Anominate": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Anomination": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Anominee": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Aframework": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Aframe": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Anotify": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Atransparent": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Atransparency": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Afatigue": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Aoutsider": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Afascinate": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Acompact": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Ajuvenile": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Aadolescent": [
+      "晟景Lv5U8",
+      "死神單字Lv5 a"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Adough": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Aballot": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Astall": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Arib": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Awilderness": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Awildlife": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Aindifferent": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Aattendance": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Aabolish": [
+      "晟景Lv5U8",
+      "死神單字Lv5 a"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Aabolition": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Aagenda": [
+      "晟景Lv5U8",
+      "死神單字Lv5 a"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Aagony": [
+      "晟景Lv5U8",
+      "死神單字Lv5 a"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Aaisle": [
+      "晟景Lv5U8",
+      "死神單字Lv5 a"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Aallergy": [
+      "晟景Lv5U8",
+      "死神單字Lv5 a"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Aallergic": [
+      "晟景Lv5U8",
+      "死神單字Lv5 a"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Aalternate": [
+      "晟景Lv5U8",
+      "死神單字Lv5 a"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Aantique": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Aarena": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Aass": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U8%3A%3Aastonish": [
+      "晟景Lv5U8"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Aban": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Abelongings": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Abeneficial": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Abeware": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Abolt": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Abonus": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Aboom": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Abooth": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Abriefcase": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Abully": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Acanal": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Acelebrity": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Acertificate": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Achoir": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Aclause": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Acomedian": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Acommentator": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Acommentary": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Acompliment": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Acomprehend": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Acomprehension": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Acomprehensible": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Acontagious": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Acontaminate": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Acontamination": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Acopyright": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Acustoms": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Adeceive": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Adeception": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Adeceptive": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Adestination": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Aexile": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Aextinct": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Aextinction": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Aformat": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Agorgeous": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Agravity": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Agreed": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Agreedy": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Aguideline": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Aherb": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Aherbal": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Ahostage": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Aidiot": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Alandlord": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Alord": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Amainstream": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Astream": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Amansion": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Anasty": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U9%3A%3Aparticipant": [
+      "晟景Lv5U9"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Apessimism": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Apessimist": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Apulse": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Arefuge": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Arefugee": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Asanctuary": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Arival": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Ascandal": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Asow": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Asuperstition": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Atackle": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Athrill": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Athriller": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Athrilling": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Atuition": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Aunderline": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Avisa": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Awarrior": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Awhereabouts": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Awig": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Ayacht": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Ablur": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Abodyguard": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Abrowse": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Abrowser": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Abutcher": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Acarnival": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Achef": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Aconsiderate": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Acorrupt": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Acorruption": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Ademocrat": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Ademocracy": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Ademocratic": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Arepublican": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Arepublic": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Adenial": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Adescriptive": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Adiscriminate": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Adiscrimination": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Adreadful": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Adread": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Aexaggeration": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Afilter": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Agasp": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Aglare": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Ahockey": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Ahowl": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Aroar": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Alaser": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Alawmaker": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Alawsuit": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U10%3A%3Amassage": [
+      "晟景Lv5U10"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Amasterpiece": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Amoan": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Amustard": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Aoverwhelm": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Aoverwhelming": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Apassionate": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Apastry": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Apillar": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Abeam": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Acolumn": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Arack": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Arally": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Arepay": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Arod": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Asandal": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Asneak": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Asolo": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Aterminal": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Atoxic": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Atoxin": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Avow": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Awheelchair": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Aethics": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Aethical": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Arear": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Aparallel": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Ainstitute": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Ainstitution": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Agrip": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Aally": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Aalliance": [
+      "晟景Lv5U11",
+      "死神單字Lv5 a"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Asubstitute": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Asubstitution": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Aventure": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Acompound": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Aundergraduate": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Aconduct": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Aconductor": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Agrant": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Apurchase": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Astain": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Astainless": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Athrust": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Astrain": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Aconvict": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Aconviction": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Aex-con": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Abid": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Adecay": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Aabortion": [
+      "晟景Lv5U11",
+      "死神單字Lv5 a"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Amiscarriage": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Aabort": [
+      "晟景Lv5U11",
+      "死神單字Lv5 a"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Aabundant": [
+      "晟景Lv5U11"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Aadore": [
+      "晟景Lv5U11",
+      "死神單字Lv5 a"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U11%3A%3Aadorable": [
+      "晟景Lv5U11",
+      "死神單字Lv5 a"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Aawe": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Abanner": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Abarren": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Abatch": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Aboredom": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Aboxer": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Abronze": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Abruise": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Achord": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Achubby": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Acompassion": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Acompassionate": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Acuisine": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Aerupt": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Aeruption": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Aflip": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Afluency": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Afoul": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Agut": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Abowel": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Ajug": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Alump": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Amammal": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Amanifest": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Ameantime": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Amidst": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Amilestone": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Amint": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Amumble": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Aolive": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Aorchard": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Apier": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Apledge": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Apoke": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Aprey": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Apredator": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Aprolong": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Aprophet": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Aprophecy": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Apyramid": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Aragged": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Arag": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Arattle": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Areminder": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U12%3A%3Arim": [
+      "晟景Lv5U12"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Arip": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Asalmon": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Ascent": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Ascramble": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Aserver": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Ashield": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Awindshield": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Ashove": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Askeleton": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Askull": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Asniff": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Aspine": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Asponge": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Asquash": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Asquat": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Astew": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Astink": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Astrand": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Astrap": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Atangle": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Athrone": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Atick": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Atorch": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Atorment": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Atraitor": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Atriple": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Atuna": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Aupdate": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Aupgrade": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Aviewpoint": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Awarehouse": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Awary": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Aweird": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Awhine": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Awither": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Aadministration": [
+      "晟景Lv5U13",
+      "死神單字Lv5 a"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Aadministrative": [
+      "晟景Lv5U13",
+      "死神單字Lv5 a"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Aadministrator": [
+      "晟景Lv5U13",
+      "死神單字Lv5 a"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Asession": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Abackyard": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Arisky": [
+      "晟景Lv5U13"
+    ],
+    "%E6%99%9F%E6%99%AFLv5U13%3A%3Anonprofit": [
+      "晟景Lv5U13"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aabrupt": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aabruptly": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aabuse": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aaccessible": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aaccord": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aaccounting": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aace": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aacknowledge": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aacknowledgement": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aacquaint": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aacquisition": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aactivist": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aacute": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aadulthood": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aadverse": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aadvocate": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aaffection": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aallocate": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aalongside": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aalter": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aalteration": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aamend": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aample": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aabsurd": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aadolescent": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aabolish": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aagenda": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aagony": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aaisle": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aallergy": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aallergic": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aalternate": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aalliance": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aabortion": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aabort": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aadore": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aadorable": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aadministration": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aadministrative": [
+      "死神單字Lv5 a"
+    ],
+    "%E6%AD%BB%E7%A5%9E%E5%96%AE%E5%AD%97Lv5%20a%3A%3Aadministrator": [
+      "死神單字Lv5 a"
+    ]
+  }
+}
