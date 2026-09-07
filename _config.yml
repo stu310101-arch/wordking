@@ -1,0 +1,15 @@
+# GitHub Pages publishes main:/ with Jekyll. Keep developer tools and frozen
+# recovery archives in Git without serving them as website assets.
+exclude:
+  - config
+  - tests
+  - DATA-ARCHITECTURE.md
+  - assets/tailwind-input.css
+  - migration/legacy-lessons
+  - migration/legacy-word-id-aliases.json
+  - migration/frozen-sources.json
+  - migration/schema-v5-catalog.sha256
+
+# The four JSON files fetched by assets/persistence.js remain published:
+# legacy-word-id-map.json, legacy-tag-baseline.json, legacy-catalog.json,
+# schema-v5-catalog.json. They are fetched only when migration is needed.

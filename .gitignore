@@ -1,0 +1,7 @@
+# Local preview/build output and Firebase CLI diagnostics are not source files.
+firebase-debug*.log
+firestore-debug*.log
+ui-debug.log
+.firebase/
+_site/
+.jekyll-cache/

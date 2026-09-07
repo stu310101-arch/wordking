@@ -1,6 +1,6 @@
 # 單字王資料架構：schema 6
 
-本文件描述這次重構後的程式與 migration 協定。正式網站目前由 GitHub Pages 的 `main:/` 發布（https://stu310101-arch.github.io/wordking/），Firebase project 為 `wordking-434f7`。本次驗證使用隔離 fixture 與 Emulator；尚未執行正式帳號 migration，也未部署正式網站或 rules。
+本文件描述這次重構後的程式與 migration 協定。正式網站由 GitHub Pages 的 `main:/` 發布（https://stu310101-arch.github.io/wordking/），Firebase project 為 `wordking-434f7`。個人資料操作的驗證使用隔離 fixture 與 Emulator；發布不會批次改寫正式帳號，舊帳號在下一次登入時依照下述協定遷移。
 
 ## 改動前的資料流
 
@@ -158,6 +158,10 @@ account.exportState();
 `migration/` 保留原始 `legacy-catalog.json`、`legacy-word-id-aliases.json`、`legacy-lessons/`；固定 `legacy-word-id-map.json`、`legacy-tag-baseline.json` 與 `frozen-sources.json`。原有 14 個凍結來源檔以 SHA-256 驗證。schema 6 另新增 `schema-v5-catalog.json` 及獨立 SHA-256，原樣保留 schema 5 的 429 筆平面中文與 POS，供辨識舊 override 基準。沒有刪除 recovery 內容，也沒有重新配發 identity。
 
 `.gitattributes` 禁止 Git 對 `migration/**` 自動轉換換行，確保 Windows、Linux 與 GitHub checkout 的 recovery checksum 一致。
+
+GitHub Pages 透過根目錄 `_config.yml` 的 `exclude` 排除 `config/`、`tests/`、架構文件、Tailwind 輸入檔及不供 runtime 讀取的 `legacy-lessons/`、舊 alias 快照與 checksum 清單。這些檔案保留在 Git 供測試、維護與復原使用，不作為網站資產發布。`.gitignore` 排除本機預覽建置輸出及 Firebase CLI 診斷紀錄。
+
+`legacy-word-id-map.json`、`legacy-tag-baseline.json`、`legacy-catalog.json`、`schema-v5-catalog.json` 仍必須發布在 `migration/`，由 `assets/persistence.js` 在需要遷移時載入。不能因為新帳號平常不載入它們而撤下；尚未登入的舊帳號仍可能需要這四份資料。舊的 `data/lessons/` 與 `data/word-id-aliases.json` 路徑已移出 runtime。
 
 正常訪客只下載 `data/words.json`。已完成 v6 的帳號只讀私人 canonical collections / settings 及同步 metadata，不下載任何歷史 JSON，也不讀 `deletedDefaults`。新空帳號只寫完成標記，不複製公用字庫，也不載入歷史檔。
 

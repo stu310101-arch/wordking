@@ -65,4 +65,4 @@
 - 原始前端訪客：`npm run preview`，http://127.0.0.1:4173 。此版本包含真正 Firebase 設定，驗證時只使用未登入訪客。
 - 本次交付暫時預覽：https://dee-washing-pavilion-criterion.trycloudflare.com 。網址透過本機 demo 的暫時通道提供，電腦／網路與通道需持續運作；失效時重新建立通道即可，不影響 Git 或 Firestore 資料。先前 quality-architects-autumn-supplemental 與 pet-doug-jewelry-installed 網址已失效。
 
-目前未推送 GitHub、未部署正式 Firebase rules，也未對真實使用者執行 migration。
+以上是發布前的隔離測試紀錄，不代表真實使用者已完成 migration。發布順序為先部署 Firestore rules、再推送 GitHub Pages 的 main 分支；真實舊帳號在之後登入時才依協定遷移。
