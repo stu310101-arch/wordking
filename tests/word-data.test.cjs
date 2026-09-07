@@ -4,7 +4,34 @@ const data=require('../assets/word-data.js');const {M}=require('./helpers/groupe
 const {validateCatalogFiles}=require('../config/validate-words.cjs');
 const catalog=()=>[{id:'w_000001',english:'penetrate',meanings:M('穿透；滲透'),lessonIds:['U6']},{id:'w_000002',english:'record',meanings:[...M('紀錄',['noun']),...M('記錄；錄製')],lessonIds:['U8']}];
 const model=(state={})=>data.createUserWordState(catalog(),state);
-test('429 unique entities retain all 892 historical identity mappings and frozen backups',()=>{assert.deepEqual(validateCatalogFiles(),{words:429,memberships:446,aliases:17,legacyIds:446,mappedIds:892,lessonFiles:9,frozenFiles:14});});
+test('expanded catalog retains all 892 historical identity mappings and frozen backups',()=>{assert.deepEqual(validateCatalogFiles(),{words:452,memberships:478,aliases:17,legacyIds:446,mappedIds:892,lessonFiles:9,frozenFiles:14});});
+test('U2 imports 32 spellings with shared identities and retains all existing course memberships',()=>{
+ const words=require('../data/words.json'), before=require('../migration/schema-v5-catalog.json');
+ const shared={antique:'w_000157',applause:'w_000081',apt:'w_000060',asset:'w_000108',attendance:'w_000148',ballot:'w_000142',barren:'w_000322',batch:'w_000323',behalf:'w_000017'};
+ const newNames=['analyst','anonymous','antarctic','appliance','arctic','armor','arouse','array','arrogant','artery','articulate','artifact','assert','attic','attorney','attribute','auction','authorize','autonomy','availability','bandit','barefoot','bazaar'];
+ const u2=words.filter(w=>w.lessonIds.includes('死神單字Lv5U2'));
+ assert.deepEqual(u2.map(w=>w.english).sort(),[...Object.keys(shared),...newNames].sort());
+ for(const old of before){
+  const word=words.find(w=>w.id===old.id);assert.equal(word.english,old.english);
+  assert.deepEqual(word.lessonIds,[...old.lessonIds,...(Object.hasOwn(shared,old.english)?['死神單字Lv5U2']:[])]);
+  assert.equal(word.isWrong,old.isWrong);
+ }
+ for(const [english,id] of Object.entries(shared))assert.equal(u2.find(w=>w.english===english).id,id);
+ newNames.forEach((english,index)=>assert.equal(u2.find(w=>w.english===english).id,`w_${String(430+index).padStart(6,'0')}`));
+ assert.equal(words.filter(w=>w.lessonIds.includes('死神單字Lv5 a')).length,40);
+ assert.deepEqual(u2.find(w=>w.english==='batch').meanings,[...M('一批；一組',['noun']),...M('分批')]);
+ assert.deepEqual(u2.find(w=>w.english==='auction').meanings,M('拍賣',['noun','verb']));
+ assert.deepEqual(u2.find(w=>w.english==='arctic').meanings,[...M('北極',['noun']),...M('北極的',['adjective'])]);
+ assert.deepEqual(u2.find(w=>w.english==='antarctic').meanings,[...M('南極',['noun']),...M('南極的',['adjective'])]);
+});
+test('registered public lessons exist before import and a renamed title retains its identity',()=>{
+ assert.deepEqual(data.getPublicLessonIds([]),['死神單字Lv5 a','死神單字Lv5U2']);
+ assert.equal(data.getPublicLessonName('死神單字Lv5 a'),'死神單字Lv5U1');
+ assert.equal(data.getPublicLessonName('晟景Lv5U6'),'晟景Lv5U6');
+ assert.equal(data.getPublicLessonName('constructor'),'constructor');
+ const ids=data.getPublicLessonIds([{lessonIds:['死神單字Lv5 a','晟景Lv5U6']}]);ids.push('rogue');
+ assert.deepEqual(data.getPublicLessonIds([]),['死神單字Lv5 a','死神單字Lv5U2']);
+});
 test('opaque identity survives English, grouped meanings and lesson edits',()=>{const m=model();m.updateWordOverride('w_000001',{english:'changed',meanings:M('個人')});m.setWordLessons('w_000001',['U8']);assert.equal(m.getEffectiveWord('w_000001').id,'w_000001');assert.equal(data.normalizeCatalog([{...catalog()[0],english:'other',lessonIds:[]}])[0].id,'w_000001');assert.throws(()=>data.normalizeCatalog([{...catalog()[0],id:'U6::penetrate'}]),/ID/);});
 test('canonical catalog forbids duplicate case-insensitive English and standalone meaning/POS',()=>{assert.throws(()=>data.normalizeCatalog([...catalog(),{...catalog()[0],id:'w_000003',english:'PENETRATE'}]),/Duplicate/);assert.throws(()=>data.normalizeCatalog([...catalog(),catalog()[0]]),/Duplicate/);for(const field of ['meaning','partOfSpeech','tags','folderId','folderIds','source','defaultId'])assert.throws(()=>data.normalizeCatalog([{...catalog()[0],[field]:[]}]),/Unknown/);});
 test('noun and verb have separate definitions inside one word entity',()=>{const m=model(),w=m.getEffectiveWord('w_000002');assert.equal(m.deriveEffectiveWords().length,2);assert.deepEqual(w.meanings,[...M('紀錄',['noun']),...M('記錄；錄製')]);assert.equal(Object.hasOwn(w,'partOfSpeech'),false);assert.equal(Object.hasOwn(w,'meaning'),false);});

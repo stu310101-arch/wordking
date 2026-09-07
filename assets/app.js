@@ -260,8 +260,8 @@ function refreshDerivedView() {
     state.words = userWordState.deriveEffectiveWords();
     state.hiddenWords = snapshot.hiddenWordIds.map(id => userWordState.getEffectiveWord(id, { includeHidden: true })).filter(Boolean);
     state.settings = cloneSettings(snapshot.settings);
-    state.lessonFolderIds = normalizeFolderIds([...publicCatalog, ...state.words, ...state.hiddenWords]
-        .flatMap(word => (word.lessonIds || []).map(id => groupKey('lesson', id))));
+    state.lessonFolderIds = wordData.getPublicLessonIds([...publicCatalog, ...state.words, ...state.hiddenWords])
+        .map(id => groupKey('lesson', id));
     state.folderNames = Object.fromEntries(Object.entries(snapshot.userFolders).map(([id, folder]) => [id, folder.name]));
     const personal = Object.keys(snapshot.userFolders).map(id => groupKey('folder', id));
     state.folders = normalizeFolders(personal, state.words, state.settings);
@@ -318,7 +318,7 @@ function getFolderDisplayName(folderId, settings = state.settings) {
     if (folderId === WRONG_FOLDER) return REVIEW_FOLDER_LABEL;
     if (folderId === UNFILED_FOLDER) return UNFILED_FOLDER;
     const group = groupInfo(folderId);
-    if (group.kind === 'lesson') return settings?.lessonFolderNames?.[group.id] || group.id;
+    if (group.kind === 'lesson') return settings?.lessonFolderNames?.[group.id] || wordData.getPublicLessonName(group.id);
     if (group.kind === 'folder') return state.folderNames[group.id] || group.id;
     return folderId;
 }
@@ -366,7 +366,7 @@ async function loadDefaultWordDatabase() {
     if (!catalog.length) throw new Error('公用單字庫是空的，請稍後重試。');
     if (generation !== catalogLoadGeneration) throw new Error('公用單字載入已由新的請求取代。');
     publicCatalog = catalog;
-    state.lessonFolderIds = normalizeFolderIds(catalog.flatMap(word => word.lessonIds.map(id => groupKey('lesson', id))));
+    state.lessonFolderIds = wordData.getPublicLessonIds(catalog).map(id => groupKey('lesson', id));
 }
 
 function clearPracticeSession() {

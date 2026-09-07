@@ -53,7 +53,7 @@ flowchart TD
 
 ## Canonical word
 
-公用庫現在有 **429 筆唯一英文、446 個課程歸屬**。同一英文的大小寫變體視為同一 entity；`english.trim().toLowerCase()` 重複會被驗證拒絕。修改英文、中文或課程都不改 ID。
+公用庫現在有 **452 筆唯一英文、478 個課程歸屬**。同一英文的大小寫變體視為同一 entity；`english.trim().toLowerCase()` 重複會被驗證拒絕。修改英文、中文或課程都不改 ID。
 
 ```json
 {
@@ -83,6 +83,14 @@ flowchart TD
 - 新公用字配發下一個未用過的 ID，第一次之後永遠保留；不要回收 ID 或以另一個字覆蓋舊 identity。初始下一號為 `w_000430`，後續請根據完整 Git 配發歷史選號，不能反覆使用凍結檔的初始下一號。
 - 發布後的公用字應保留 identity；驗證器禁止刪除初始 429 個映射目標。需要更正英文時改原筆。
 - custom word / folder 的 UI 新增使用 `c_` / `f_` + UUID；名稱更改不影響 ID。舊 custom / folder ID 可保留；公用 `w_` namespace 不給 custom 使用。
+
+### 課程名稱與 2026-09-08 匯入
+
+`assets/word-data.js` 的小型 `PUBLIC_LESSONS` 登記表將課程 ID 與顯示名稱分開，也可在匯入單字前建立空課程。`getPublicLessonIds()` 合併已登記課程與字庫中實際的課程；`getPublicLessonName()` 提供公用名稱。UI 統一經由 `getFolderDisplayName()` 顯示，個人的 `settings.lessonFolderNames` 仍優先。不增加正常載入所需的 HTTP 請求。
+
+- 原「死神單字Lv5 a」改名為「死神單字Lv5U1」，保留原有 40 個單字、word IDs 與課程 ID `死神單字Lv5 a`。這個 ID 是原課程的永久識別，不是新舊欄位 alias；既存 `addedLessonIds`、`removedLessonIds`、`hiddenLessonIds`、個人改名與 custom word 歸屬因此不需改寫或 migration。同名私人資料夾也不會被更名。
+- 先登記「死神單字Lv5U2」，再依「整理單字陣列」對話（`6a9fd9bd-0e48-83ee-b050-d92c50781145`）匯入 32 個單字：23 筆新字配發 `w_000430` 至 `w_000452`；9 筆既有字沿用原 ID，加入 U2 並保留原課程。`batch` 的名詞補「一組」，原動詞「分批」保留。沒有改動其他既有中文或凍結 migration 檔。
+- 這次的 `auction` 是來源清單中的正式匯入資料；先前只拿它示範畫面時並未新增。接下來的新 ID 必須從未使用的 `w_000453` 起配發，仍不得改寫初始凍結配置。
 
 ## 個人 Firestore schema
 
@@ -226,7 +234,7 @@ git diff --check
 
 rules runner 使用 Java 21+ 與官方 Firestore Emulator；可透過 `WORDKING_JAVA_BIN` 指定 Java executable。測試不連正式資料庫。
 
-目前資料／UI 接線／migration／persistence／Auth 測試 89 項，Firestore Emulator 測試 8 項。涵蓋 opaque ID 穩定、同英文唯一、各詞性獨立中文、編輯時直接建立資料夾／取消／同批儲存、A/B/visitor 隔離、不可 mutate public、public update / field reset、課程 diff / 同名資料夾、custom CRUD、hide/restore/reset、所有舊欄位與 alias/root、v5 升級及 journal 接續、重複 migration、staging / 中途批次 / 最後 ack 故障、lease takeover、revision 衝突及 stale session。
+目前資料／UI 接線／migration／persistence／Auth 測試 93 項，Firestore Emulator 測試 8 項。涵蓋 opaque ID 穩定、同英文唯一、各詞性獨立中文、編輯時直接建立資料夾／取消／同批儲存、A/B/visitor 隔離、不可 mutate public、public update / field reset、課程 diff / 同名資料夾、custom CRUD、hide/restore/reset、所有舊欄位與 alias/root、v5 升級及 journal 接續、重複 migration、staging / 中途批次 / 最後 ack 故障、lease takeover、revision 衝突及 stale session。
 
 `npm run preview` 在 loopback 4173 提供原始網站；`npm run preview:demo` 在 4175 使用原始網站資產，僅將 Firebase import 替換成瀏覽器內隔離 fixture。測試工具列提供 A / B / 訪客、故障與恢復網路。fixture 使用 sessionStorage，不會連真實 Google 帳號或 Firestore，頁面對外預覽也沒有私人帳號資料。伺服器白名單不公開 `.git`、設定、tests 或工作區其他檔案。
 

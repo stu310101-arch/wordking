@@ -108,3 +108,31 @@ test('a game timer from an older game or account cannot advance the current game
  await new Promise(resolve=>setTimeout(resolve,10));assert.equal(h.run('advanced'),0);
  h.run('scheduleGameAdvance(1);authSessionGeneration+=1;');await new Promise(resolve=>setTimeout(resolve,10));assert.equal(h.run('advanced'),0);
 });
+
+test('U1 title change preserves personal hidden lessons, removed memberships, custom names and same-named folders',()=>{
+ const fullCatalog=copy(require('../data/words.json'));
+ const existing=fullCatalog.find(w=>w.english==='abuse');
+ const initial={userOverrides:{[existing.id]:{removedLessonIds:['死神單字Lv5 a'],folderIds:['private']}},
+  userFolders:{private:{name:'死神單字Lv5 a'}},settings:{hiddenLessonIds:['死神單字Lv5 a']}};
+ const h=harness(initial);h.context.__fullCatalog=fullCatalog;
+ h.run('publicCatalog=wordData.normalizeCatalog(__fullCatalog);applyUserData({snapshot:__snapshot});');
+ assert.equal(h.run("getFolderDisplayName('lesson:死神單字Lv5 a')"),'死神單字Lv5U1');
+ assert.equal(h.run("getFolderDisplayName('folder:private')"),'死神單字Lv5 a');
+ assert.equal(h.run("state.folders.includes('lesson:死神單字Lv5 a')"),false);
+ assert.equal(word(h,existing.id).lessonIds.includes('死神單字Lv5 a'),false);
+ assert.deepEqual(copy(h.run('snapshotUserState()')),{customWords:{},hiddenWordIds:[],...initial});
+ h.run("restoreUserState({settings:{lessonFolderNames:{'死神單字Lv5 a':'我的課程名稱'}}})");
+ assert.equal(h.run("getFolderDisplayName('lesson:死神單字Lv5 a')"),'我的課程名稱');
+ h.run('currentUser=null;restoreUserState({})');
+ assert.equal(h.run("getFolderDisplayName('lesson:死神單字Lv5 a')"),'死神單字Lv5U1');
+ assert.equal(h.run("state.folders.includes('lesson:死神單字Lv5 a')"),true);
+ assert.equal(h.run("state.words.filter(w=>wordIsInFolder(w,'lesson:死神單字Lv5U2')).length"),32);
+ assert.equal(h.run("findSearchMatches('auction')[0].folderName"),'死神單字Lv5U2');
+ assert.equal(h.run("getMeaningWithPartOfSpeech(state.words.find(w=>w.english==='auction'))"),'名詞：拍賣\n動詞：拍賣');
+ assert.equal(h.writes.length,0);
+});
+
+test('registered U2 is selectable as an empty course before its catalog import',()=>{
+ const h=harness();assert.equal(h.run("state.folders.includes('lesson:死神單字Lv5U2')"),true);
+ assert.equal(h.run("state.words.filter(w=>wordIsInFolder(w,'lesson:死神單字Lv5U2')).length"),0);
+});

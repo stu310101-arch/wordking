@@ -276,7 +276,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U6"
+      "晟景Lv5U6",
+      "死神單字Lv5U2"
     ],
     "isWrong": false
   },
@@ -1042,7 +1043,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U7"
+      "晟景Lv5U7",
+      "死神單字Lv5U2"
     ],
     "isWrong": false
   },
@@ -1408,7 +1410,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U7"
+      "晟景Lv5U7",
+      "死神單字Lv5U2"
     ],
     "isWrong": false
   },
@@ -1921,7 +1924,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U7"
+      "晟景Lv5U7",
+      "死神單字Lv5U2"
     ],
     "isWrong": false
   },
@@ -2581,7 +2585,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U8"
+      "晟景Lv5U8",
+      "死神單字Lv5U2"
     ],
     "isWrong": false
   },
@@ -2687,7 +2692,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U8"
+      "晟景Lv5U8",
+      "死神單字Lv5U2"
     ],
     "isWrong": false
   },
@@ -2852,7 +2858,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U8"
+      "晟景Lv5U8",
+      "死神單字Lv5U2"
     ],
     "isWrong": false
   },
@@ -5942,7 +5949,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U12"
+      "晟景Lv5U12",
+      "死神單字Lv5U2"
     ],
     "isWrong": false
   },
@@ -5953,7 +5961,8 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "一批"
+          "一批",
+          "一組"
         ]
       },
       {
@@ -5964,7 +5973,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U12"
+      "晟景Lv5U12",
+      "死神單字Lv5U2"
     ],
     "isWrong": false
   },
@@ -7984,6 +7994,411 @@
     ],
     "lessonIds": [
       "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000430",
+    "english": "analyst",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "分析師"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U2"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000431",
+    "english": "anonymous",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "匿名的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U2"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000432",
+    "english": "antarctic",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "南極"
+        ]
+      },
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "南極的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U2"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000433",
+    "english": "appliance",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "用具"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U2"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000434",
+    "english": "arctic",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "北極"
+        ]
+      },
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "北極的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U2"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000435",
+    "english": "armor",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "盔甲"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U2"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000436",
+    "english": "arouse",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "喚起",
+          "引起"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U2"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000437",
+    "english": "array",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "一批",
+          "一系列"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U2"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000438",
+    "english": "arrogant",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "傲慢的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U2"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000439",
+    "english": "artery",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "動脈",
+          "要道"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U2"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000440",
+    "english": "articulate",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "明確表達"
+        ]
+      },
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "口才好的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U2"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000441",
+    "english": "artifact",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "手工藝品"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U2"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000442",
+    "english": "assert",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "聲稱",
+          "指控"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U2"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000443",
+    "english": "attic",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "閣樓"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U2"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000444",
+    "english": "attorney",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "律師"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U2"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000445",
+    "english": "attribute",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "特質"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "將...歸因於"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U2"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000446",
+    "english": "auction",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "拍賣"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "拍賣"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U2"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000447",
+    "english": "authorize",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "授權",
+          "認可"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U2"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000448",
+    "english": "autonomy",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "自治",
+          "自治權"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U2"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000449",
+    "english": "availability",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "可用性"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U2"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000450",
+    "english": "bandit",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "強盜"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U2"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000451",
+    "english": "barefoot",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "光腳的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U2"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000452",
+    "english": "bazaar",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "市集",
+          "商場"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U2"
     ],
     "isWrong": false
   }

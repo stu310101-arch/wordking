@@ -6,6 +6,18 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
     'use strict';
     const SCHEMA_VERSION = 6;
+    // Course identity survives title changes, just like word and private-folder IDs.
+    // Register courses here before adding their first words so empty courses exist.
+    const PUBLIC_LESSONS = Object.freeze({
+        '死神單字Lv5 a': '死神單字Lv5U1',
+        '死神單字Lv5U2': '死神單字Lv5U2'
+    });
+    function getPublicLessonName(id) {
+        return Object.prototype.hasOwnProperty.call(PUBLIC_LESSONS, id) ? PUBLIC_LESSONS[id] : id;
+    }
+    function getPublicLessonIds(words = []) {
+        return [...new Set([...Object.keys(PUBLIC_LESSONS), ...words.flatMap(word => word.lessonIds || [])])];
+    }
     const PARTS_OF_SPEECH = Object.freeze(['noun', 'verb', 'adjective', 'adverb', 'pronoun',
         'preposition', 'conjunction', 'interjection', 'other', 'determiner', 'article', 'numeral', 'auxiliary', 'phrase']);
     const FIELD_NAMES = Object.freeze(['english', 'meanings', 'isWrong']);
@@ -355,5 +367,5 @@
             getSettings, setSettings, updateSettings: setSettings, clearSetting, reset, exportState });
     }
     return Object.freeze({ SCHEMA_VERSION, PARTS_OF_SPEECH, FIELD_NAMES, OVERRIDE_FIELDS,
-        normalizeMeanings, normalizeCatalog, createUserWordState });
+        normalizeMeanings, normalizeCatalog, getPublicLessonName, getPublicLessonIds, createUserWordState });
 });

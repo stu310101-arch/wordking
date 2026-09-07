@@ -1,5 +1,21 @@
 # Schema 6 瀏覽器實測紀錄
 
+## 2026-09-08 死神單字 Lv5 U1 改名與 U2 匯入
+
+暫時預覽：https://captured-beats-oscar-injuries.trycloudflare.com/?page=library 。使用真實 Codex in-app Chromium、桌面 1366×900 與手機 390×844；Firebase 操作仍透過隔離 fixture，不連正式帳號。
+
+| 操作 | 實際結果 |
+| --- | --- |
+| 訪客資料夾列表 | 「死神單字Lv5U1 (40)」、「死神單字Lv5U2 (32)」正確顯示 |
+| 開啟 U2 | 32 張卡片含 23 個新字與 9 個共用既有字，沒有重複 entity |
+| 桌面翻看 auction | 名詞「拍賣」、動詞「拍賣」各自一行 |
+| 測試帳號 A 登入後開啟 batch 編輯 | 名詞「一批；一組」、動詞「分批」，U2 與原本晟景Lv5U12 同時勾選 |
+| 手機編輯視窗 | 詞性組與課程勾選正確，可捲動並取消；390px 視窗的 document scrollWidth 為 375px，無橫向溢出 |
+| 返回訪客，手機搜尋 auction | 候選顯示名詞／動詞「拍賣」與 U2，候選框在視窗內 |
+| Console | 無 error |
+
+93 項 Node 測試、8 項 Firestore Emulator 測試、資料驗證、CSS 建置與 `git diff --check` 通過。新增測試確認原始 429 個 ID、全部舊課程歸屬、U2 32 個拼法、U1 個人隱藏與移除設定、個人改名、同名私人資料夾及空課程建立；公用庫現為 452 個唯一英文、478 個課程歸屬。凍結 recovery 檔案未改動。
+
 ## 2026-09-07 詞性分組與直接新增資料夾
 
 真實 Codex in-app Chromium，桌面 1366×900、手機 390×844。使用這次分支的原始資產與隔離 fixture；下面的單字修改與新增只發生在測試帳號的 sessionStorage。沒有增加公用 entity。
