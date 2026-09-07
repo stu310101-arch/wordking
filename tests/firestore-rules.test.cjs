@@ -61,6 +61,34 @@ function expectStatus(result, allowed, label) {
     assert.ok(allowed.includes(result.status), `${label}: expected ${allowed.join('/')}; got ${result.status}: ${result.body}`);
 }
 
+test('v6 grouped words are owner-only and fence out v5 fields, writes and account downgrade',async()=>{
+ const uid=`grouped-${nonce}`,path=`users/${uid}`;
+ const root={fields:{schemaVersion:{integerValue:'6'},revision:{integerValue:'1'},migrationV6:{mapValue:{fields:{status:{stringValue:'complete'}}}}}};
+ const grouped={fields:{schemaVersion:{integerValue:'6'},meanings:{arrayValue:{values:[{mapValue:{fields:{
+  partOfSpeech:{stringValue:'noun'},definitions:{arrayValue:{values:[{stringValue:'紀錄'}]}}
+ }}}]}}}};
+ expectStatus(await request(path,{method:'PATCH',uid,data:root}),[200],'v6 root');
+ for(const collection of ['wordOverrides','customWords','hiddenWords','folders','settings']) {
+  const target=`${path}/${collection}/w_000001`;
+  const value=collection==='customWords'?{fields:{...grouped.fields,english:{stringValue:'record'},lessonIds:{arrayValue:{}},folderIds:{arrayValue:{}},isWrong:{booleanValue:false}}}:
+   collection==='wordOverrides'?grouped:{fields:{schemaVersion:{integerValue:'6'}}};
+  expectStatus(await request(target,{method:'PATCH',uid,data:value}),[200],'v6 create');
+  expectStatus(await request(target,{uid}),[200],'v6 owner read');
+  expectStatus(await request(target,{method:'PATCH',uid,data:value}),[200],'v6 owner update');
+  for(const foreign of [other,undefined]) for(const method of ['GET','PATCH','DELETE']) {
+   expectStatus(await request(target,{method,uid:foreign,...(method==='PATCH'?{data:value}:{})}),[401,403],'v6 account isolation');
+  }
+  expectStatus(await request(target,{method:'PATCH',uid,data:body('old client')}),[403],'v5 write into v6 account denied');
+  if(collection==='customWords'||collection==='wordOverrides') for(const field of ['meaning','partOfSpeech','tags','folderId']) {
+   expectStatus(await request(target,{method:'PATCH',uid,data:{fields:{...value.fields,[field]:{stringValue:'legacy'}}}}),[403],'legacy field rejected');
+  }
+  expectStatus(await request(target,{method:'DELETE',uid}),[200],'v6 owner delete');
+ }
+ expectStatus(await request(path,{method:'PATCH',uid,data:{fields:{schemaVersion:{integerValue:'5'}}}}),[403],'v5 root downgrade denied');
+ expectStatus(await request(`${path}/deletedDefaults/old`,{method:'PATCH',uid,data:grouped}),[403],'legacy hide write denied');
+ expectStatus(await request(path,{method:'DELETE',uid}),[200],'v6 cleanup');
+});
+
 test('owner can create, read, update and delete root, personal differences, backups and nested data', async () => {
     for (const path of paths) {
         expectStatus(await request(path, { method: 'PATCH', uid: owner, data: body('created') }), [200], `${path}: create`);

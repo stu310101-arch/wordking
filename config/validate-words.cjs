@@ -10,8 +10,9 @@ function validateCatalogFiles(root = path.resolve(__dirname, '..')) {
     const read = file => fs.readFileSync(path.join(root, file));
     const json = file => JSON.parse(read(file).toString('utf8').replace(/^\uFEFF/, ''));
     const words = data.normalizeCatalog(json('data/words.json'));
-    for (const word of words) assert.ok(!/[（(]\s*(?:n|v|vi|vt|a|adj|adv|pron|prep|conj|interj|det|art|num|aux|phr)\.\s*[)）]/i.test(word.meaning),
+    for (const word of words) assert.ok(!/[（(]\s*(?:n|v|vi|vt|a|adj|adv|pron|prep|conj|interj|det|art|num|aux|phr)\.\s*[)）]/i.test(word.meanings.flatMap(group => group.definitions).join(';')),
         `Move the legacy POS annotation into partOfSpeech: ${word.id}`);
+    assert.equal(crypto.createHash('sha256').update(read('migration/schema-v5-catalog.json')).digest('hex'), read('migration/schema-v5-catalog.sha256').toString().trim(), 'Frozen v5 content');
     const mapping = json('migration/legacy-word-id-map.json');
     const baseline = json('migration/legacy-tag-baseline.json');
     const original = json('migration/legacy-catalog.json');

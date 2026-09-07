@@ -1,9 +1,10 @@
+const {M}=require('./helpers/grouped-fixtures.cjs');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { createAppHarness, deferred } = require('./helpers/app-harness.cjs');
 
-const publicWord = { id: 'w_000001', english: 'public', meaning: '公用', lessonIds: ['unit-1'], partOfSpeech: [] };
-const personalWord = { english: 'private', meaning: '個人', lessonIds: [], folderIds: ['f_mine'], partOfSpeech: [] };
+const publicWord = { id: 'w_000001', english: 'public', meanings: M('公用'), lessonIds: ['unit-1'] };
+const personalWord = { english: 'private', meanings: M('個人'), lessonIds: [], folderIds: ['f_mine'] };
 const userData = (word = personalWord, revision = 3) => ({
     snapshot: { userOverrides: {}, customWords: { 'custom-1': word }, hiddenWordIds: ['w_000001'],
         userFolders: { f_mine: { name: 'mine' } },
@@ -36,11 +37,11 @@ test('public overrides appear on the first signed-in render with no unmodified f
     assert.equal(h.events.views.length, 0);
     const result = userData();
     result.snapshot.hiddenWordIds = [];
-    result.snapshot.userOverrides = { w_000001: { meaning: '只顯示私人解釋', partOfSpeech: [] } };
+    result.snapshot.userOverrides = { w_000001: { meanings: M('只顯示私人解釋') } };
     loading.resolve(result);
     await login;
     assert.equal(h.events.views.length, 1);
-    assert.equal(h.events.views[0].words.find(word => word.id === 'w_000001').meaning, '只顯示私人解釋');
+    assert.equal(h.events.views[0].words.find(word => word.id === 'w_000001').meanings[0].definitions.join('；'), '只顯示私人解釋');
 });
 
 test('a timed-out load invalidates migration writes even before the user retries', async () => {
@@ -90,7 +91,7 @@ test('conflicting saves followed by a failed reload never restore private snapsh
         load: async () => {throw new Error('reload offline');},
         save: async () => {const error = new Error('conflict'); error.code = 'cloud-revision-conflict'; throw error;}
     };`);
-    assert.equal(await h.run("commitUserMutation(model => model.updateCustomWord('custom-1', {meaning:'optimistic'}))"), false);
+    assert.equal(await h.run("commitUserMutation(model => model.updateCustomWord('custom-1', {meanings: M('optimistic')}))"), false);
     assert.equal(h.run('isUserDataReady'), false);
     assert.equal(h.run('state.words.length'), 0);
     assert.equal(h.run('activeCloudWrites'), 0);
@@ -124,14 +125,14 @@ test('persistence receives canonical snapshots, expected revision and a current-
         }
     };`);
     await h.run("handleAuthStateChanged({uid:'alice'})");
-    assert.equal(await h.run("commitUserMutation(model => model.updateCustomWord('custom-1', {meaning:''}))"), true);
+    assert.equal(await h.run("commitUserMutation(model => model.updateCustomWord('custom-1', {meanings: M('')}))"), true);
     assert.equal(h.events.loadedUser, 'alice');
     const saved = h.events.saved;
     assert.equal(saved.uid, 'alice');
     assert.equal(saved.revision, 3);
     assert.deepEqual(Object.keys(saved.next).sort(), ['customWords','hiddenWordIds','settings','userFolders','userOverrides']);
-    assert.equal(saved.previous.customWords['custom-1'].meaning, '個人');
-    assert.equal(saved.next.customWords['custom-1'].meaning, '');
+    assert.equal(saved.previous.customWords['custom-1'].meanings[0].definitions.join('；'), '個人');
+    assert.equal(saved.next.customWords['custom-1'].meanings[0].definitions.join('；'), '');
     assert.equal(h.run('cloudRevision'), 4);
 });
 
@@ -269,7 +270,7 @@ test('late failed mutations cannot roll back a new account or decrement its writ
     const saving = deferred();
     h.context.saving = saving.promise;
     h.run('saveDiffChangesToCloud = async () => saving;');
-    const mutation = h.run("commitUserMutation(model => model.updateCustomWord('custom-1', {meaning: 'editing'}))");
+    const mutation = h.run("commitUserMutation(model => model.updateCustomWord('custom-1', {meanings: M('editing')}))");
     h.context.personalData = userData({ ...personalWord, english: 'bob-only' });
     await h.run("handleAuthStateChanged({uid: 'bob'})");
     h.run('activeCloudWrites = 2;');

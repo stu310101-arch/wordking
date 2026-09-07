@@ -1,29 +1,56 @@
+const {M}=require('./helpers/grouped-fixtures.cjs');
 'use strict';
 const assert=require('node:assert/strict');const {test}=require('node:test');
 const {createAppHarness,createMemoryFirestore}=require('./helpers/app-harness.cjs');
-const rawCatalog=[{id:'w_000001',english:'penetrate',meaning:'穿透',partOfSpeech:['verb'],lessonIds:['U6','U8']},
-{id:'w_000002',english:'record',meaning:'紀錄；錄製',partOfSpeech:['noun','verb'],lessonIds:['U8']}];
+const rawCatalog=[{id:'w_000001',english:'penetrate',meanings:M('穿透',['verb']),lessonIds:['U6','U8']},
+{id:'w_000002',english:'record',meanings:M('紀錄；錄製',['noun','verb']),lessonIds:['U8']}];
 const copy=v=>JSON.parse(JSON.stringify(v));
 function harness(snapshot={}){
- const cloud=createMemoryFirestore({'users/A':{schemaVersion:5,revision:0,migrationV5:{status:'complete'}}});
+ const cloud=createMemoryFirestore({'users/A':{schemaVersion:6,revision:0,migrationV6:{status:'complete'}}});
  const h=createAppHarness({firebase:cloud.firebase});h.context.__catalog=copy(rawCatalog);h.context.__snapshot=copy(snapshot);
  h.run(`publicCatalog=wordData.normalizeCatalog(__catalog);currentUser={uid:'A'};authReady=true;isUserDataReady=true;
  applyUserData({snapshot:__snapshot,revision:0});["new-word","new-meaning","new-folder-name","input-rename-folder"].forEach(id=>document.getElementById(id));renderLibrary=()=>{};renderWordList=()=>{};renderResultWordList=()=>{};
- renderResultFolderOptions=()=>{};openAddModal=()=>{};closeAddModal=()=>{state.editingWordIndex=-1;};`);
+ renderResultFolderOptions=()=>{};openAddModal=()=>{};closeModal=()=>{};`);
  return {...h,...cloud};
 }
 function word(h,id='w_000001'){h.context.__id=id;return copy(h.run('userWordState.getEffectiveWord(__id)'));}
+test('inline folders preserve meaning groups, course selections and review; word and folders save together',async()=>{
+ const h=harness();h.elements.get('new-word').value='record';
+ h.run("state.editingWordIndex=1;renderMeaningEditor([{partOfSpeech:'noun',definitions:['紀錄']},{partOfSpeech:'verb',definitions:['記錄','錄製']}]);renderFolderSelection(['lesson:U8'],true);");
+ for(const name of ['考前複習','容易錯']) {
+  h.elements.get('new-folder-name').value=name;assert.equal(h.run('stageNewWordFolder()'),true);
+ }
+ assert.equal(h.writes.length,0);assert.deepEqual(copy(h.run('snapshotUserState().userFolders')),{});
+ assert.equal(h.run('document.querySelectorAll(".folder-checkbox:checked").length'),3);
+ assert.deepEqual(copy(h.run('readMeaningEditor()')),[...M('紀錄',['noun']),...M('記錄；錄製')]);
+ assert.equal(h.run("document.getElementById('wrong-checkbox').checked"),true);
+ await h.run('saveNewWord()');
+ const folders=Object.values(h.run('snapshotUserState().userFolders')).map(f=>f.name);assert.deepEqual(folders,['考前複習','容易錯']);
+ assert.deepEqual(word(h,'w_000002').lessonIds,['U8']);assert.equal(word(h,'w_000002').folderIds.length,2);assert.equal(word(h,'w_000002').isWrong,true);
+ assert.deepEqual(word(h,'w_000002').meanings,[...M('紀錄',['noun']),...M('記錄；錄製')]);
+ assert.equal(h.documents.get('users/A').revision,1);assert.equal(h.run('draftWordFolders.length'),0);
+});
+test('cancelling an inline folder draft never creates a private folder or changes the word',()=>{
+ const h=harness();h.elements.get('new-folder-name').value='取消的資料夾';h.run('stageNewWordFolder();closeAddModal();');
+ assert.equal(h.writes.length,0);assert.deepEqual(copy(h.run('snapshotUserState().userFolders')),{});assert.equal(h.run('draftWordFolders.length'),0);
+});
+test('inline duplicate folder names are rejected without erasing entered definitions',()=>{
+ const h=harness();h.setMeanings([...M('名詞獨立意思',['noun']),...M('動詞獨立意思')]);
+ h.elements.get('new-folder-name').value='同名';h.run('stageNewWordFolder()');h.elements.get('new-folder-name').value='同名';
+ assert.equal(h.run('stageNewWordFolder()'),false);assert.equal(h.run('draftWordFolders.length'),1);
+ assert.deepEqual(copy(h.run('readMeaningEditor()')),[...M('名詞獨立意思',['noun']),...M('動詞獨立意思')]);assert.equal(h.writes.length,0);
+});
 test('editing only meaning through form writes a sparse override using stable identity',async()=>{
- const h=harness();h.elements.get('new-word').value='penetrate';h.elements.get('new-meaning').value='我的穿透';
- h.run(`state.editingWordIndex=0;document.querySelectorAll=selector=>selector.includes('new-part-of-speech')?[{value:'verb'}]:selector.includes('folder-checkbox')?[{value:'lesson:U6'},{value:'lesson:U8'}]:[];`);
+ const h=harness();h.elements.get('new-word').value='penetrate';h.setMeanings(M('我的穿透'));
+ h.run(`state.editingWordIndex=0;document.querySelectorAll=selector=>selector.includes('word-meanings')?document.getElementById('word-meanings').children:selector.includes('folder-checkbox')?[{value:'lesson:U6'},{value:'lesson:U8'}]:[];`);
  await h.run('saveNewWord()');const override=h.documents.get('users/A/wordOverrides/w_000001');
- assert.equal(override.meaning,'我的穿透');assert.equal(Object.hasOwn(override,'english'),false);assert.equal(Object.hasOwn(override,'lessonIds'),false);assert.equal(Object.hasOwn(override,'folderIds'),false);
- assert.equal(word(h).id,'w_000001');assert.equal(rawCatalog[0].meaning,'穿透');
+ assert.equal(override.meanings[0].definitions.join('；'),'我的穿透');assert.equal(Object.hasOwn(override,'english'),false);assert.equal(Object.hasOwn(override,'lessonIds'),false);assert.equal(Object.hasOwn(override,'folderIds'),false);
+ assert.equal(word(h).id,'w_000001');assert.equal(rawCatalog[0].meanings[0].definitions.join('；'),'穿透');
 });
 test('derived state is never the write model',async()=>{
- const h=harness();h.run("state.words[0].meaning='rogue merged edit';state.game.reviewSelection=[state.words[0]];state.game.wrongWords=new Set(state.game.reviewSelection);");
- await h.run('saveReviewWords()');assert.equal(word(h).meaning,'穿透');assert.equal(word(h).isWrong,true);
- assert.equal(Object.hasOwn(h.documents.get('users/A/wordOverrides/w_000001'),'meaning'),false);
+ const h=harness();h.run("state.words[0].meanings[0].definitions=['rogue merged edit'];state.game.reviewSelection=[state.words[0]];state.game.wrongWords=new Set(state.game.reviewSelection);");
+ await h.run('saveReviewWords()');assert.equal(word(h).meanings[0].definitions.join('；'),'穿透');assert.equal(word(h).isWrong,true);
+ assert.equal(Object.hasOwn(h.documents.get('users/A/wordOverrides/w_000001'),'meanings'),false);
 });
 test('identical lesson/folder names have different view keys and edit independent memberships',async()=>{
  const h=harness({userFolders:{U6:{name:'U6'}},userOverrides:{w_000001:{folderIds:['U6']}}});
@@ -32,24 +59,24 @@ test('identical lesson/folder names have different view keys and edit independen
  assert.deepEqual(word(h).lessonIds,['U8']);assert.deepEqual(word(h).folderIds,['U6']);assert.equal(h.run("wordIsInFolder(state.words[0],'folder:U6')"),true);
 });
 test('hiding and restoring public words preserves modifications and uses hiddenWords existence',async()=>{
- const h=harness({userOverrides:{w_000001:{meaning:'my hidden'}}});await h.run("deletePersonalWord('w_000001')");
+ const h=harness({userOverrides:{w_000001:{meanings:M('my hidden')}}});await h.run("deletePersonalWord('w_000001')");
  assert.ok(h.documents.has('users/A/hiddenWords/w_000001'));assert.equal(h.run('state.hiddenWords.length'),1);
- h.run('closeSettingsModal=()=>{};');await h.run('restoreHiddenWords()');assert.equal(h.documents.has('users/A/hiddenWords/w_000001'),false);assert.equal(word(h).meaning,'my hidden');
+ h.run('closeSettingsModal=()=>{};');await h.run('restoreHiddenWords()');assert.equal(h.documents.has('users/A/hiddenWords/w_000001'),false);assert.equal(word(h).meanings[0].definitions.join('；'),'my hidden');
  assert.equal(h.writes.some(w=>w.path.includes('deletedDefaults')),false);
 });
 test('clear a field or whole override deletes empty sparse documents and retains current public meaning',async()=>{
- const h=harness();await h.run("commitUserMutation(model=>model.updateWordOverride('w_000001',{meaning:'mine',isWrong:true}))");
- await h.run("changeWordOverride('w_000001',model=>model.clearWordOverrideField('w_000001','meaning'))");
- assert.equal(word(h).meaning,'穿透');assert.equal(h.documents.get('users/A/wordOverrides/w_000001').isWrong,true);
+ const h=harness();await h.run("commitUserMutation(model=>model.updateWordOverride('w_000001',{meanings:M('mine'),isWrong:true}))");
+ await h.run("changeWordOverride('w_000001',model=>model.clearWordOverrideField('w_000001','meanings'))");
+ assert.equal(word(h).meanings[0].definitions.join('；'),'穿透');assert.equal(h.documents.get('users/A/wordOverrides/w_000001').isWrong,true);
  await h.run("changeWordOverride('w_000001',model=>model.clearWordOverride('w_000001'))");assert.equal(h.documents.has('users/A/wordOverrides/w_000001'),false);
 });
 test('custom word create/update/delete never changes a public entity',async()=>{
- const h=harness();await h.run("commitUserMutation(model=>model.createCustomWord({id:'c',english:'custom',meaning:'mine',partOfSpeech:['noun','verb'],lessonIds:['U6'],folderIds:[]}))");
- await h.run("commitUserMutation(model=>model.updateCustomWord('c',{english:'renamed',meaning:'changed'}))");assert.equal(h.documents.get('users/A/customWords/c').english,'renamed');
+ const h=harness();await h.run("commitUserMutation(model=>model.createCustomWord({id:'c',english:'custom',meanings:M('mine',['noun','verb']),lessonIds:['U6'],folderIds:[]}))");
+ await h.run("commitUserMutation(model=>model.updateCustomWord('c',{english:'renamed',meanings:M('changed')}))");assert.equal(h.documents.get('users/A/customWords/c').english,'renamed');
  await h.run("deletePersonalWord('c')");assert.equal(h.documents.has('users/A/customWords/c'),false);assert.equal(word(h).english,'penetrate');
 });
 test('case-insensitive duplicate form edits roll back newly created folders too',async()=>{
- const h=harness();h.elements.get('new-word').value='RECORD';h.elements.get('new-meaning').value='duplicate';h.elements.get('new-folder-name').value='New folder';
+ const h=harness();h.elements.get('new-word').value='RECORD';h.setMeanings(M('duplicate'));h.elements.get('new-folder-name').value='New folder';
  h.run('state.editingWordIndex=-1;document.querySelectorAll=()=>[];');await h.run('saveNewWord()');
  assert.equal(Object.keys(h.run('snapshotUserState().customWords')).length,0);assert.equal(Object.keys(h.run('snapshotUserState().userFolders')).length,0);
  assert.equal(h.writes.length,0);assert.match(h.events.alerts.at(-1),/Duplicate/);
@@ -65,16 +92,16 @@ test('folder deletion retains words belonging to other courses and hides only ex
  assert.deepEqual(copy(h.run('state.settings.hiddenLessonIds')),['U6']);
 });
 test('reset clears private collections and immediately derives public catalog again',async()=>{
- const h=harness();await h.run("commitUserMutation(model=>{model.updateWordOverride('w_000001',{meaning:'mine'});model.hidePublicWord('w_000001');model.createCustomWord('c',{english:'custom'});model.setFolder('f',{name:'mine'});})");
- await h.run('confirmReset()');assert.equal(h.run('state.words.length'),2);assert.equal(h.run('state.hiddenWords.length'),0);assert.equal(word(h).meaning,'穿透');
+ const h=harness();await h.run("commitUserMutation(model=>{model.updateWordOverride('w_000001',{meanings:M('mine')});model.hidePublicWord('w_000001');model.createCustomWord('c',{english:'custom'});model.setFolder('f',{name:'mine'});})");
+ await h.run('confirmReset()');assert.equal(h.run('state.words.length'),2);assert.equal(h.run('state.hiddenWords.length'),0);assert.equal(word(h).meanings[0].definitions.join('；'),'穿透');
  for(const group of ['wordOverrides','customWords','hiddenWords','folders'])assert.equal([...h.documents.keys()].some(path=>path.startsWith(`users/A/${group}/`)),false);
 });
 test('search, Chinese ordering, spelling history and practice definitions use effective canonical fields',async()=>{
- const h=harness();await h.run("commitUserMutation(model=>model.updateWordOverride('w_000001',{english:'newpenetrate',meaning:'自己的穿透',partOfSpeech:['noun','verb']}))");
- assert.equal(h.run("findSearchMatches('PEN')[0].word.id"),'w_000001');assert.equal(h.run("findSearchMatches('己透')[0].word.meaning"),'自己的穿透');
- assert.equal(h.run("getMeaningWithPartOfSpeech(state.words[0])"),'自己的穿透 (n.) / (v.)');
- assert.equal(h.run("parseMeaning('紀錄 (正式用法)；錄製',['noun','verb'])[0].text"),'紀錄 (正式用法)');
- assert.deepEqual(copy(h.run('createAnswerRecord({word:state.words[0],result:"correct"}).partOfSpeech')),['noun','verb']);
+ const h=harness();await h.run("commitUserMutation(model=>model.updateWordOverride('w_000001',{english:'newpenetrate',meanings:M('自己的穿透',['noun','verb'])}))");
+ assert.equal(h.run("findSearchMatches('PEN')[0].word.id"),'w_000001');assert.equal(h.run("findSearchMatches('己透')[0].word.meanings[0].definitions.join('；')"),'自己的穿透');
+ assert.equal(h.run("getMeaningWithPartOfSpeech(state.words[0])"),'名詞：自己的穿透\n動詞：自己的穿透');
+ assert.equal(h.run("parseMeaning(M('紀錄 (正式用法)；錄製',['noun','verb']))[0].text"),'紀錄 (正式用法)；錄製');
+ assert.deepEqual(copy(h.run('createAnswerRecord({word:state.words[0],result:"correct"}).meanings.map(group=>group.partOfSpeech)')),['noun','verb']);
 });
 test('a game timer from an older game or account cannot advance the current game',async()=>{
  const h=harness();h.run("let advanced=0;nextQuestion=()=>{advanced+=1;};scheduleGameAdvance(1);clearPracticeSession();");

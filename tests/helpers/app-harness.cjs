@@ -2,13 +2,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
+const {M} = require('./grouped-fixtures.cjs');
 const root = path.resolve(__dirname, '../..');
 
 function element(id) {
     const classes = new Set();
     const attributes = new Map();
     return {
-        id, hidden: false, inert: false, dataset: {}, value: '', textContent: '', children: [], checked: false,
+        id, className: '', hidden: false, inert: false, dataset: {}, value: '', textContent: '', children: [], checked: false,
         classList: {
             add: (...names) => names.forEach(name => classes.add(name)),
             remove: (...names) => names.forEach(name => classes.delete(name)),
@@ -20,11 +21,14 @@ function element(id) {
         toggleAttribute(name, force = !attributes.has(name)) { if (force) attributes.set(name, ''); else attributes.delete(name); },
         removeAttribute(name) { attributes.delete(name); },
         querySelectorAll(selector) {
-            return this.children.flatMap(child => [child, ...child.querySelectorAll('*')]).filter(child =>
-                selector === '*' || (selector.includes('word-pos') && child.name === 'word-pos' &&
-                    (!selector.includes(':checked') || child.checked)));
+            const [query] = selector.split(':');
+            return this.children.flatMap(child => [child, ...child.querySelectorAll('*')]).filter(child => {
+                const matches = query === '*' || (query.startsWith('.') ? child.className.split(' ').includes(query.slice(1)) : child.id === query);
+                return matches && (!selector.includes(':checked') || child.checked);
+            });
         },
         querySelector(selector) { return this.querySelectorAll(selector)[0] || null; },
+        append(...children) { this.children.push(...children); },
         replaceChildren(...children) { this.children = children; this.textContent = ''; },
         addEventListener() {}, removeEventListener() {}, focus() {}, pause() {},
         appendChild(child) { this.children.push(child); },
@@ -35,6 +39,10 @@ function element(id) {
 function createAppHarness({ firebase = {}, persistence: injectedPersistence } = {}) {
     const elements = new Map();
     const getElement = id => {
+        for (const root of elements.values()) {
+            const found = root.querySelectorAll('*').find(child => child.id === id);
+            if (found) return found;
+        }
         if (!elements.has(id)) elements.set(id, element(id));
         return elements.get(id);
     };
@@ -45,7 +53,7 @@ function createAppHarness({ firebase = {}, persistence: injectedPersistence } = 
     const emptySnapshot = { exists: () => false, data: () => ({}) };
     const context = vm.createContext({
         console: { log() {}, warn() {}, error: (...args) => events.errors.push(args) },
-        URL, TextEncoder, Date, Promise, crypto: require('node:crypto').webcrypto, queueMicrotask, setTimeout(callback, delay) {
+        M, Option: function(text,value){return Object.assign(element('option'),{textContent:text,value});}, URL, TextEncoder, Date, Promise, crypto: require('node:crypto').webcrypto, queueMicrotask, setTimeout(callback, delay) {
             if (delay === 15000 || delay === 120000) { const id = nextTimer++; syncTimeouts.set(id, callback); return id; }
             const timer = setTimeout(callback, delay); timer.unref(); return timer;
         },
@@ -55,13 +63,13 @@ function createAppHarness({ firebase = {}, persistence: injectedPersistence } = 
         history: { replaceState() {}, pushState() {} },
         document: {
             body: getElement('body'), getElementById: getElement,
-            querySelectorAll: selector => getElement('new-part-of-speech').querySelectorAll(selector),
-            querySelector: selector => getElement('new-part-of-speech').querySelector(selector),
+            querySelectorAll: selector => selector.startsWith('#word-meanings ') ? getElement('word-meanings').querySelectorAll(selector.split(' ')[1]) : getElement('folder-selection-container').querySelectorAll(selector),
+            querySelector: selector => getElement(selector),
             addEventListener() {}, createElement: tag => element(tag)
         },
         window: {
             location: 'https://example.test/?page=library', scrollTo() {},
-            crypto: { randomUUID: () => 'test-uuid' }, speechSynthesis: { cancel() {} },
+            crypto: require('node:crypto').webcrypto, speechSynthesis: { cancel() {} },
             addEventListener() {}
         },
         initializeApp: () => ({}), getAuth: () => auth, getFirestore: () => ({}),
@@ -103,9 +111,13 @@ function createAppHarness({ firebase = {}, persistence: injectedPersistence } = 
     `);
     return {
         context, run, elements, auth, events,
-        setPartOfSpeech(values) {
-            getElement('new-part-of-speech').replaceChildren(...values.map(value =>
-                Object.assign(element(`pos-${value}`), { name: 'word-pos', value, checked: true })));
+        setMeanings(groups) {
+            getElement('word-meanings').replaceChildren(...groups.map(group => {
+                const row = element('div'); row.className = 'meaning-group';
+                row.append(Object.assign(element('select'), {className:'meaning-pos',value:group.partOfSpeech}),
+                    Object.assign(element('textarea'), {className:'meaning-definitions',value:group.definitions.join('；')}));
+                return row;
+            }));
         },
         fireSyncTimeouts() {
             const callbacks = [...syncTimeouts.values()]; syncTimeouts.clear(); callbacks.forEach(callback => callback());

@@ -73,8 +73,8 @@
         }
     </style>
 
-    <link rel="stylesheet" href="./assets/tailwind.css?v=20260906-schema-v5">
-    <link rel="stylesheet" href="./assets/styles.css?v=20260906-schema-v5">
+    <link rel="stylesheet" href="./assets/tailwind.css?v=20260907-schema-v6">
+    <link rel="stylesheet" href="./assets/styles.css?v=20260907-schema-v6">
 </head>
 <body class="bg-gray-50 min-h-screen font-sans pb-24" aria-busy="true">
 
@@ -410,29 +410,11 @@
                 <label class="text-xs text-gray-500 font-bold ml-1">英文</label>
                 <input type="text" id="new-word" class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 outline-none text-lg">
             </div>
-            <div>
-                <label class="text-xs text-gray-500 font-bold ml-1">中文意思</label>
-                <input type="text" id="new-meaning" class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 outline-none text-lg">
-            </div>
-            <div>
-                <label class="text-xs text-gray-500 font-bold ml-1">詞性</label>
-                <div id="new-part-of-speech" role="group" aria-label="詞性（可複選）" class="grid grid-cols-3 gap-2 border-2 border-gray-200 p-3 rounded-xl">
-                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="noun">名詞</label>
-                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="verb">動詞</label>
-                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="adjective">形容詞</label>
-                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="adverb">副詞</label>
-                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="pronoun">代名詞</label>
-                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="preposition">介系詞</label>
-                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="conjunction">連接詞</label>
-                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="interjection">感嘆詞</label>
-                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="other">其他</label>
-                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="determiner">限定詞</label>
-                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="article">冠詞</label>
-                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="numeral">數詞</label>
-                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="auxiliary">助動詞</label>
-                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="word-pos" value="phrase">片語</label>
-                </div>
-            </div>
+            <section aria-label="各詞性的中文意思" class="space-y-2">
+                <p class="text-xs text-gray-500 font-bold ml-1">中文意思（依詞性分組）</p>
+                <div id="word-meanings" class="space-y-2"></div>
+                <button id="btn-add-meaning-group" type="button" class="w-full p-2 bg-indigo-50 text-indigo-600 rounded-xl font-bold">＋ 新增一組詞性與意思</button>
+            </section>
             <div>
                 <p id="word-folder-selection-label" class="text-xs text-gray-500 font-bold ml-1">課程與個人資料夾（可複選）</p>
 
@@ -444,13 +426,12 @@
                     class="mt-1 max-h-48 overflow-y-auto custom-scrollbar border-2 border-gray-200 rounded-xl bg-gray-50 p-2 text-sm space-y-1">
                 </div>
 
-                <!-- 新增並加入資料夾（選填） -->
-                <input
-                    type="text"
-                    id="new-folder-name"
-                    maxlength="40"
-                    placeholder="可選：再建立並加入一個新資料夾"
-                    class="mt-2 w-full border-2 border-gray-200 p-2 rounded-xl focus:border-indigo-500 outline-none text-sm">
+                <div class="mt-2 border-2 border-indigo-100 rounded-xl p-2 space-y-2">
+                    <label for="new-folder-name" class="text-sm font-bold text-indigo-700">直接新增個人資料夾</label>
+                    <input type="text" id="new-folder-name" maxlength="40" placeholder="輸入新資料夾名稱" class="w-full border-2 border-gray-200 p-2 rounded-lg outline-none focus:border-indigo-500 text-sm">
+                    <button id="btn-add-word-folder" type="button" class="w-full p-2 bg-indigo-600 text-white rounded-lg font-bold">＋ 新增並勾選資料夾</button>
+                    <p id="word-folder-feedback" aria-live="polite" class="text-xs text-gray-500">儲存單字時一併建立。</p>
+                </div>
 
                 <p class="text-xs text-gray-400 mt-1 ml-1">
                     * 可同時加入多個資料夾；取消勾選只移除你的課程歸屬，不會隱藏整個單字。
@@ -583,9 +564,9 @@
 </div>
 
 <!-- 共用資料合併規則與主程式 -->
-<script src="./assets/word-data.js?v=20260906-schema-v5"></script>
-<script src="./assets/migration.js?v=20260906-schema-v5"></script>
-<script src="./assets/persistence.js?v=20260906-schema-v5"></script>
-<script type="module" src="./assets/app.js?v=20260906-schema-v5"></script>
+<script src="./assets/word-data.js?v=20260907-schema-v6"></script>
+<script src="./assets/migration.js?v=20260907-schema-v6"></script>
+<script src="./assets/persistence.js?v=20260907-schema-v6"></script>
+<script type="module" src="./assets/app.js?v=20260907-schema-v6"></script>
 </body>
 </html>

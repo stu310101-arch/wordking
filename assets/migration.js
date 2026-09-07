@@ -1,4 +1,4 @@
-/* Schema 5 migration planner. Pure: never fetches, writes, or compares against
+/* Schema 6 migration planner. Pure: never fetches, writes, or compares against
  * today's effective words. All uncertain inputs remain in the caller's backup.
  * sources: {root, wordOverrides/customWords/folders/deletedDefaults/hiddenWords:
  * [{id,data}], settings}. Document-path IDs always outrank payload IDs.
@@ -11,7 +11,7 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (wordData) {
     'use strict';
 
-    const SCHEMA_VERSION = 5;
+    const SCHEMA_VERSION = 6;
     const own = (value, key) => Object.prototype.hasOwnProperty.call(value || {}, key);
     const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
     const copy = value => Array.isArray(value) ? value.map(copy) : object(value)
@@ -49,9 +49,9 @@
         plain(value, label);
         return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, json(item, label)]));
     }
-    function fields(raw, custom = false) {
+    function validateWordFields(raw, contentFields, custom) {
         plain(raw, 'word');
-        const allowed = ['english', 'meaning', 'partOfSpeech', 'isWrong', 'folderIds',
+        const allowed = ['english', ...contentFields, 'isWrong', 'folderIds',
             ...(custom ? ['lessonIds'] : ['addedLessonIds', 'removedLessonIds'])];
         if (Object.keys(raw).some(key => !allowed.includes(key))) throw error('invalid-canonical-snapshot', 'Unknown word field');
         const result = {};
@@ -69,6 +69,7 @@
             if (key === 'partOfSpeech' && values.some(value => !POS.has(value))) throw error('invalid-canonical-snapshot', 'Unknown part of speech');
             if (values.length || !['addedLessonIds', 'removedLessonIds', 'folderIds'].includes(key) || custom) result[key] = values;
         }
+        if (own(raw, 'meanings')) result.meanings = wordData.normalizeMeanings(raw.meanings);
         if (!custom) {
             const removed = new Set(result.removedLessonIds || []);
             if (result.addedLessonIds) {
@@ -79,6 +80,38 @@
             for (const key of allowed) if (!own(result, key)) throw error('invalid-canonical-snapshot', `Custom word missing ${key}`);
         }
         return result;
+    }
+    function legacyFields(raw, custom = false) {
+        return validateWordFields(raw, ['meaning', 'partOfSpeech'], custom);
+    }
+    function fields(raw, custom = false) {
+        return validateWordFields(raw, ['meanings'], custom);
+    }
+    function convertLegacyMeanings(text, positions = []) {
+        if (typeof text !== 'string') throw error('invalid-legacy-meaning', 'Legacy meaning must be text');
+        const fallback = positions.length ? positions : ['other'];
+        const groups = new Map();
+        const add = (pos, text) => groups.set(pos, unique([...(groups.get(pos) || []), ...text.split(/[;；]/).map(t => t.trim()).filter(Boolean)]));
+        for (const part of text.split(/\s*\/\s*/)) {
+            // One definition may end in several labels, e.g. "攀爬 (v.)(n.)".
+            // Remove only recognized trailing POS labels; retain ordinary notes.
+            let definition = part;
+            const labels = [];
+            for (;;) {
+                const match = definition.match(/^(.*?)[（(]([^()（）]+)[)）]\s*$/);
+                const parsed = match ? match[2].toLowerCase().replace(/[.]/g, '').split(/[,、\s]+/).filter(Boolean).map(pos => POS_ALIASES[pos] || pos) : [];
+                if (!parsed.length || !parsed.every(pos => POS.has(pos))) break;
+                labels.push(...parsed);
+                definition = match[1];
+            }
+            (labels.length ? unique(labels) : fallback).forEach(pos => add(pos, definition));
+        }
+        return wordData.normalizeMeanings([...groups].map(([partOfSpeech, definitions]) => ({ partOfSpeech, definitions })));
+    }
+    function mergeMeanings(...sets) {
+        const groups = new Map();
+        for (const set of sets) for (const group of set) groups.set(group.partOfSpeech, unique([...(groups.get(group.partOfSpeech) || []), ...group.definitions]));
+        return wordData.normalizeMeanings([...groups].map(([partOfSpeech, definitions]) => ({ partOfSpeech, definitions })));
     }
     function emptySnapshot() { return { userOverrides: {}, customWords: {}, hiddenWordIds: [], userFolders: {}, settings: {} }; }
     function normalizeSnapshot(raw) {
@@ -110,13 +143,13 @@
 
     function createMigrationPlan(sources = {}, inputs = {}) {
         const root = sources.root || {};
-        if (Number(root.schemaVersion) > 5) throw error('unsupported-schema-version', 'A newer client schema is required');
+        if (Number(root.schemaVersion) > 6) throw error('unsupported-schema-version', 'A newer client schema is required');
         for (const name of ['wordOverrides', 'customWords', 'folders', 'hiddenWords', 'deletedDefaults']) {
-            for (const row of sources[name] || []) if (Number((row.data || row).schemaVersion) > 5) {
+            for (const row of sources[name] || []) if (Number((row.data || row).schemaVersion) > 6) {
                 throw error('unsupported-schema-version', `Newer ${name} schema`);
             }
         }
-        if (Number(sources.settings?.schemaVersion) > 5) throw error('unsupported-schema-version', 'Newer settings schema');
+        if (Number(sources.settings?.schemaVersion) > 6) throw error('unsupported-schema-version', 'Newer settings schema');
         const snapshot = emptySnapshot();
         const conflicts = [];
         const report = (source, reason, details = {}) => conflicts.push({ source, reason, ...copy(details) });
@@ -138,7 +171,12 @@
         for (const word of oldCatalog) { try { oldById.set(decodeURIComponent(word.id), word); } catch {} }
         const newIds = new Set([...catalog.map(word => word.id), ...Object.values(aliases).filter(id => typeof id === 'string')]);
         const lessonIds = new Set([...catalog.flatMap(word => word.lessonIds || []), ...Object.values(tagsById).flatMap(value => Array.isArray(value) ? value : [])]);
-        const importRoot = !root.migratedToDiffStorageAt;
+        // The root advances to 6 before staging. A retry before journal-ready
+        // must still respect the completed v5 cutover and ignore its old backups.
+        const upgradingV5 = root.schemaVersion >= 5 && root.migrationV5?.status === 'complete';
+        const completedV6 = root.schemaVersion === SCHEMA_VERSION && root.migrationV6?.status === 'complete';
+        const sourceVersion = completedV6 ? SCHEMA_VERSION : upgradingV5 ? 5 : null;
+        const importRoot = !root.migratedToDiffStorageAt && sourceVersion === null;
         function resolve(id) {
             if (typeof id !== 'string') return null;
             if (newIds.has(id) && /^w_[0-9]{6}$/.test(id)) return id;
@@ -146,7 +184,8 @@
             return typeof value === 'string' && validId(value) ? value : null;
         }
         function rows(name) {
-            return (sources[name] || []).map(row => ({ id: row.id, raw: own(row, 'data') ? row.data : row, source: `${name}/${row.id}`, priority: 2 }));
+            return (sources[name] || []).filter(row => sourceVersion === null || (row.data || row).schemaVersion === sourceVersion)
+                .map(row => ({ id: row.id, raw: own(row, 'data') ? row.data : row, source: `${name}/${row.id}`, priority: 2 }));
         }
         function safe(source, operation) {
             try { return operation(); } catch (cause) {
@@ -226,10 +265,10 @@
         function migrateFields(row, custom) {
             const raw = row.raw;
             if (!object(raw)) throw new Error('Expected a word record');
-            if (Number(raw.schemaVersion) > 5) throw error('unsupported-schema-version', 'Newer word schema');
-            if (raw.schemaVersion === 5) {
+            if (Number(raw.schemaVersion) > 6) throw error('unsupported-schema-version', 'Newer word schema');
+            if (raw.schemaVersion === 6 || raw.schemaVersion === 5) {
                 const clean = Object.fromEntries(Object.entries(raw).filter(([key]) => !['id', 'schemaVersion', 'updatedAt', 'createdAt'].includes(key)));
-                return fields(clean, custom);
+                return raw.schemaVersion === 6 ? fields(clean, custom) : canonicalize(legacyFields(clean, custom), row, custom);
             }
             const result = {};
             const oldId = own(previousAliases, row.id) ? previousAliases[row.id] : row.id;
@@ -283,6 +322,23 @@
                 result.addedLessonIds = desired.filter(id => !frozen.includes(id));
                 result.removedLessonIds = frozen.filter(id => !desired.includes(id));
             }
+            return canonicalize(legacyFields(result, custom), row, custom);
+        }
+        function canonicalize(raw, row, custom) {
+            const result = { ...raw };
+            if (own(raw, 'meaning') || own(raw, 'partOfSpeech')) {
+                const base = catalog.find(word => word.id === resolve(row.id));
+                const positions = own(raw, 'partOfSpeech') ? raw.partOfSpeech : (base?.meanings || []).map(group => group.partOfSpeech);
+                const text = own(raw, 'meaning') ? row.raw.meaning : (base?.meanings || []).flatMap(group => group.definitions).join('；');
+                result.meanings = convertLegacyMeanings(text || '', positions);
+                const frozen = (inputs.v5Catalog || []).find(word => word.id === resolve(row.id));
+                const original = frozen && oldByEnglish.get(frozen.english);
+                const matchesFrozen = frozen && original && (!own(raw, 'meaning') || raw.meaning === frozen.meaning) &&
+                    (!own(raw, 'partOfSpeech') || equal([...raw.partOfSpeech].sort(), [...frozen.partOfSpeech].sort()));
+                if (row.raw.schemaVersion === 5 && matchesFrozen) result.meanings = convertLegacyMeanings(original.meaning, frozen.partOfSpeech);
+                else if (row.raw.schemaVersion === 5 && positions.length > 1) report(row.source, 'flat-v5-meaning-grouping-preserved', { positions });
+                delete result.meaning; delete result.partOfSpeech;
+            }
             return fields(result, custom);
         }
         const overrideRows = rows('wordOverrides');
@@ -313,7 +369,7 @@
             return Number.isFinite(parsed) ? parsed : 0;
         }
         for (const [id, all] of groups) {
-            const authoritative = all.filter(row => row.raw.schemaVersion === 5 ||
+            const authoritative = all.filter(row => row.raw.schemaVersion >= 5 ||
                 (row.raw.supersedesLegacyAliases === true && !own(previousAliases, row.id)));
             const candidates = authoritative.length ? authoritative : all;
             const values = candidates.map(row => ({ ...row, value: safe(row.source, () => migrateFields(row, false)) }))
@@ -377,7 +433,8 @@
             else report(row.source, 'unknown-hidden-id', { legacyId: row.id });
         }
         snapshot.hiddenWordIds = [...hidden].filter(([, value]) => value).map(([id]) => id);
-        const settings = { ...(importRoot && object(root.settings) ? root.settings : {}), ...(sources.settings || {}) };
+        const currentSettings = sourceVersion !== null && sources.settings?.schemaVersion !== sourceVersion ? {} : sources.settings;
+        const settings = { ...(importRoot && object(root.settings) ? root.settings : {}), ...(currentSettings || {}) };
         delete settings.schemaVersion; delete settings.updatedAt; delete settings.createdAt;
         if (own(settings, 'deletedLessonIds')) {
             if (Array.isArray(settings.deletedLessonIds)) settings.hiddenLessonIds = unique([...(settings.hiddenLessonIds || []), ...settings.deletedLessonIds]);
@@ -401,11 +458,11 @@
             if (!changed) break;
         }
         const byEnglish = new Map();
-        const mergeText = (...texts) => unique(texts.filter(Boolean).flatMap(text => text.split(/[;；]/).map(part => part.trim()).filter(Boolean))).join('；');
+
         for (const word of catalog) {
             const over = snapshot.userOverrides[word.id] || {};
             byEnglish.set((over.english ?? word.english).trim().toLowerCase(), { id: word.id, public: true, word: {
-                ...word, ...Object.fromEntries(Object.entries(over).filter(([key]) => ['english','meaning','partOfSpeech','isWrong'].includes(key))),
+                ...word, ...Object.fromEntries(Object.entries(over).filter(([key]) => ['english','meanings','isWrong'].includes(key))),
                 lessonIds: unique([...word.lessonIds, ...(over.addedLessonIds || [])]).filter(id => !(over.removedLessonIds || []).includes(id)),
                 folderIds: over.folderIds || []
             } });
@@ -414,14 +471,13 @@
             const key = word.english.trim().toLowerCase();
             const existing = byEnglish.get(key);
             if (!existing) { byEnglish.set(key, { id, word, public: false }); continue; }
-            const merged = { ...existing.word, meaning: mergeText(existing.word.meaning, word.meaning),
-                partOfSpeech: unique([...(existing.word.partOfSpeech || []), ...word.partOfSpeech]),
+            const merged = { ...existing.word, meanings: mergeMeanings(existing.word.meanings, word.meanings),
                 lessonIds: unique([...existing.word.lessonIds, ...word.lessonIds]), folderIds: unique([...existing.word.folderIds, ...word.folderIds]),
                 isWrong: !!existing.word.isWrong || word.isWrong };
             if (existing.public) {
                 const base = catalog.find(item => item.id === existing.id);
                 const override = { ...(snapshot.userOverrides[existing.id] || {}) };
-                for (const field of ['meaning','partOfSpeech','isWrong']) if (!equal(merged[field], base[field])) override[field] = merged[field];
+                for (const field of ['meanings','isWrong']) if (!equal(merged[field], base[field])) override[field] = merged[field];
                 override.addedLessonIds = unique([...(override.addedLessonIds || []), ...merged.lessonIds.filter(id => !base.lessonIds.includes(id))]);
                 override.removedLessonIds = (override.removedLessonIds || []).filter(id => !word.lessonIds.includes(id));
                 override.folderIds = merged.folderIds;
@@ -438,5 +494,5 @@
         return { snapshot: normalizeSnapshot(canonical), conflicts };
     }
 
-    return Object.freeze({ SCHEMA_VERSION, emptySnapshot, normalizeSnapshot, createMigrationPlan, validId });
+    return Object.freeze({ SCHEMA_VERSION, emptySnapshot, normalizeSnapshot, createMigrationPlan, convertLegacyMeanings, mergeMeanings, validId });
 });

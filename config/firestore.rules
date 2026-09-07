@@ -11,15 +11,14 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(userId)).data.get('schemaVersion', 0) >= 5;
     }
 
-    function canonicalWrite(name) {
-      return request.resource.data.get('schemaVersion', 0) == 5 &&
-        (name != 'wordOverrides' || request.resource.data.keys().hasOnly([
-          'english', 'meaning', 'partOfSpeech', 'isWrong', 'addedLessonIds', 'removedLessonIds',
-          'folderIds', 'schemaVersion', 'updatedAt'
-        ])) &&
-        (name != 'customWords' || request.resource.data.keys().hasOnly([
-          'english', 'meaning', 'partOfSpeech', 'isWrong', 'lessonIds', 'folderIds', 'schemaVersion', 'updatedAt'
-        ]));
+    function canonicalWrite(userId, name) {
+      let version = getAfter(/databases/$(database)/documents/users/$(userId)).data.get('schemaVersion', 0);
+      let contentFields = version == 6 ? ['meanings'] : ['meaning', 'partOfSpeech'];
+      return version in [5, 6] && request.resource.data.get('schemaVersion', 0) == version &&
+        (name != 'wordOverrides' || request.resource.data.keys().hasOnly(
+          ['english', 'isWrong', 'addedLessonIds', 'removedLessonIds', 'folderIds', 'schemaVersion', 'updatedAt'].concat(contentFields))) &&
+        (name != 'customWords' || request.resource.data.keys().hasOnly(
+          ['english', 'isWrong', 'lessonIds', 'folderIds', 'schemaVersion', 'updatedAt'].concat(contentFields)));
     }
 
     match /users/{userId} {
@@ -29,18 +28,18 @@ service cloud.firestore {
       allow update: if isOwner(userId) &&
         (resource.data.get('schemaVersion', 0) < 5 ||
           (request.resource.data.get('schemaVersion', 0) >= resource.data.schemaVersion &&
-            (!request.resource.data.keys().hasAny(['syncLock']) || request.resource.data.syncLock.get('protocol', 0) == 5) &&
+            (!request.resource.data.keys().hasAny(['syncLock']) || request.resource.data.syncLock.get('protocol', 0) == request.resource.data.schemaVersion) &&
             !request.resource.data.diff(resource.data).affectedKeys().hasAny(['syncRecoveredAt', 'syncInterruptedAt'])));
 
       match /{name}/{documentId} {
         allow read: if isOwner(userId);
         allow create, update: if isOwner(userId) &&
           (!usesV5(userId) ||
-            (name in ['wordOverrides', 'customWords', 'hiddenWords', 'folders', 'settings'] && canonicalWrite(name)) ||
+            (name in ['wordOverrides', 'customWords', 'hiddenWords', 'folders', 'settings'] && canonicalWrite(userId, name)) ||
             name == 'migrationBackups');
         allow delete: if isOwner(userId) &&
           (!usesV5(userId) || name == 'migrationBackups' ||
-            (name in ['wordOverrides', 'customWords', 'hiddenWords', 'folders', 'settings'] && resource.data.get('schemaVersion', 0) == 5));
+            (name in ['wordOverrides', 'customWords', 'hiddenWords', 'folders', 'settings'] && resource.data.get('schemaVersion', 0) in [5, 6]));
       }
       match /migrationBackups/{backupId}/{document=**} {
         allow read, write: if isOwner(userId);

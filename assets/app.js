@@ -156,9 +156,58 @@ function groupInfo(key) {
     return separator < 0 ? { kind: 'system', id: key }
         : { kind: key.slice(0, separator), id: key.slice(separator + 1) };
 }
-function normalizePartOfSpeech(value) { return wordData.normalizePartOfSpeech(value); }
-function getPartOfSpeechShort(value) {
-    return normalizePartOfSpeech(value).map(pos => PART_OF_SPEECH_OPTIONS[pos]?.short || '').filter(Boolean).join(' / ');
+function meaningSearchText(word) { return formatMeaning(word.meanings); }
+let draftWordFolders = [];
+function readMeaningEditor() {
+    return wordData.normalizeMeanings(Array.from(document.querySelectorAll('#word-meanings .meaning-group')).map(row => ({
+        partOfSpeech: row.querySelector('.meaning-pos').value,
+        definitions: row.querySelector('.meaning-definitions').value.split(/[;；\n]/).map(text => text.trim()).filter(Boolean)
+    })));
+}
+function addMeaningGroup(group) {
+    const container = document.getElementById('word-meanings');
+    const used = Array.from(container.querySelectorAll('.meaning-pos')).map(input => input.value);
+    const partOfSpeech = group?.partOfSpeech || wordData.PARTS_OF_SPEECH.find(pos => !used.includes(pos));
+    if (!partOfSpeech) { alert('所有詞性都已加入，可直接編輯各組中文意思。'); return; }
+    const row = document.createElement('div');
+    row.className = 'meaning-group border-2 border-gray-200 rounded-xl p-3 space-y-2';
+    const heading = document.createElement('div'); heading.className = 'flex items-center gap-2';
+    const select = document.createElement('select'); select.className = 'meaning-pos flex-1 min-w-0 p-2 rounded-lg bg-indigo-50 text-indigo-700 font-bold';
+    select.setAttribute('aria-label', '這組中文意思的詞性');
+    wordData.PARTS_OF_SPEECH.forEach(pos => select.appendChild(new Option(PART_OF_SPEECH_OPTIONS[pos].label, pos)));
+    select.value = partOfSpeech;
+    const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'p-2 text-red-500 text-sm'; remove.textContent = '移除';
+    const input = document.createElement('textarea'); input.className = 'meaning-definitions w-full p-2 border rounded-lg outline-none focus:border-indigo-500';
+    input.rows = 2; input.placeholder = '輸入中文意思；多個意思可用分號或換行'; input.value = (group?.definitions || []).join('；');
+    let previous = partOfSpeech;
+    const label = () => { const name = PART_OF_SPEECH_OPTIONS[select.value].label; input.setAttribute('aria-label', `${name}中文意思`); remove.setAttribute('aria-label', `移除${name}這組意思`); };
+    label();
+    select.addEventListener('change', () => {
+        if (Array.from(container.querySelectorAll('.meaning-pos')).some(other => other !== select && other.value === select.value)) {
+            alert('這個詞性已存在，請在原本那組編輯中文意思。'); select.value = previous;
+        } else previous = select.value;
+        label();
+    });
+    remove.addEventListener('click', () => row.remove());
+    heading.append(select, remove); row.append(heading, input); container.appendChild(row);
+}
+function renderMeaningEditor(meanings) {
+    document.getElementById('word-meanings').replaceChildren();
+    meanings.forEach(group => addMeaningGroup(group));
+}
+function stageNewWordFolder() {
+    const input = document.getElementById('new-folder-name');
+    const validation = validateFolderName(input.value);
+    if (!validation.valid) { alert(validation.message); return false; }
+    if (draftWordFolders.some(folder => folder.name === validation.name)) { alert('這個資料夾已加入下方選單。'); return false; }
+    const selected = Array.from(document.querySelectorAll('.folder-checkbox:checked')).map(input => input.value);
+    const isWrong = !!document.getElementById('wrong-checkbox')?.checked;
+    const folder = { id: `f_${window.crypto.randomUUID()}`, name: validation.name };
+    draftWordFolders.push(folder);
+    renderFolderSelection([...selected, groupKey('folder', folder.id)], isWrong);
+    input.value = '';
+    document.getElementById('word-folder-feedback').textContent = `已勾選「${folder.name}」，儲存單字時一併建立。`;
+    return true;
 }
 function normalizeFolderId(value) {
     const id = typeof value === 'string' ? value.trim() : '';
@@ -714,6 +763,7 @@ function assertCurrentUserSession(user, generation) {
 }
 
 function clearPersonalSessionData() {
+    draftWordFolders = [];
     isUserDataReady = false;
     userWordState = null;
     state.recovery = null;
@@ -1031,7 +1081,7 @@ function compareSearchText(a, b, locale) {
 
 function compareEnglishSearchCandidates(a, b) {
     return compareSearchText(a.word.english, b.word.english, 'en') ||
-        compareSearchText(a.word.meaning, b.word.meaning, 'zh-Hant') ||
+        compareSearchText(meaningSearchText(a.word), meaningSearchText(b.word), 'zh-Hant') ||
         compareSearchText(a.folderName, b.folderName, 'zh-Hant') ||
         compareSearchText(a.key, b.key, 'en');
 }
@@ -1042,7 +1092,7 @@ function compareChineseSearchCandidates(a, b) {
         const difference = a.chineseScore[field] - b.chineseScore[field];
         if (difference) return difference;
     }
-    return compareSearchText(a.word.meaning, b.word.meaning, 'zh-Hant') ||
+    return compareSearchText(meaningSearchText(a.word), meaningSearchText(b.word), 'zh-Hant') ||
         compareSearchText(a.word.english, b.word.english, 'en') ||
         compareSearchText(a.folderName, b.folderName, 'zh-Hant') ||
         compareSearchText(a.key, b.key, 'en');
@@ -1083,10 +1133,10 @@ function findSearchMatches(query, words = state.words) {
         }
 
         if (chineseQuery) {
-            chineseMatchIndexes = findOrderedMatchIndexes(word.meaning, normalizedQuery);
+            chineseMatchIndexes = findOrderedMatchIndexes(meaningSearchText(word), normalizedQuery);
             if (!chineseMatchIndexes && englishMatchStart === -1) return;
             chineseScore = chineseMatchIndexes
-                ? getChineseMatchScore(word.meaning, normalizedQuery, chineseMatchIndexes)
+                ? getChineseMatchScore(meaningSearchText(word), normalizedQuery, chineseMatchIndexes)
                 : {
                     exact: 2,
                     contiguous: 2,
@@ -1276,9 +1326,9 @@ function createSearchSuggestionOption(candidate, index, renderId) {
     const meaning = document.createElement('span');
     meaning.className = 'block truncate text-xs text-gray-600';
     if (candidate.chineseMatchIndexes) {
-        appendHighlightedIndexes(meaning, candidate.word.meaning, candidate.chineseMatchIndexes);
+        appendHighlightedIndexes(meaning, meaningSearchText(candidate.word), candidate.chineseMatchIndexes);
     } else {
-        meaning.textContent = candidate.word.meaning || '';
+        meaning.textContent = meaningSearchText(candidate.word) || '';
     }
     textWrap.append(english, meaning);
 
@@ -1652,23 +1702,22 @@ function openAddModal(idx = -1) {
     closeSearchSuggestions({ clearResults: true });
     state.editingWordIndex = idx;
     const modal = document.getElementById('add-modal');
-    const tagInput = document.getElementById('new-folder-name');
-    const partOfSpeechInput = document.getElementById('new-part-of-speech');
+    const folderInput = document.getElementById('new-folder-name');
+    draftWordFolders = [];
+    document.getElementById('word-folder-feedback').textContent = '';
     document.getElementById('modal-title').innerText = idx >= 0 ? '編輯單字' : '新增單字';
 
     if (idx >= 0) {
         const w = state.words[idx];
         document.getElementById('new-word').value = w.english;
-        document.getElementById('new-meaning').value = w.meaning;
-        if (partOfSpeechInput) partOfSpeechInput.querySelectorAll('input').forEach(input => { input.checked = w.partOfSpeech.includes(input.value); });
+        renderMeaningEditor(w.meanings);
         renderFolderSelection(
             getWordSourceFolderIds(w),
             !!w.isWrong
         );
     } else {
         document.getElementById('new-word').value = '';
-        document.getElementById('new-meaning').value = '';
-        if (partOfSpeechInput) partOfSpeechInput.querySelectorAll('input').forEach(input => { input.checked = false; });
+        renderMeaningEditor([{ partOfSpeech: 'noun', definitions: [] }]);
         let preSelectedFolderId = '';
         const wordListView = document.getElementById('view-word-list');
         const currentTitle = document.getElementById('list-title');
@@ -1679,7 +1728,7 @@ function openAddModal(idx = -1) {
         }
         renderFolderSelection(preSelectedFolderId ? [preSelectedFolderId] : [], current === WRONG_FOLDER);
     }
-    if (tagInput) tagInput.value = '';
+    if (folderInput) folderInput.value = '';
     renderPersonalWordActions(idx >= 0 ? state.words[idx] : null);
     openModal(modal, '#new-word');
 }
@@ -1700,7 +1749,7 @@ function renderPersonalWordActions(word) {
     };
     if (word.source === 'public') {
         const override = userWordState.getWordOverride(word.id) || {};
-        const names = { english: '英文', meaning: '中文意思', partOfSpeech: '詞性', isWrong: '待複習狀態' };
+        const names = { english: '英文', meanings: '各詞性中文意思', isWrong: '待複習狀態' };
         Object.keys(names).filter(field => Object.hasOwn(override, field)).forEach(field => {
             addAction(`恢復公用${names[field]}`, () => changeWordOverride(word.id, model => model.clearWordOverrideField(word.id, field)));
         });
@@ -1751,6 +1800,7 @@ async function restoreHiddenWords() {
 }
 
 function closeAddModal() {
+    draftWordFolders = [];
     closeModal('add-modal');
     state.editingWordIndex = -1;
 }
@@ -1761,7 +1811,7 @@ function renderFolderSelection(selectedFolderIds = [], isWrong = false) {
     container.replaceChildren();
 
     const selected = new Set(normalizeFolderIds(selectedFolderIds));
-    const normalFolderIds = state.folderIds.filter(folderId => (
+    const normalFolderIds = [...state.folderIds, ...draftWordFolders.map(folder => groupKey('folder', folder.id))].filter(folderId => (
         folderId !== WRONG_FOLDER && folderId !== UNFILED_FOLDER
     ));
     if (!normalFolderIds.length) {
@@ -1785,7 +1835,7 @@ function renderFolderSelection(selectedFolderIds = [], isWrong = false) {
 
         const span = document.createElement('span');
         span.className = 'text-sm text-gray-700 min-w-0 break-all';
-        span.textContent = `${isLessonFolder(folderId) ? '課程' : '資料夾'}：${getFolderDisplayName(folderId)}`;
+        span.textContent = `${isLessonFolder(folderId) ? '課程' : '資料夾'}：${draftWordFolders.find(folder => groupKey('folder', folder.id) === folderId)?.name || getFolderDisplayName(folderId)}`;
 
         label.append(checkbox, span);
         container.appendChild(label);
@@ -1815,40 +1865,21 @@ function renderFolderSelection(selectedFolderIds = [], isWrong = false) {
 async function saveNewWord() {
     if (!requireLoginForChange()) return;
     const eng = document.getElementById('new-word').value.trim();
-    const mean = document.getElementById('new-meaning').value.trim();
-    const partOfSpeech = Array.from(document.querySelectorAll('#new-part-of-speech input:checked')).map(input => input.value);
-    const folderInputEl = document.getElementById('new-folder-name');
-    if (!eng) {
-        alert('請輸入英文；中文意思可以留空。');
-        return;
-    }
-
-    const selectedFolderIds = Array.from(document.querySelectorAll('.folder-checkbox:checked'))
-        .map(checkbox => checkbox.value);
-    const newFolderName = folderInputEl ? folderInputEl.value.trim() : '';
-    if (/[,，]/.test(newFolderName)) {
-        alert('一次只能建立一個新資料夾，請勿輸入逗號。');
-        return;
-    }
-    let validatedNewFolderName = '';
-    if (newFolderName) {
-        const validation = validateFolderName(newFolderName);
-        if (!validation.valid) {
-            alert(validation.message);
-            return;
-        }
-        validatedNewFolderName = validation.name;
-    }
+    if (!eng) { alert('請輸入英文；中文意思可以留空。'); return; }
+    let meanings;
+    try { meanings = readMeaningEditor(); } catch (error) { alert(error.message); return; }
+    if (document.getElementById('new-folder-name').value.trim() && !stageNewWordFolder()) return;
+    const selectedFolderIds = Array.from(document.querySelectorAll('.folder-checkbox:checked')).map(input => input.value);
     const isWrong = !!document.getElementById('wrong-checkbox')?.checked;
 
     const editingIndex = state.editingWordIndex;
     const previousWord = editingIndex >= 0 ? cloneWord(state.words[editingIndex]) : null;
     const ok = await commitUserMutation(model => {
-        const newFolder = validatedNewFolderName ? createPersonalFolder(model, validatedNewFolderName) : '';
+        draftWordFolders.forEach(folder => model.setFolder(folder.id, { name: folder.name }));
         // Hidden course groups are not editable in this view and must survive an unrelated edit.
         const unseenGroups = previousWord ? getWordGroupIds(previousWord).filter(key => !state.folderIds.includes(key)) : [];
-        const groups = normalizeFolderIds([...unseenGroups, ...selectedFolderIds, newFolder]);
-        const fields = { english: eng, meaning: mean, partOfSpeech, isWrong };
+        const groups = normalizeFolderIds([...unseenGroups, ...selectedFolderIds]);
+        const fields = { english: eng, meanings, isWrong };
         if (previousWord) {
             const patch = Object.fromEntries(Object.entries(fields).filter(([key, value]) =>
                 JSON.stringify(value) !== JSON.stringify(previousWord[key])));
@@ -2021,14 +2052,11 @@ function createWordCard(w) {
     const back = document.createElement('div');
     back.className = 'word-card-back p-6 bg-indigo-50 border-2 border-indigo-200 flex flex-col rounded-2xl';
     back.setAttribute('aria-hidden', 'true');
-    parseMeaning(w.meaning, w.partOfSpeech).forEach(part => {
+    const backTitle = document.createElement('div'); backTitle.className = 'text-xl font-black text-indigo-900 mb-3'; backTitle.textContent = w.english; back.appendChild(backTitle);
+    parseMeaning(w.meanings).forEach(part => {
         const block = document.createElement('div');
         block.className = 'mb-3 text-indigo-800 font-bold text-lg';
-        block.appendChild(document.createTextNode(part.text));
-        const pos = document.createElement('span');
-        pos.className = 'block text-sm text-indigo-400 opacity-90 mt-1';
-        pos.textContent = part.pos;
-        block.appendChild(pos);
+        block.textContent = `${part.pos}：${part.text}`;
         back.appendChild(block);
     });
 
@@ -2070,14 +2098,10 @@ function createWordCard(w) {
     return card;
 }
 
-function parseMeaning(raw, partOfSpeech = []) {
-    const pos = getPartOfSpeechShort(partOfSpeech);
-    return String(raw || '').split(/[;；]/).map(text => text.trim()).filter(Boolean).map(text => ({ text, pos }));
+function parseMeaning(meanings) {
+    return meanings.map(group => ({ pos: PART_OF_SPEECH_OPTIONS[group.partOfSpeech].label, text: group.definitions.join('；') }));
 }
-
-function getMeaningWithPartOfSpeech(word) {
-    return [word?.meaning || '', getPartOfSpeechShort(word?.partOfSpeech || [])].filter(Boolean).join(' ');
-}
+function getMeaningWithPartOfSpeech(word) { return formatMeaning(word.meanings); }
 
 function renderPracticeOptions() {
     refreshFolders();
@@ -2279,8 +2303,7 @@ function createAnswerRecord({ word, result, userAnswer = '', choices = [] }) {
         result,
         userAnswer,
         correctAnswer: word.english,
-        meaning: word.meaning,
-        partOfSpeech: normalizePartOfSpeech(word.partOfSpeech),
+        meanings: cloneWord(word.meanings),
         choices: choices.map(choice => ({
             text: choice.text,
             isCorrect: !!choice.isCorrect,
@@ -2306,16 +2329,13 @@ function loadSpellingWord() {
 
     const defArea = document.getElementById('spelling-definition-area');
     defArea.replaceChildren();
-    parseMeaning(word.meaning, word.partOfSpeech).forEach(part => {
+    parseMeaning(word.meanings).forEach(part => {
         const wrap = document.createElement('div');
         wrap.className = 'flex flex-col items-center mb-3';
         const text = document.createElement('div');
         text.className = 'text-2xl font-extrabold text-gray-800 text-center';
-        text.textContent = part.text;
-        const pos = document.createElement('div');
-        pos.className = 'mt-1 px-4 py-1 bg-indigo-50 text-indigo-500 rounded-full text-sm font-bold border border-indigo-100';
-        pos.textContent = part.pos || '(?)';
-        wrap.append(text, pos);
+        text.textContent = `${part.pos}：${part.text}`;
+        wrap.append(text);
         defArea.appendChild(wrap);
     });
 
@@ -2381,7 +2401,7 @@ function loadChoiceQuestion() {
     document.getElementById('choice-feedback').innerText = '';
 
     const isEnToCh = state.game.mode === 'choice-en-ch';
-    document.getElementById('choice-question').innerText = isEnToCh ? word.english : formatMeaning(word.meaning, word.partOfSpeech);
+    document.getElementById('choice-question').innerText = isEnToCh ? word.english : formatMeaning(word.meanings);
 
     const options = [word];
     const pool = state.game.currentWords.length >= 5 ? state.game.currentWords : state.words;
@@ -2401,7 +2421,7 @@ function renderChoiceOptions(word, options, isEnToCh) {
     options.forEach(opt => {
         const btn = document.createElement('button');
         btn.className = 'choice-btn w-full bg-white border-2 border-indigo-100 text-gray-700 font-bold py-4 rounded-xl text-lg shadow-sm hover:border-indigo-300';
-        btn.innerText = isEnToCh ? formatMeaning(opt.meaning, opt.partOfSpeech) : opt.english;
+        btn.innerText = isEnToCh ? formatMeaning(opt.meanings) : opt.english;
         btn.addEventListener('click', () => {
             const allBtns = document.querySelectorAll('.choice-btn');
             allBtns.forEach(b => {
@@ -2418,7 +2438,7 @@ function renderChoiceOptions(word, options, isEnToCh) {
                     result: 'correct',
                     userAnswer: btn.innerText,
                     choices: options.map(choice => ({
-                        text: isEnToCh ? formatMeaning(choice.meaning, choice.partOfSpeech) : choice.english,
+                        text: isEnToCh ? formatMeaning(choice.meanings) : choice.english,
                         isCorrect: choice === word,
                         isSelected: choice === opt
                     }))
@@ -2427,7 +2447,7 @@ function renderChoiceOptions(word, options, isEnToCh) {
             } else {
                 btn.classList.add('choice-wrong');
                 allBtns.forEach(b => {
-                    if ((isEnToCh && b.innerText === formatMeaning(word.meaning, word.partOfSpeech)) ||
+                    if ((isEnToCh && b.innerText === formatMeaning(word.meanings)) ||
                         (!isEnToCh && b.innerText === word.english)) {
                         b.classList.add('choice-correct');
                     }
@@ -2441,7 +2461,7 @@ function renderChoiceOptions(word, options, isEnToCh) {
                     result: 'wrong',
                     userAnswer: btn.innerText,
                     choices: options.map(choice => ({
-                        text: isEnToCh ? formatMeaning(choice.meaning, choice.partOfSpeech) : choice.english,
+                        text: isEnToCh ? formatMeaning(choice.meanings) : choice.english,
                         isCorrect: choice === word,
                         isSelected: choice === opt
                     }))
@@ -2464,16 +2484,13 @@ function showHistoryEntry(entryIndex) {
         setProgressForIndex('spelling', entry.index, state.game.currentWords.length, true);
         const defArea = document.getElementById('spelling-definition-area');
         defArea.replaceChildren();
-        parseMeaning(entry.meaning, entry.partOfSpeech).forEach(part => {
+        parseMeaning(entry.meanings).forEach(part => {
             const wrap = document.createElement('div');
             wrap.className = 'flex flex-col items-center mb-3';
             const text = document.createElement('div');
             text.className = 'text-2xl font-extrabold text-gray-800 text-center';
-            text.textContent = part.text;
-            const pos = document.createElement('div');
-            pos.className = 'mt-1 px-4 py-1 bg-indigo-50 text-indigo-500 rounded-full text-sm font-bold border border-indigo-100';
-            pos.textContent = part.pos || '(?)';
-            wrap.append(text, pos);
+            text.textContent = `${part.pos}：${part.text}`;
+            wrap.append(text);
             defArea.appendChild(wrap);
         });
         document.getElementById('spelling-hint').innerText = entry.correctAnswer.split('').join(' ');
@@ -2490,7 +2507,7 @@ function showHistoryEntry(entryIndex) {
         const isEnToCh = entry.mode === 'choice-en-ch';
         document.getElementById('choice-question').innerText = isEnToCh
             ? entry.word.english
-            : formatMeaning(entry.word.meaning, entry.word.partOfSpeech);
+            : formatMeaning(entry.word.meanings);
         const container = document.getElementById('choice-options');
         container.replaceChildren();
         entry.choices.forEach(choice => {
@@ -2536,7 +2553,7 @@ function showCurrentQuestion() {
     setProgressForIndex('choice', state.game.index, state.game.currentWords.length);
     document.getElementById('choice-question').innerText = state.game.mode === 'choice-en-ch'
         ? word.english
-        : formatMeaning(word.meaning, word.partOfSpeech);
+        : formatMeaning(word.meanings);
     document.getElementById('choice-feedback').innerText = '';
     renderChoiceOptions(word, state.game.currentChoiceOptions, state.game.mode === 'choice-en-ch');
     setGameplayInputsEnabled(true);
@@ -2557,9 +2574,8 @@ function navigateHistory(direction) {
     showHistoryEntry(target);
 }
 
-function formatMeaning(raw, partOfSpeech = []) {
-    const text = String(raw || '').trim();
-    return [(text.length > 15 ? text.substring(0, 15) + '...' : text), getPartOfSpeechShort(partOfSpeech)].filter(Boolean).join(' ');
+function formatMeaning(meanings) {
+    return parseMeaning(meanings).map(group => `${group.pos}：${group.text}`).join('\n');
 }
 
 function handleWrongAnswer(element) {
@@ -3162,6 +3178,8 @@ function bindStaticEvents() {
 
     document.getElementById('btn-save-review')?.addEventListener('click', saveReviewWords);
     document.getElementById('result-folder-select')?.addEventListener('change', handleResultFolderSelectChange);
+    document.getElementById('btn-add-meaning-group')?.addEventListener('click', () => addMeaningGroup());
+    document.getElementById('btn-add-word-folder')?.addEventListener('click', stageNewWordFolder);
     document.getElementById('result-new-folder-name')?.addEventListener('input', handleResultNewFolderInput);
     document.getElementById('btn-save-result-folder')?.addEventListener('click', saveResultWordsToFolder);
     document.getElementById('btn-result-return')?.addEventListener('click', () => navigateTo('practice'));

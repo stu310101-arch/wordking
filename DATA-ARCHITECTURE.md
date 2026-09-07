@@ -1,4 +1,4 @@
-# 單字王資料架構：schema 5
+# 單字王資料架構：schema 6
 
 本文件描述這次重構後的程式與 migration 協定。正式網站目前由 GitHub Pages 的 `main:/` 發布（https://stu310101-arch.github.io/wordking/），Firebase project 為 `wordking-434f7`。本次驗證使用隔離 fixture 與 Emulator；尚未執行正式帳號 migration，也未部署正式網站或 rules。
 
@@ -47,7 +47,7 @@ flowchart TD
 | UI | `assets/app.js`、`index.html` | 使用模型 API；維持原有頁面、搜尋、練習及 Google Auth 流程 |
 | 檢查 | `config/validate-words.cjs`、`tests/` | 靜態資料、凍結檔案、隔離、遷移失敗點、同步及 rules 驗證 |
 
-三個資料模組都可以直接被 Node 測試載入，無須 Firebase 或 DOM。Persistence 使用 Migration 匯出的純 canonical snapshot validator；只有缺少 v5 完成標記且存在舊資料時才執行 legacy planner 或下載歷史 JSON。
+三個資料模組都可以直接被 Node 測試載入，無須 Firebase 或 DOM。Persistence 使用 Migration 匯出的純 canonical snapshot validator；只有缺少 v6 完成標記且存在舊資料時才執行 legacy planner 或下載歷史 JSON。
 
 `state.words` 與 `state.hiddenWords` 僅是 derived view。`commitUserMutation(model => …)` 保存模型 snapshot 供交易差異與錯誤 rollback 使用，不從完整公用單字反推 override。Firestore collection 名稱與 legacy mapping 不出現在 UI 操作程式。
 
@@ -59,15 +59,20 @@ flowchart TD
 {
   "id": "w_000001",
   "english": "penetrate",
-  "meaning": "穿透；滲透",
-  "partOfSpeech": ["verb"],
+  "meanings": [
+    { "partOfSpeech": "verb", "definitions": ["穿透", "滲透"] }
+  ],
   "lessonIds": ["晟景Lv5U6"]
 }
 ```
 
 公用 JSON 不含 `source`、`tags`、`folderId`、`folderIds` 或 `defaultId`。公用資料的 `isWrong` 為 false，省略時模型同樣提供預設 false。有效單字的 `source: public/custom` 只在 view 存在。
 
-採用 `meaning: string` + `partOfSpeech: string[]`，讓現有卡片與練習維持簡單資料介面。多義以 `；` 分隔，多詞性仍屬於同一 word。已把歷史 `(v.)`、`(n.)`、`(a.)` 等詞性註記轉為結構化欄位；一般解釋括號不移除。UI 詞性改為複選，練習只讀 structured POS，不再從 meaning 推論。
+採用 `meanings: {partOfSpeech, definitions: string[]}[]`：一筆單字內每個詞性一組，各自持有中文意思陣列。canonical word 不含獨立的 `meaning` 或頂層 `partOfSpeech`。每個詞性只能出現一次，定義保留順序、去除前後空白和重複值；詞性組依固定 enum 排序。空 meanings、空 definitions 都是有效的明確個人值。
+
+卡片背面顯示英文，再依序顯示「名詞：…」「動詞：…」等分組；搜尋、拼字提示、選擇題及作答紀錄都從相同結構讀取。編輯視窗可增加／移除詞性組，每組有自己的中文輸入框；輸入以分號或換行分開的意思，儲存成 definitions 陣列。UI 不再解析 `(v.)` 或把一份中文自動套到所有詞性。原始教材中的不同詞性定義依歷史標註轉換，一般解釋括號保留。使用者舉例不會造成公用字庫新增單字。
+
+「加入課程與個人資料夾」區域可直接輸入私人資料夾名稱並按「新增並勾選資料夾」，可連續新增多個。新資料夾立即出現在選單並勾選；既有課程選擇、待複習與中文草稿保留。按儲存才把資料夾與單字放進同一次個人交易；取消不會建立資料夾，儲存失敗則一起回復。課程與私人資料夾仍使用不同 identity。
 
 詞性可用：noun、verb、adjective、adverb、pronoun、preposition、conjunction、interjection、other、determiner、article、numeral、auxiliary、phrase。
 
@@ -85,7 +90,7 @@ flowchart TD
 
 | 路徑 | 內容 |
 | --- | --- |
-| `users/{uid}` | `schemaVersion: 5`、`revision`、`syncFence`、暫時的 `syncLock`、`migrationV5`，保留原 root snapshot |
+| `users/{uid}` | `schemaVersion: 6`、`revision`、`syncFence`、暫時的 `syncLock`、`migrationV6`，保留原 root snapshot 及既存 `migrationV5` |
 | `wordOverrides/{publicWordId}` | 只存個人欄位與課程增減、私人 `folderIds` |
 | `customWords/{customWordId}` | 完整私人內容，不含 `id`、`source`、public base |
 | `hiddenWords/{publicWordId}` | 文件存在即隱藏；僅 schema 與更新時間 metadata |
@@ -95,16 +100,16 @@ flowchart TD
 | `migrationBackups/{runId}/entries/{n}` | 分段 JSON 原始私人來源與衝突報告 |
 | `migrationBackups/{runId}/chunks/{n}` | 可重複接續的 canonical 文件操作 |
 
-一般 canonical 文件由 Persistence 加入 `schemaVersion: 5`、ISO `updatedAt`。時間僅供診斷；衝突判定使用 Firestore transaction、revision 與 fence，不依賴各裝置時鐘排序。
+一般 canonical 文件由 Persistence 加入 `schemaVersion: 6`、ISO `updatedAt`。時間僅供診斷；衝突判定使用 Firestore transaction、revision 與 fence，不依賴各裝置時鐘排序。
 
 ```json
 {
-  "meaning": "我的解釋",
+  "meanings": [{ "partOfSpeech": "verb", "definitions": ["我的解釋"] }],
   "addedLessonIds": ["晟景Lv5U8"],
   "removedLessonIds": ["晟景Lv5U6"],
   "folderIds": ["f_個人資料夾ID"],
   "isWrong": true,
-  "schemaVersion": 5,
+  "schemaVersion": 6,
   "updatedAt": "2026-09-06T00:00:00.000Z"
 }
 ```
@@ -113,9 +118,9 @@ flowchart TD
 
 課程計算：`(public.lessonIds ∪ addedLessonIds) − removedLessonIds`。曾移除、目前暫不在公用庫的課程 ID 仍保留於 diff；未來公用庫重新加入時維持使用者意圖。私人 folder membership 獨立計算。
 
-未修改欄位繼承最新公用值。明確的空 meaning、空 POS 或 `false` 都有效。使用者明確設回公用值時刪除該 override 欄位；最後一個差異消失就刪掉文件。若公用更新剛好追上既存的個人值，不能自動推定使用者已放棄個人意圖，因此不在一般載入時清除該 scalar override。
+未修改欄位繼承最新公用值。明確的空 meanings、空 definitions 或 `false` 都有效。`meanings` 是整個分組陣列的 override：修改一組時保存此字的個人分組，不另外建立 POS entity。尚未修改 meanings 的帳號繼承後續公用分組更新；已修改者保留個人分組。使用者明確設回公用值時刪除該 override 欄位；最後一個差異消失就刪掉文件。若公用更新剛好追上既存個人值，不在一般載入時推定使用者放棄個人意圖。
 
-custom word 存完整 `english`、`meaning`、`partOfSpeech`、`lessonIds`、`folderIds`、`isWrong`。新增與更名都拒絕和有效公用字、隱藏公用字或其他 custom word 產生相同英文。
+custom word 存完整 `english`、`meanings`、`lessonIds`、`folderIds`、`isWrong`。新增與更名都拒絕和有效公用字、隱藏公用字或其他 custom word 產生相同英文。
 
 ## 資料 API 與恢復行為
 
@@ -125,21 +130,21 @@ account.getPublicWord(id);
 account.getWordOverride(id);
 account.getEffectiveWord(id); // 預設可供隱藏字的編輯／恢復使用
 account.deriveEffectiveWords(); // 預設排除隱藏字
-account.updateWordOverride(id, { meaning: '新的個人解釋' });
-account.clearWordOverrideField(id, 'meaning');
+account.updateWordOverride(id, { meanings: [{ partOfSpeech: 'verb', definitions: ['新的個人解釋'] }] });
+account.clearWordOverrideField(id, 'meanings');
 account.clearWordOverride(id);
 account.setWordLessons(id, ['晟景Lv5U8']);
 account.setWordFolders(id, ['f_example']);
 account.hidePublicWord(id);
 account.restorePublicWord(id);
-account.createCustomWord('c_example', { english: 'example', meaning: '例子', partOfSpeech: ['noun'] });
-account.updateCustomWord('c_example', { meaning: '我的例子' });
+account.createCustomWord('c_example', { english: 'example', meanings: [{ partOfSpeech: 'noun', definitions: ['例子'] }] });
+account.updateCustomWord('c_example', { meanings: [{ partOfSpeech: 'noun', definitions: ['我的例子'] }] });
 account.deleteCustomWord('c_example');
 account.setFolder('f_example', { name: '考前複習' });
 account.exportState();
 ```
 
-- 「恢復公用中文意思」等操作只清除該欄位；課程、資料夾及錯題狀態保留。
+- 「恢復公用各詞性中文意思」清除整個 meanings override；課程、資料夾及錯題狀態保留。
 - 「恢復此字全部公用內容」清除整筆 override（含私人資料夾 membership），重新繼承公用值。
 - 隱藏與恢復隱藏只操作 hidden ID；恢復後仍有原個人 override。
 - 刪 custom word 只刪本人的 custom document。
@@ -150,13 +155,17 @@ account.exportState();
 
 ### 來源與轉換
 
-`migration/` 保留原始 `legacy-catalog.json`、`legacy-word-id-aliases.json`、`legacy-lessons/`；新增固定 `legacy-word-id-map.json`、`legacy-tag-baseline.json` 與 `frozen-sources.json`。共 14 個凍結來源檔以 SHA-256 驗證。移動歷史檔沒有刪除 recovery 內容。
+`migration/` 保留原始 `legacy-catalog.json`、`legacy-word-id-aliases.json`、`legacy-lessons/`；固定 `legacy-word-id-map.json`、`legacy-tag-baseline.json` 與 `frozen-sources.json`。原有 14 個凍結來源檔以 SHA-256 驗證。schema 6 另新增 `schema-v5-catalog.json` 及獨立 SHA-256，原樣保留 schema 5 的 429 筆平面中文與 POS，供辨識舊 override 基準。沒有刪除 recovery 內容，也沒有重新配發 identity。
 
 `.gitattributes` 禁止 Git 對 `migration/**` 自動轉換換行，確保 Windows、Linux 與 GitHub checkout 的 recovery checksum 一致。
 
-正常訪客只下載 `data/words.json`。已完成 v5 的帳號只讀私人 canonical collections / settings 及同步 metadata，不下載任何歷史 JSON，也不讀 `deletedDefaults`。新空帳號只寫完成標記，不複製公用字庫，也不載入歷史檔。
+正常訪客只下載 `data/words.json`。已完成 v6 的帳號只讀私人 canonical collections / settings 及同步 metadata，不下載任何歷史 JSON，也不讀 `deletedDefaults`。新空帳號只寫完成標記，不複製公用字庫，也不載入歷史檔。
 
-舊帳號缺少 v5 完成標記時，讀取 root、wordOverrides、customWords、deletedDefaults、hiddenWords、folders、settings。planner 使用固定舊基準，不拿今天的解釋／課程當成「當時使用者沒有修改」的證據。
+舊帳號缺少 v6 完成標記時，讀取 root、wordOverrides、customWords、deletedDefaults、hiddenWords、folders、settings。planner 使用固定舊基準，不拿今天的解釋／課程當成「當時使用者沒有修改」的證據。
+
+已完成 v5 的帳號只轉換 schema 5 文件，不重新匯入保留的 pre-v5 root、alias、deletedDefaults、custom、folder 或 settings。即使 v6 staging 失敗、root 已是 6/preparing，仍透過保留的 v5 完成標記維持這個範圍。未完成的 v5 ready/applying journal 先按 protocol 5 接續完成，再升級 v6；兩份 journal 及原始 backup 均保留。
+
+舊中文中的末尾詞性註記（包含連續 `(v.)(n.)`）歸入各自的詞性組。v5 平面 meaning/POS 與凍結公用基準相符時，可從原始教材還原不同詞性的中文。若是使用者自訂的平面多詞性內容，歷史資料沒有逐詞性對應資訊：保守地讓各個已標註詞性保留完整中文，列出 `flat-v5-meaning-grouping-preserved` 報告，並保留原文備份供本人修訂。沒有 POS 資訊時使用 `other`，不猜測中文詞性。
 
 1. 文件路徑 ID 優先於 payload 的 `id`。所有已知舊 ID / alias 轉成固定 opaque ID；encoded / decoded alias 的權威重設判定一致。
 2. 最早無 ID 的 root words 只可依凍結的舊 English 找 identity；找不到但有完整英文的資料保留為 deterministic custom word。
@@ -171,12 +180,12 @@ account.exportState();
 
 ### 寫入與失敗重試
 
-1. 同一帳號取得 root revision 與 lease，租期 120 秒，每批延長；`fence` 單調增加。root 此時升為 schema 5 / preparing，rules 開始拒絕舊協定寫入。
+1. 同一帳號取得 root revision 與 lease，租期 120 秒，每批延長；`fence` 單調增加。新的 migration 此時升為 schema 6 / preparing，rules 開始拒絕舊協定寫入。
 2. 先將所有私人原始來源、未知欄位及 conflicts 序列化備份，再寫 frozen operation chunks，最後才標記 journal ready / migration applying。
 3. 每批最多 180 個操作，序列化約 600 KB 上限。每個 transaction 先讀 root、journal、chunk，完成全部 reads 才 writes；原子更新 cursor 與資料。單一過大資料會停止，原始來源不刪除。
-4. 最後 transaction 才將 `migrationV5.status` 設 complete、revision +1、記錄 `lastOperationId` 並移除 lease。reader 不顯示 applying 期間的半套資料。
+4. 最後 transaction 才將 `migrationV6.status` 設 complete、revision +1、記錄 `lastOperationId` 並移除 lease。接續舊 journal 時使用其原本的版本標記。reader 不顯示 applying 期間的半套資料。
 5. 中斷時保留 journal。lease 過期後重試接續同一 frozen plan 的 cursor；舊 worker 的 fence 不符便不能繼續寫。ready 前失敗尚未碰 canonical 文件，可重建計畫。最後提交成功但回應遺失也不會重複匯入。
-6. 同一筆 custom / folder / settings 需要換格式時，只有完整備份 ready 後才覆寫；root 原始陣列、舊 alias / deletedDefaults 文件不提前刪除。v5 loader 只讀 schema 5 文件，不把保留的舊文件當成現行資料。
+6. 同一筆 custom / override / folder / settings 需要換格式時，只有完整備份 ready 後才覆寫；root 原始陣列、舊 alias / deletedDefaults 文件不提前刪除。v6 loader 只讀 schema 6 文件，不把保留的舊文件當成現行資料。
 
 一般小筆修改用單一 revision-guarded transaction；大量刪除／重置使用相同 journal 流程。Firestore 交易 callback 可能重試，因此 callback 只進行可重入的資料操作。設計依據：[Firestore transactions](https://firebase.google.com/docs/firestore/manage-data/transactions)、[Firestore quotas](https://firebase.google.com/docs/firestore/quotas)。
 
@@ -194,9 +203,9 @@ account.exportState();
 
 寫入使用 expectedRevision，收到其他裝置的 revision 變更會要求重載。讀取前後比對 root revision / migration marker，避免套用混合版本。未完成寫入或回應遺失會要求重載，不擅自宣告寫入成功。
 
-`config/firestore.rules` 限制本人 CRUD 自己 subtree、拒絕 A 讀寫 B、拒絕未登入讀 private data、拒絕 `/users` enumeration 與其外全部路徑。升級 v5 後拒絕 schema 2 / 4 canonical 寫入、舊 deletedDefaults 新寫入、舊 lease acquire / cleanup 協定及 root 降版。recovery 子路徑同樣 owner-only。
+`config/firestore.rules` 限制本人 CRUD 自己 subtree、拒絕 A 讀寫 B、拒絕未登入讀 private data、拒絕 `/users` enumeration 與其外全部路徑。升級 v6 後拒絕 schema 5 及更舊 canonical 寫入、頂層 meaning/POS/tags/folderId、舊 deletedDefaults 新寫入、舊 lease acquire / cleanup 協定及 root 降版。尚未升級的 v5 帳號仍能使用 v5 協定，讓舊 journal 完成。recovery 子路徑同樣 owner-only。
 
-**發布順序：先部署並確認新 rules，再發布包含全部 JS / catalog / migration 資產的前端。** 新 rules 對尚未升級帳號仍相容；開始 migration 後會擋住舊分頁。不能以回退到舊 schema 4 前端作為已完成 v5 帳號的 rollback，應修正 v5 client，保留 checkpoint / backup 接續。
+**發布順序：先部署並確認新 rules，再發布包含全部 JS / catalog / migration 資產的前端。** 新 rules 對尚未升級帳號仍相容；開始 migration 後會擋住舊分頁。不能以回退到 schema 5 或更舊前端作為已完成 v6 帳號的 rollback，應修正 v6 client，保留 checkpoint / backup 接續。
 
 ## 驗證與重現
 
@@ -213,7 +222,7 @@ git diff --check
 
 rules runner 使用 Java 21+ 與官方 Firestore Emulator；可透過 `WORDKING_JAVA_BIN` 指定 Java executable。測試不連正式資料庫。
 
-目前資料／UI 接線／migration／persistence／Auth 測試 79 項，Firestore Emulator 測試 7 項。涵蓋 opaque ID 穩定、同英文唯一、多 POS、A/B/visitor 隔離、不可 mutate public、public update / field reset、課程 diff / 同名資料夾、custom CRUD、hide/restore/reset、所有舊欄位與 alias/root、重複 migration、staging / 中途批次 / 最後 ack 故障、lease takeover、revision 衝突及 stale session。
+目前資料／UI 接線／migration／persistence／Auth 測試 89 項，Firestore Emulator 測試 8 項。涵蓋 opaque ID 穩定、同英文唯一、各詞性獨立中文、編輯時直接建立資料夾／取消／同批儲存、A/B/visitor 隔離、不可 mutate public、public update / field reset、課程 diff / 同名資料夾、custom CRUD、hide/restore/reset、所有舊欄位與 alias/root、v5 升級及 journal 接續、重複 migration、staging / 中途批次 / 最後 ack 故障、lease takeover、revision 衝突及 stale session。
 
 `npm run preview` 在 loopback 4173 提供原始網站；`npm run preview:demo` 在 4175 使用原始網站資產，僅將 Firebase import 替換成瀏覽器內隔離 fixture。測試工具列提供 A / B / 訪客、故障與恢復網路。fixture 使用 sessionStorage，不會連真實 Google 帳號或 Firestore，頁面對外預覽也沒有私人帳號資料。伺服器白名單不公開 `.git`、設定、tests 或工作區其他檔案。
 

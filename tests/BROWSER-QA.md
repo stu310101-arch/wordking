@@ -1,4 +1,31 @@
-# Schema 5 瀏覽器實測紀錄
+# Schema 6 瀏覽器實測紀錄
+
+## 2026-09-07 詞性分組與直接新增資料夾
+
+真實 Codex in-app Chromium，桌面 1366×900、手機 390×844。使用這次分支的原始資產與隔離 fixture；下面的單字修改與新增只發生在測試帳號的 sessionStorage。沒有增加公用 entity。
+
+| 操作 | 實際結果 |
+| --- | --- |
+| 訪客、A 舊帳號載入 | 完整載入公用與個人資料，舊的私人內容可顯示 |
+| 桌面 abuse 搜尋／卡片翻面 | 顯示英文與名詞、動詞各自的中文；翻面功能保留 |
+| 編輯名詞、保留動詞 | 只修改名詞框，動詞的原始中文保留；重開編輯視窗結果一致 |
+| 直接連續新增兩個私人資料夾 | 「分組複習」「考前整理」立即勾選；原課程、中文草稿、待複習勾選保留；儲存後兩夾各有該字 |
+| A → B → visitor → A | B 與 visitor 顯示公用中文，不含 A 的資料夾；回到 A 保留個人分組 |
+| 390px 手機搜尋 | 候選框寬 352px，document scrollWidth 不超過 clientWidth |
+| 手機編輯與資料夾區塊 | 可垂直捲動到完整內容、新增及儲存按鈕，沒有橫向溢出 |
+| 新增／移除第三個詞性組 | 新組使用未使用詞性，移除後原有名詞、動詞內容保留 |
+| 新增資料夾後取消 | 「取消測試」草稿未出現在重新開啟的編輯視窗或單字庫 |
+| 恢復公用各詞性中文意思 | 回復名詞／動詞公用內容，保留兩個私人資料夾、原課程及待複習 |
+| 手機拼字 | 選「分組複習」中的 abuse，兩組中文提示正常；回答 abuse 判對，結算 0 錯誤 |
+| 手機英選中 | gut 題目與多詞性完整選項排版正常；選「名詞：內臟；膽量／動詞：取出內臟；毀損；拆除內部」判對 |
+| 手機新增 custom word 與 folder | groupfixture 使用不同名詞／動詞內容；動詞換行輸入轉成兩個 definitions；「手機新資料夾」儲存後可開啟 |
+| 刪除該 custom word | 該測試字消失，資料夾保留並顯示空狀態 |
+| 原始 Firebase 前端訪客（4173） | 保留真實 SDK imports，未登入即可搜尋 compact，分別顯示名詞、動詞、形容詞中文 |
+| 瀏覽器錯誤 | 原始前端與 fixture 均未出現 console error / warning |
+
+本次自動測試為 89 項 Node 測試、8 項實際 Firestore Emulator 測試，全部通過。新增驗證 v5 完成後升級、不復活舊資料、v5 journal 接續、v6 staging 故障重試、已完成 v6 再次規劃、分組轉換與資料夾草稿交易。資料驗證另確認 429 個原始 ID、英文、446 個課程歸屬與 isWrong 基底均維持一致。
+
+## Schema 5 階段的既有實測紀錄
 
 日期：2026-09-06 至 2026-09-07（Asia/Taipei）。使用真實 Chromium / Codex in-app browser，桌面 1366×900、手機 390×844。驗證的是此次分支的原始網站資產；個人操作透過隔離 Firebase fixture，沒有登入或改寫正式帳號。
 
@@ -36,6 +63,6 @@
 
 - 本機隔離 demo：`npm run preview:demo`（在 config 執行），http://127.0.0.1:4175 。工具列 A / B / 訪客都只使用該分頁的 sessionStorage。
 - 原始前端訪客：`npm run preview`，http://127.0.0.1:4173 。此版本包含真正 Firebase 設定，驗證時只使用未登入訪客。
-- 本次交付暫時預覽：https://quality-architects-autumn-supplemental.trycloudflare.com 。網址透過本機 demo 的暫時通道提供，電腦／網路與通道需持續運作；失效時重新建立通道即可，不影響 Git 或 Firestore 資料。
+- 本次交付暫時預覽：https://dee-washing-pavilion-criterion.trycloudflare.com 。網址透過本機 demo 的暫時通道提供，電腦／網路與通道需持續運作；失效時重新建立通道即可，不影響 Git 或 Firestore 資料。先前 quality-architects-autumn-supplemental 與 pet-doug-jewelry-installed 網址已失效。
 
 目前未推送 GitHub、未部署正式 Firebase rules，也未對真實使用者執行 migration。

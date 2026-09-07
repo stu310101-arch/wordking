@@ -7,7 +7,7 @@
     else root.WordKingPersistence = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (migration) {
     'use strict';
-    const VERSION = 5;
+    const VERSION = 6;
     const COLLECTIONS = ['wordOverrides', 'customWords', 'hiddenWords', 'folders'];
     const copy = value => JSON.parse(JSON.stringify(value));
     const error = (code, message) => Object.assign(new Error(message), { code });
@@ -15,7 +15,8 @@
         ? Object.fromEntries(Object.keys(value).sort().map(key => [key, sorted(value[key])])) : value;
     const equal = (a, b) => JSON.stringify(sorted(a)) === JSON.stringify(sorted(b));
     const revision = root => Number.isSafeInteger(root.revision) && root.revision >= 0 ? root.revision : 0;
-    const complete = root => root.schemaVersion === VERSION && root.migrationV5?.status === 'complete';
+    const marker = version => `migrationV${version}`;
+    const complete = (root, version = VERSION) => root.schemaVersion === version && root[marker(version)]?.status === 'complete';
     const clean = data => Object.fromEntries(Object.entries(data).filter(([key]) => !['schemaVersion', 'updatedAt', 'createdAt', 'id'].includes(key)));
 
     function documentsFor(snapshot) {
@@ -79,13 +80,13 @@
             }
         }
         const stamp = () => new Date(now()).toISOString();
-        function apply(tx, user, operations) {
+        function apply(tx, user, operations, version = VERSION) {
             for (const op of operations) {
                 if (!/^(wordOverrides|customWords|hiddenWords|folders)\/[^/]+$/.test(op.path) && op.path !== 'settings/main') {
                     throw error('invalid-journal', '無效的同步文件路徑。');
                 }
                 if (op.type === 'delete') tx.delete(ref(user, op.path));
-                else if (op.type === 'set') tx.set(ref(user, op.path), { ...op.data, schemaVersion: VERSION, updatedAt: stamp() });
+                else if (op.type === 'set') tx.set(ref(user, op.path), { ...op.data, schemaVersion: version, updatedAt: stamp() });
                 else throw error('invalid-journal', '無效的同步操作。');
             }
         }
@@ -122,23 +123,24 @@
             if (dependencies.migrationInputs) return typeof dependencies.migrationInputs === 'function'
                 ? dependencies.migrationInputs() : dependencies.migrationInputs;
             const fetcher = dependencies.fetch || globalThis.fetch;
-            const files = ['legacy-word-id-map.json', 'legacy-tag-baseline.json', 'legacy-catalog.json'];
-            const [idMap, tagBaseline, legacyCatalog] = await Promise.all(files.map(async file => {
+            const files = ['legacy-word-id-map.json', 'legacy-tag-baseline.json', 'legacy-catalog.json', 'schema-v5-catalog.json'];
+            const [idMap, tagBaseline, legacyCatalog, v5Catalog] = await Promise.all(files.map(async file => {
                 const response = await fetcher(`./migration/${file}`, { cache: 'no-cache' });
                 if (!response.ok) throw error('migration-input-unavailable', '無法讀取舊資料對照表，尚未更改你的資料。');
                 return response.json();
             }));
-            return { idMap, tagBaseline, legacyCatalog };
+            return { idMap, tagBaseline, legacyCatalog, v5Catalog };
         }
-        async function acquire(user, expected, kind, guard, runId = createId()) {
+        async function acquire(user, expected, kind, guard, runId = createId(), protocol = VERSION) {
             return transaction(user, guard, (tx, root) => {
                 checkRevision(root, expected);
-                if (kind === 'mutation' && !complete(root)) throw error('migration-required', '個人資料尚未完成遷移。');
+                if (Number(root.schemaVersion) > protocol) throw error('invalid-journal', 'Journal protocol cannot downgrade an account.');
+                if (kind === 'mutation' && !complete(root, protocol)) throw error('migration-required', '個人資料尚未完成遷移。');
                 if (root.syncLock && !expired(root.syncLock)) throw error('cloud-sync-in-progress', '另一個裝置正在同步，請稍後重試。');
-                const lease = { protocol: VERSION, id: runId, kind, fence: (root.syncFence || 0) + 1,
+                const lease = { protocol, id: runId, kind, fence: (root.syncFence || 0) + 1,
                     baseRevision: expected, targetRevision: expected + 1, expiresAt: now() + leaseMs };
-                tx.set(ref(user), { schemaVersion: VERSION, syncFence: lease.fence, syncLock: lease,
-                    ...(kind === 'migration' ? { migrationV5: { status: 'preparing', backupId: runId } } : {}), updatedAt: stamp() }, { merge: true });
+                tx.set(ref(user), { schemaVersion: protocol, syncFence: lease.fence, syncLock: lease,
+                    ...(kind === 'migration' ? { [marker(protocol)]: { status: 'preparing', backupId: runId } } : {}), updatedAt: stamp() }, { merge: true });
                 return lease;
             });
         }
@@ -167,7 +169,7 @@
                     baseRevision: lease.baseRevision, targetRevision: lease.targetRevision, cursor: 0, chunks: batches.length,
                     backupParts: backupParts.length, conflictCount: conflicts.length, createdAt: stamp() });
                 tx.set(ref(user), { syncLock: { ...lease, expiresAt: now() + leaseMs },
-                    ...(lease.kind === 'migration' ? { migrationV5: { status: 'applying', backupId: lease.id } } : {}) }, { merge: true });
+                    ...(lease.kind === 'migration' ? { [marker(lease.protocol)]: { status: 'applying', backupId: lease.id } } : {}) }, { merge: true });
             });
         }
         async function runJournal(user, lease, guard) {
@@ -183,16 +185,16 @@
                         journal.baseRevision !== lease.baseRevision) throw error('invalid-journal', '同步紀錄不完整，原始資料仍保留。');
                     if (journal.cursor === journal.chunks) {
                         tx.set(journalRef, { status: 'complete', completedAt: stamp() }, { merge: true });
-                        tx.set(ref(user), { schemaVersion: VERSION, revision: lease.targetRevision, lastOperationId: lease.id,
+                        tx.set(ref(user), { schemaVersion: lease.protocol, revision: lease.targetRevision, lastOperationId: lease.id,
                             syncLock: deleteField(), updatedAt: stamp(),
-                            ...(lease.kind === 'migration' ? { migrationV5: { status: 'complete', backupId: lease.id,
+                            ...(lease.kind === 'migration' ? { [marker(lease.protocol)]: { status: 'complete', backupId: lease.id,
                                 conflictCount: journal.conflictCount, completedAt: stamp() } } : {}) }, { merge: true });
                         return true;
                     }
                     const batch = dataOf(await tx.get(ref(user, `migrationBackups/${lease.id}/chunks/${journal.cursor}`)));
                     guard();
                     if (!Array.isArray(batch.operations)) throw error('invalid-journal', '找不到同步批次，原始資料仍保留。');
-                    apply(tx, user, batch.operations);
+                    apply(tx, user, batch.operations, lease.protocol);
                     tx.set(journalRef, { status: 'applying', cursor: journal.cursor + 1 }, { merge: true });
                     tx.set(ref(user), { syncLock: { ...lease, expiresAt: now() + leaseMs }, updatedAt: stamp() }, { merge: true });
                     return false;
@@ -221,11 +223,11 @@
         async function recover(user, root, guard) {
             const lock = root.syncLock;
             if (!expired(lock)) throw error('cloud-sync-in-progress', '另一個裝置正在同步，請稍後重試。');
-            if (lock.protocol === VERSION) {
+            if ([5, VERSION].includes(lock.protocol)) {
                 const journal = dataOf(await getDoc(ref(user, `migrationBackups/${lock.id}`)));
                 guard();
                 if (['ready', 'applying'].includes(journal.status)) {
-                    const lease = await acquire(user, journal.baseRevision, lock.kind, guard, lock.id);
+                    const lease = await acquire(user, journal.baseRevision, lock.kind, guard, lock.id, lock.protocol);
                     try { await runJournal(user, lease, guard); }
                     catch (cause) { if (cause.code !== 'stale-user-session') await releaseFailedLease(user, lease, guard); throw cause; }
                     return;
@@ -235,7 +237,7 @@
             await transaction(user, guard, (tx, fresh) => {
                 if (fresh.syncLock?.id !== lock.id || !expired(fresh.syncLock)) throw error('cloud-sync-in-progress', '同步已由其他裝置接手。');
                 tx.set(ref(user), { syncLock: deleteField(), updatedAt: stamp(),
-                    ...(lock.protocol !== VERSION ? { revision: Math.max(revision(fresh), Number(lock.targetRevision) || 0) } : {}) }, { merge: true });
+                    ...(![5, VERSION].includes(lock.protocol) ? { revision: Math.max(revision(fresh), Number(lock.targetRevision) || 0) } : {}) }, { merge: true });
             });
         }
         async function load(user, { assertCurrent = () => {} } = {}) {
@@ -244,17 +246,17 @@
                 const before = await readRoot(user);
                 assertCurrent(); checkVersion(before);
                 if (before.syncLock) { await recover(user, before, assertCurrent); continue; }
-                if (before.migrationV5?.status === 'applying') {
+                if (before[marker(before.schemaVersion)]?.status === 'applying') {
                     // Lost lease is an integrity failure, not permission to reimport changed source data.
                     throw error('migration-recovery-required', '遷移鎖已變更，請保留備份並檢查同步紀錄。');
                 }
                 const rows = await readCollections(user, !complete(before));
                 const after = await readRoot(user);
                 assertCurrent(); checkVersion(after);
-                if (after.syncLock || revision(after) !== revision(before) || !equal(after.migrationV5, before.migrationV5)) {
+                if (after.syncLock || revision(after) !== revision(before) || !equal(after.migrationV6, before.migrationV6)) {
                     await wait(50); continue;
                 }
-                if (complete(after)) return { snapshot: canonical(rows), revision: revision(after), recovery: after.migrationV5 };
+                if (complete(after)) return { snapshot: canonical(rows), revision: revision(after), recovery: after.migrationV6?.backupId ? after.migrationV6 : (after.migrationV5 || after.migrationV6) };
                 const sources = { root: after, ...rows, settings: rows.settings || {} };
                 const hasLegacy = ['words', 'folders', 'settings', 'deletedDefaults'].some(key => Object.hasOwn(after, key)) ||
                     COLLECTIONS.some(name => rows[name].length) || rows.deletedDefaults.length || !!rows.settings;
@@ -268,7 +270,7 @@
                         checkRevision(fresh, revision(after));
                         if (fresh.syncLock) throw error('cloud-sync-in-progress', '另一個裝置正在同步。');
                         tx.set(ref(user), { schemaVersion: VERSION, revision: revision(after) + 1,
-                            migrationV5: { status: 'complete', conflictCount: 0, completedAt: stamp() }, updatedAt: stamp() }, { merge: true });
+                            migrationV6: { status: 'complete', conflictCount: 0, completedAt: stamp() }, updatedAt: stamp() }, { merge: true });
                     });
                 } else await largeWrite(user, revision(after), 'migration', operations, sources, plan.conflicts, assertCurrent);
             }
@@ -302,7 +304,7 @@
         }
         async function exportRecovery(user, { assertCurrent = () => {} } = {}) {
             const root = await readRoot(user); assertCurrent();
-            const id = root.migrationV5?.backupId;
+            const id = root.migrationV6?.backupId || root.migrationV5?.backupId;
             if (!id) return null;
             const journal = dataOf(await getDoc(ref(user, `migrationBackups/${id}`))); assertCurrent();
             const parts = await Promise.all(Array.from({ length: journal.backupParts || 0 }, async (_, i) => {

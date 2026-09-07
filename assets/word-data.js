@@ -1,14 +1,14 @@
-/* Schema v5. Pure catalog and per-account state; storage and migration live elsewhere. */
+/* Schema v6. Pure catalog and per-account state; storage and migration live elsewhere. */
 (function (root, factory) {
     const api = factory();
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.WordKingData = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
     'use strict';
-    const SCHEMA_VERSION = 5;
+    const SCHEMA_VERSION = 6;
     const PARTS_OF_SPEECH = Object.freeze(['noun', 'verb', 'adjective', 'adverb', 'pronoun',
         'preposition', 'conjunction', 'interjection', 'other', 'determiner', 'article', 'numeral', 'auxiliary', 'phrase']);
-    const FIELD_NAMES = Object.freeze(['english', 'meaning', 'partOfSpeech', 'isWrong']);
+    const FIELD_NAMES = Object.freeze(['english', 'meanings', 'isWrong']);
     const OVERRIDE_FIELDS = Object.freeze([...FIELD_NAMES, 'addedLessonIds', 'removedLessonIds', 'folderIds']);
     const CUSTOM_FIELDS = Object.freeze([...FIELD_NAMES, 'lessonIds', 'folderIds']);
     const own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
@@ -57,25 +57,29 @@
         if (!Array.isArray(value)) fail(`${label} must be an array.`);
         return [...new Set(Array.from(value, item => identifier(item, label)))];
     }
-    function normalizePartOfSpeech(value) {
-        const pos = stringList(value, 'partOfSpeech');
-        if (pos.some(item => !PARTS_OF_SPEECH.includes(item))) fail('partOfSpeech must contain canonical values.');
-        return PARTS_OF_SPEECH.filter(item => pos.includes(item));
+    function normalizeMeanings(value) {
+        if (!Array.isArray(value)) fail('meanings must be an array.');
+        const groups = new Map();
+        for (const group of value) {
+            fields(group, ['partOfSpeech', 'definitions'], 'meaning group');
+            if (!PARTS_OF_SPEECH.includes(group.partOfSpeech)) fail('Unknown meaning group partOfSpeech.');
+            if (groups.has(group.partOfSpeech)) fail('Duplicate meaning group partOfSpeech.');
+            if (!Array.isArray(group.definitions) || group.definitions.some(text => typeof text !== 'string')) fail('definitions must be an array of strings.');
+            groups.set(group.partOfSpeech, [...new Set(group.definitions.map(text => text.trim()).filter(Boolean))]);
+        }
+        return PARTS_OF_SPEECH.filter(pos => groups.has(pos)).map(partOfSpeech => ({ partOfSpeech, definitions: groups.get(partOfSpeech) }));
     }
     function scalar(field, value) {
         if (field === 'english') {
             if (typeof value !== 'string' || !value.trim()) fail('English must be a nonempty string.');
             return value.trim();
         }
-        if (field === 'meaning') {
-            if (typeof value !== 'string') fail('Meaning must be a string.');
-            return value;
-        }
+        if (field === 'meanings') return normalizeMeanings(value);
         if (field === 'isWrong') {
             if (typeof value !== 'boolean') fail('isWrong must be a boolean.');
             return value;
         }
-        return normalizePartOfSpeech(value);
+        fail(`Unknown field: ${field}`);
     }
     function normalizeCatalog(rawWords) {
         if (!Array.isArray(rawWords)) fail('Public catalog must be an array.');
@@ -86,14 +90,14 @@
             if (ids.has(id)) fail(`Duplicate public ID: ${id}`);
             const english = scalar('english', raw.english);
             if (englishKeys.has(englishKey(english))) fail(`Duplicate public English: ${english}`);
-            const partOfSpeech = normalizePartOfSpeech(raw.partOfSpeech);
+            const meanings = normalizeMeanings(raw.meanings);
             const lessonIds = stringList(raw.lessonIds, 'lessonIds');
-            if (new Set(raw.partOfSpeech).size !== raw.partOfSpeech.length || !equal(lessonIds, raw.lessonIds)) {
-                fail(`Duplicate catalog memberships or partOfSpeech: ${id}`);
+            if (!equal(lessonIds, raw.lessonIds)) {
+                fail(`Duplicate catalog memberships: ${id}`);
             }
             ids.add(id);
             englishKeys.add(englishKey(english));
-            return { id, english, meaning: scalar('meaning', raw.meaning), partOfSpeech, lessonIds,
+            return { id, english, meanings, lessonIds,
                 isWrong: own(raw, 'isWrong') ? scalar('isWrong', raw.isWrong) : false };
         });
     }
@@ -111,8 +115,7 @@
     }
     function normalizeCustom(raw) {
         fields(raw, CUSTOM_FIELDS, 'custom word');
-        return { english: scalar('english', raw.english), meaning: scalar('meaning', own(raw, 'meaning') ? raw.meaning : ''),
-            partOfSpeech: normalizePartOfSpeech(own(raw, 'partOfSpeech') ? raw.partOfSpeech : []),
+        return { english: scalar('english', raw.english), meanings: normalizeMeanings(own(raw, 'meanings') ? raw.meanings : []),
             lessonIds: stringList(own(raw, 'lessonIds') ? raw.lessonIds : [], 'lessonIds'),
             folderIds: stringList(own(raw, 'folderIds') ? raw.folderIds : [], 'folderIds'),
             isWrong: scalar('isWrong', own(raw, 'isWrong') ? raw.isWrong : false) };
@@ -352,5 +355,5 @@
             getSettings, setSettings, updateSettings: setSettings, clearSetting, reset, exportState });
     }
     return Object.freeze({ SCHEMA_VERSION, PARTS_OF_SPEECH, FIELD_NAMES, OVERRIDE_FIELDS,
-        normalizePartOfSpeech, normalizeCatalog, createUserWordState });
+        normalizeMeanings, normalizeCatalog, createUserWordState });
 });

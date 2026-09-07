@@ -1,0 +1,5313 @@
+[
+  {
+    "id": "w_000001",
+    "english": "penetrate",
+    "meaning": "穿透；滲透",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000002",
+    "english": "penetrating",
+    "meaning": "具穿透力的；響亮的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000003",
+    "english": "penetration",
+    "meaning": "滲透",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000004",
+    "english": "exclaim",
+    "meaning": "大叫；驚呼",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000005",
+    "english": "exclamation",
+    "meaning": "大叫；驚呼",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000006",
+    "english": "contemplate",
+    "meaning": "沉思；凝視",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000007",
+    "english": "contemplation",
+    "meaning": "注視；沉思",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000008",
+    "english": "naive",
+    "meaning": "天真的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000009",
+    "english": "exceptional",
+    "meaning": "異常的；非凡的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000010",
+    "english": "curriculum",
+    "meaning": "課程",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000011",
+    "english": "supervise",
+    "meaning": "監督",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000012",
+    "english": "supervisor",
+    "meaning": "監督人",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000013",
+    "english": "supervision",
+    "meaning": "監督",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000014",
+    "english": "steer",
+    "meaning": "駕駛",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000015",
+    "english": "confession",
+    "meaning": "認罪；懺悔",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000016",
+    "english": "workshop",
+    "meaning": "工作坊；研習營",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000017",
+    "english": "behalf",
+    "meaning": "代表",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000018",
+    "english": "sole",
+    "meaning": "唯一的 / 腳底；鞋底",
+    "partOfSpeech": [
+      "noun",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000019",
+    "english": "minimal",
+    "meaning": "極少的；最低限度的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000020",
+    "english": "minimize",
+    "meaning": "使最小化",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000021",
+    "english": "miniature",
+    "meaning": "迷你的 / 小複製品",
+    "partOfSpeech": [
+      "noun",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000022",
+    "english": "optimism",
+    "meaning": "樂觀",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000023",
+    "english": "optimistic",
+    "meaning": "樂觀的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000024",
+    "english": "optimist",
+    "meaning": "樂觀主義者",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000025",
+    "english": "scan",
+    "meaning": "掃描；瀏覽 / 掃描；瀏覽",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000026",
+    "english": "commodity",
+    "meaning": "商品",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000027",
+    "english": "yield",
+    "meaning": "產生；屈服 / 產量",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000028",
+    "english": "caution",
+    "meaning": "謹慎 / 告誡",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000029",
+    "english": "cautious",
+    "meaning": "謹慎的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000030",
+    "english": "precaution",
+    "meaning": "預防措施",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000031",
+    "english": "verbal",
+    "meaning": "言語上的 / 準動詞",
+    "partOfSpeech": [
+      "noun",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000032",
+    "english": "peasant",
+    "meaning": "小型自耕農",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000033",
+    "english": "contempt",
+    "meaning": "輕視",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000034",
+    "english": "conceal",
+    "meaning": "隱藏",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000035",
+    "english": "concealment",
+    "meaning": "隱藏",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000036",
+    "english": "tempt",
+    "meaning": "誘惑",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000037",
+    "english": "tempting",
+    "meaning": "誘人的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000038",
+    "english": "temptation",
+    "meaning": "誘惑",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000039",
+    "english": "infinite",
+    "meaning": "無限的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000040",
+    "english": "infinity",
+    "meaning": "無限",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000041",
+    "english": "sober",
+    "meaning": "清醒的；嚴肅的 / 使清醒",
+    "partOfSpeech": [
+      "verb",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000042",
+    "english": "ridiculous",
+    "meaning": "荒謬的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000043",
+    "english": "ridicule",
+    "meaning": "嘲笑 / 嘲笑",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000044",
+    "english": "beloved",
+    "meaning": "摯愛的 / 深愛的人",
+    "partOfSpeech": [
+      "noun",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000045",
+    "english": "continental",
+    "meaning": "大陸的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000046",
+    "english": "sturdy",
+    "meaning": "強健的；牢固的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000047",
+    "english": "structural",
+    "meaning": "結構上的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000048",
+    "english": "startle",
+    "meaning": "驚嚇",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000049",
+    "english": "startling",
+    "meaning": "驚人的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000050",
+    "english": "preference",
+    "meaning": "偏好",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000051",
+    "english": "preferable",
+    "meaning": "更好的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000052",
+    "english": "haul",
+    "meaning": "拖曳 / 漁獲量",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000053",
+    "english": "bulk",
+    "meaning": "大量",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000054",
+    "english": "via",
+    "meaning": "經由",
+    "partOfSpeech": [
+      "preposition"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000055",
+    "english": "patron",
+    "meaning": "贊助人；老主顧",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000056",
+    "english": "compromise",
+    "meaning": "妥協；損及 / 妥協",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000057",
+    "english": "absurd",
+    "meaning": "荒謬的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6",
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000058",
+    "english": "absurdity",
+    "meaning": "荒唐",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U6"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000059",
+    "english": "odds",
+    "meaning": "可能性",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000060",
+    "english": "apt",
+    "meaning": "貼切的；恰當的；易於...的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000061",
+    "english": "aptitude",
+    "meaning": "資質；傾向；性向",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000062",
+    "english": "blast",
+    "meaning": "強風；爆震 / 爆炸",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000063",
+    "english": "doorway",
+    "meaning": "門口",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000064",
+    "english": "driveway",
+    "meaning": "私人車道",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000065",
+    "english": "slap",
+    "meaning": "一巴掌；侮辱 / 搧巴掌",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000066",
+    "english": "commute",
+    "meaning": "通勤",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000067",
+    "english": "commuter",
+    "meaning": "通勤者",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000068",
+    "english": "indulge",
+    "meaning": "放任",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000069",
+    "english": "consent",
+    "meaning": "同意 / 同意",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000070",
+    "english": "consensus",
+    "meaning": "共識",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000071",
+    "english": "hostile",
+    "meaning": "有敵意的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000072",
+    "english": "hostility",
+    "meaning": "敵意",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000073",
+    "english": "quest",
+    "meaning": "追尋",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000074",
+    "english": "ego",
+    "meaning": "自我",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000075",
+    "english": "resort",
+    "meaning": "訴諸於 / 訴求；勝地",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000076",
+    "english": "corridor",
+    "meaning": "走廊",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000077",
+    "english": "immense",
+    "meaning": "無限的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000078",
+    "english": "immensity",
+    "meaning": "無限；極度嚴重",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000079",
+    "english": "carbon",
+    "meaning": "碳",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000080",
+    "english": "carbohydrate",
+    "meaning": "碳水化合物",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000081",
+    "english": "applause",
+    "meaning": "鼓掌",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000082",
+    "english": "saddle",
+    "meaning": "馬鞍 / 為馬上鞍",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000083",
+    "english": "assault",
+    "meaning": "襲擊 / 襲擊",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000084",
+    "english": "slam",
+    "meaning": "砰然關上 / 砰然關上",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000085",
+    "english": "currency",
+    "meaning": "流通；貨幣",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000086",
+    "english": "current",
+    "meaning": "現行的 / 電流",
+    "partOfSpeech": [
+      "noun",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000087",
+    "english": "likelihood",
+    "meaning": "可能性",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000088",
+    "english": "shiver",
+    "meaning": "發抖 / 發抖",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000089",
+    "english": "quiver",
+    "meaning": "顫抖 / 顫抖",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000090",
+    "english": "counsel",
+    "meaning": "勸告 / 勸告",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000091",
+    "english": "counselor",
+    "meaning": "顧問；輔導員",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000092",
+    "english": "counseling",
+    "meaning": "諮商",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000093",
+    "english": "consultation",
+    "meaning": "商議",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000094",
+    "english": "consult",
+    "meaning": "商議",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000095",
+    "english": "vertical",
+    "meaning": "垂直的 / 垂直線",
+    "partOfSpeech": [
+      "noun",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000096",
+    "english": "horizontal",
+    "meaning": "水平的 / 水平線",
+    "partOfSpeech": [
+      "noun",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000097",
+    "english": "scrap",
+    "meaning": "碎片 / 廢除；廢棄",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000098",
+    "english": "dialect",
+    "meaning": "方言",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000099",
+    "english": "creek",
+    "meaning": "小溪流",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000100",
+    "english": "muscular",
+    "meaning": "肌肉的；肌肉發達的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000101",
+    "english": "masculine",
+    "meaning": "男性的；陽剛的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000102",
+    "english": "profile",
+    "meaning": "側面；輪廓；人物簡介",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000103",
+    "english": "grim",
+    "meaning": "嚴厲的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000104",
+    "english": "stack",
+    "meaning": "一疊 / 堆疊",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000105",
+    "english": "noticeable",
+    "meaning": "顯著的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000106",
+    "english": "cluster",
+    "meaning": "串；束 / 群聚",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000107",
+    "english": "tournament",
+    "meaning": "聯賽；錦標賽",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000108",
+    "english": "asset",
+    "meaning": "資產",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U7"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000109",
+    "english": "journalist",
+    "meaning": "新聞記者",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000110",
+    "english": "journalism",
+    "meaning": "新聞學",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000111",
+    "english": "mock",
+    "meaning": "嘲弄 / 模擬的；假的 / 模擬測驗",
+    "partOfSpeech": [
+      "noun",
+      "verb",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000112",
+    "english": "intent",
+    "meaning": "目的 / 一心一意想要...",
+    "partOfSpeech": [
+      "noun",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000113",
+    "english": "intend",
+    "meaning": "打算",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000114",
+    "english": "intention",
+    "meaning": "意向",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000115",
+    "english": "soak",
+    "meaning": "浸泡 / 浸泡",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000116",
+    "english": "soaked",
+    "meaning": "溼的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000117",
+    "english": "tin",
+    "meaning": "錫；罐頭 / 將食物裝罐",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000118",
+    "english": "delegate",
+    "meaning": "代表 / 委託",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000119",
+    "english": "delegation",
+    "meaning": "代表團；委任",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000120",
+    "english": "trim",
+    "meaning": "刪減；修剪 / 修剪 / 修剪整齊的",
+    "partOfSpeech": [
+      "noun",
+      "verb",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000121",
+    "english": "thigh",
+    "meaning": "大腿",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000122",
+    "english": "statistical",
+    "meaning": "統計的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000123",
+    "english": "statistic",
+    "meaning": "統計數字",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000124",
+    "english": "alien",
+    "meaning": "不熟悉的；異國的 / 外星人；外國人",
+    "partOfSpeech": [
+      "noun",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000125",
+    "english": "stereotype",
+    "meaning": "刻板印象 / 使定型",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000126",
+    "english": "molecule",
+    "meaning": "分子",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000127",
+    "english": "nominate",
+    "meaning": "提名；任命",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000128",
+    "english": "nomination",
+    "meaning": "提名",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000129",
+    "english": "nominee",
+    "meaning": "被提名者",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000130",
+    "english": "framework",
+    "meaning": "框架；體制；架構",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000131",
+    "english": "frame",
+    "meaning": "邊框 / 裝框",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000132",
+    "english": "notify",
+    "meaning": "通知",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000133",
+    "english": "transparent",
+    "meaning": "透明的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000134",
+    "english": "transparency",
+    "meaning": "透明",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000135",
+    "english": "fatigue",
+    "meaning": "疲倦 / 使疲倦",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000136",
+    "english": "outsider",
+    "meaning": "局外人",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000137",
+    "english": "fascinate",
+    "meaning": "使...著迷",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000138",
+    "english": "compact",
+    "meaning": "緊密的；迷你的；小巧的 / 使緊密 / 小型車",
+    "partOfSpeech": [
+      "noun",
+      "verb",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000139",
+    "english": "juvenile",
+    "meaning": "青少年的 / 青少年",
+    "partOfSpeech": [
+      "noun",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000140",
+    "english": "adolescent",
+    "meaning": "青春期的 / 青少年",
+    "partOfSpeech": [
+      "noun",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8",
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000141",
+    "english": "dough",
+    "meaning": "麵團；錢",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000142",
+    "english": "ballot",
+    "meaning": "投票；選票 / 不記名投票",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000143",
+    "english": "stall",
+    "meaning": "攤位；柵欄；小隔間 / 拖延；拋錨",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000144",
+    "english": "rib",
+    "meaning": "肋骨",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000145",
+    "english": "wilderness",
+    "meaning": "荒野",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000146",
+    "english": "wildlife",
+    "meaning": "野生動物",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000147",
+    "english": "indifferent",
+    "meaning": "冷漠的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000148",
+    "english": "attendance",
+    "meaning": "出席；照顧",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000149",
+    "english": "abolish",
+    "meaning": "廢止",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8",
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000150",
+    "english": "abolition",
+    "meaning": "廢止",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000151",
+    "english": "agenda",
+    "meaning": "議程",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8",
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000152",
+    "english": "agony",
+    "meaning": "痛苦",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8",
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000153",
+    "english": "aisle",
+    "meaning": "走道",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8",
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000154",
+    "english": "allergy",
+    "meaning": "過敏",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8",
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000155",
+    "english": "allergic",
+    "meaning": "過敏的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8",
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000156",
+    "english": "alternate",
+    "meaning": "交替；輪流 / 輪流的；交替的",
+    "partOfSpeech": [
+      "verb",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8",
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000157",
+    "english": "antique",
+    "meaning": "古董 / 古董的",
+    "partOfSpeech": [
+      "noun",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000158",
+    "english": "arena",
+    "meaning": "競技場",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000159",
+    "english": "ass",
+    "meaning": "屁股；傻蛋",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000160",
+    "english": "astonish",
+    "meaning": "使...震驚",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U8"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000161",
+    "english": "ban",
+    "meaning": "禁止 / 禁令",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000162",
+    "english": "belongings",
+    "meaning": "財產",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000163",
+    "english": "beneficial",
+    "meaning": "有益的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000164",
+    "english": "beware",
+    "meaning": "提防；小心",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000165",
+    "english": "bolt",
+    "meaning": "一道閃電 / 衝",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000166",
+    "english": "bonus",
+    "meaning": "紅利；加碼",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000167",
+    "english": "boom",
+    "meaning": "繁榮；轟隆聲 / 使繁榮",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000168",
+    "english": "booth",
+    "meaning": "小亭子；攤位",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000169",
+    "english": "briefcase",
+    "meaning": "公事包",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000170",
+    "english": "bully",
+    "meaning": "惡霸 / 欺負",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000171",
+    "english": "canal",
+    "meaning": "運河",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000172",
+    "english": "celebrity",
+    "meaning": "名人",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000173",
+    "english": "certificate",
+    "meaning": "證明書 / 授予...證書",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000174",
+    "english": "choir",
+    "meaning": "唱詩班",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000175",
+    "english": "clause",
+    "meaning": "條款；子句",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000176",
+    "english": "comedian",
+    "meaning": "諧星",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000177",
+    "english": "commentator",
+    "meaning": "名嘴",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000178",
+    "english": "commentary",
+    "meaning": "實況播報；評論；註解",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000179",
+    "english": "compliment",
+    "meaning": "恭維 / 恭維",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000180",
+    "english": "comprehend",
+    "meaning": "領悟；理解",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000181",
+    "english": "comprehension",
+    "meaning": "理解；理解力",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000182",
+    "english": "comprehensible",
+    "meaning": "可理解的",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000183",
+    "english": "contagious",
+    "meaning": "具感染力的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000184",
+    "english": "contaminate",
+    "meaning": "汙染；汙衊",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000185",
+    "english": "contamination",
+    "meaning": "汙染；玷汙",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000186",
+    "english": "copyright",
+    "meaning": "著作權 / 為...取得著作權",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000187",
+    "english": "customs",
+    "meaning": "海關；關稅",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000188",
+    "english": "deceive",
+    "meaning": "欺騙",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000189",
+    "english": "deception",
+    "meaning": "欺騙",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000190",
+    "english": "deceptive",
+    "meaning": "騙人的；誤導的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000191",
+    "english": "destination",
+    "meaning": "目的地",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000192",
+    "english": "exile",
+    "meaning": "流放 / 流放；離鄉背井",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000193",
+    "english": "extinct",
+    "meaning": "絕種的；滅絕的；熄火的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000194",
+    "english": "extinction",
+    "meaning": "消滅；滅絕",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000195",
+    "english": "format",
+    "meaning": "格式 / 格式化",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000196",
+    "english": "gorgeous",
+    "meaning": "極好的；極美的；宜人的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000197",
+    "english": "gravity",
+    "meaning": "地心引力",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000198",
+    "english": "greed",
+    "meaning": "貪心；貪吃",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000199",
+    "english": "greedy",
+    "meaning": "貪心的；貪吃的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000200",
+    "english": "guideline",
+    "meaning": "指導方針",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000201",
+    "english": "herb",
+    "meaning": "草藥；香草植物",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000202",
+    "english": "herbal",
+    "meaning": "草藥的；香草的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000203",
+    "english": "hostage",
+    "meaning": "人質",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000204",
+    "english": "idiot",
+    "meaning": "白癡",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000205",
+    "english": "landlord",
+    "meaning": "房東",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000206",
+    "english": "lord",
+    "meaning": "領主",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000207",
+    "english": "mainstream",
+    "meaning": "主流",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000208",
+    "english": "stream",
+    "meaning": "河流 / 流出",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000209",
+    "english": "mansion",
+    "meaning": "大廈；官邸",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000210",
+    "english": "nasty",
+    "meaning": "惡意的；惡劣的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000211",
+    "english": "participant",
+    "meaning": "參加者",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U9"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000212",
+    "english": "pessimism",
+    "meaning": "悲觀主義",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000213",
+    "english": "pessimist",
+    "meaning": "悲觀主義者",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000214",
+    "english": "pulse",
+    "meaning": "脈搏跳動",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000215",
+    "english": "refuge",
+    "meaning": "避難；避難所",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000216",
+    "english": "refugee",
+    "meaning": "難民",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000217",
+    "english": "sanctuary",
+    "meaning": "避難所；庇護",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000218",
+    "english": "rival",
+    "meaning": "敵對的；競爭的 / 對手 / 匹敵；與...競爭",
+    "partOfSpeech": [
+      "noun",
+      "verb",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000219",
+    "english": "scandal",
+    "meaning": "醜聞",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000220",
+    "english": "sow",
+    "meaning": "播種",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000221",
+    "english": "superstition",
+    "meaning": "迷信",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000222",
+    "english": "tackle",
+    "meaning": "處理；截球",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000223",
+    "english": "thrill",
+    "meaning": "興奮；膽戰心驚 / 使...興奮",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000224",
+    "english": "thriller",
+    "meaning": "驚悚戲劇/電影/讀物",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000225",
+    "english": "thrilling",
+    "meaning": "刺激的；驚悚的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000226",
+    "english": "tuition",
+    "meaning": "教學；學費",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000227",
+    "english": "underline",
+    "meaning": "在...下面畫線",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000228",
+    "english": "visa",
+    "meaning": "簽證",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000229",
+    "english": "warrior",
+    "meaning": "戰士",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000230",
+    "english": "whereabouts",
+    "meaning": "行蹤下落",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000231",
+    "english": "wig",
+    "meaning": "假髮",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000232",
+    "english": "yacht",
+    "meaning": "遊艇 / 駕駛/乘坐遊艇",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000233",
+    "english": "blur",
+    "meaning": "模糊 / 變模糊",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000234",
+    "english": "bodyguard",
+    "meaning": "保鑣",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000235",
+    "english": "browse",
+    "meaning": "瀏覽 / 瀏覽；隨意觀看",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000236",
+    "english": "browser",
+    "meaning": "瀏覽器",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000237",
+    "english": "butcher",
+    "meaning": "屠夫；肉販 / 屠宰",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000238",
+    "english": "carnival",
+    "meaning": "嘉年華；露天遊樂場",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000239",
+    "english": "chef",
+    "meaning": "主廚",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000240",
+    "english": "considerate",
+    "meaning": "體諒的；體貼的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000241",
+    "english": "corrupt",
+    "meaning": "腐敗的 / 腐化...",
+    "partOfSpeech": [
+      "verb",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000242",
+    "english": "corruption",
+    "meaning": "腐敗",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000243",
+    "english": "democrat",
+    "meaning": "民主主義者",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000244",
+    "english": "democracy",
+    "meaning": "民主",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000245",
+    "english": "democratic",
+    "meaning": "民主的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000246",
+    "english": "republican",
+    "meaning": "共和主義者 / 共和政體的",
+    "partOfSpeech": [
+      "noun",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000247",
+    "english": "republic",
+    "meaning": "共和國",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000248",
+    "english": "denial",
+    "meaning": "否認；拒絕",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000249",
+    "english": "descriptive",
+    "meaning": "描述的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000250",
+    "english": "discriminate",
+    "meaning": "歧視；分辨",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000251",
+    "english": "discrimination",
+    "meaning": "歧視；區別",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000252",
+    "english": "dreadful",
+    "meaning": "可怕的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000253",
+    "english": "dread",
+    "meaning": "畏懼 / 畏懼",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000254",
+    "english": "exaggeration",
+    "meaning": "誇大",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000255",
+    "english": "filter",
+    "meaning": "過濾器 / 過濾",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000256",
+    "english": "gasp",
+    "meaning": "喘氣；倒抽一口氣 / 喘氣；倒抽一口氣",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000257",
+    "english": "glare",
+    "meaning": "強光；怒視 / 發強光；怒視",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000258",
+    "english": "hockey",
+    "meaning": "曲棍球",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000259",
+    "english": "howl",
+    "meaning": "嚎叫；(風)怒號 / 嚎叫",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000260",
+    "english": "roar",
+    "meaning": "吼叫；咆哮 / 吼叫",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000261",
+    "english": "laser",
+    "meaning": "雷射",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000262",
+    "english": "lawmaker",
+    "meaning": "立法者；立委",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000263",
+    "english": "lawsuit",
+    "meaning": "訴訟",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000264",
+    "english": "massage",
+    "meaning": "按摩 / 按摩",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000265",
+    "english": "masterpiece",
+    "meaning": "傑作",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000266",
+    "english": "moan",
+    "meaning": "呻吟 / 呻吟",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000267",
+    "english": "mustard",
+    "meaning": "芥末",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000268",
+    "english": "overwhelm",
+    "meaning": "壓倒；使...震撼；淹沒",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000269",
+    "english": "overwhelming",
+    "meaning": "壓倒性的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000270",
+    "english": "passionate",
+    "meaning": "熱情的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000271",
+    "english": "pastry",
+    "meaning": "糕點",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000272",
+    "english": "pillar",
+    "meaning": "柱子；中流砥柱",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000273",
+    "english": "beam",
+    "meaning": "橫梁",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000274",
+    "english": "column",
+    "meaning": "圓柱",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000275",
+    "english": "rack",
+    "meaning": "架子 / 折磨；使...痛苦",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000276",
+    "english": "rally",
+    "meaning": "集會 / 集合；恢復",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000277",
+    "english": "repay",
+    "meaning": "償還；報答",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000278",
+    "english": "rod",
+    "meaning": "棍子；桿子",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000279",
+    "english": "sandal",
+    "meaning": "涼鞋",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000280",
+    "english": "sneak",
+    "meaning": "潛行；鬼祟而行 / 告密者；鬼祟之人",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000281",
+    "english": "solo",
+    "meaning": "獨唱 / 獨唱 / 單獨的 / 單飛",
+    "partOfSpeech": [
+      "noun",
+      "verb",
+      "adjective",
+      "adverb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000282",
+    "english": "terminal",
+    "meaning": "終站；航廈 / 重症末期的",
+    "partOfSpeech": [
+      "noun",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000283",
+    "english": "toxic",
+    "meaning": "有毒的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000284",
+    "english": "toxin",
+    "meaning": "毒素",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000285",
+    "english": "vow",
+    "meaning": "誓言 / 發誓",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000286",
+    "english": "wheelchair",
+    "meaning": "輪椅",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000287",
+    "english": "ethics",
+    "meaning": "倫理",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000288",
+    "english": "ethical",
+    "meaning": "倫理的；道德的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000289",
+    "english": "rear",
+    "meaning": "在後面的 / 後面 / 養育；飼養",
+    "partOfSpeech": [
+      "noun",
+      "verb",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000290",
+    "english": "parallel",
+    "meaning": "平行的；同樣的；類似的 / 相似；比較 / 與...平行；與...類似；與...匹敵",
+    "partOfSpeech": [
+      "noun",
+      "verb",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000291",
+    "english": "institute",
+    "meaning": "研究機構 / 制定",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000292",
+    "english": "institution",
+    "meaning": "制定；公益機構",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000293",
+    "english": "grip",
+    "meaning": "抓握；掌控；吸引 / 抓握；掌控",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000294",
+    "english": "ally",
+    "meaning": "聯盟；盟友 / 與...結盟",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000295",
+    "english": "alliance",
+    "meaning": "同盟關係",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11",
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000296",
+    "english": "substitute",
+    "meaning": "替代物 / 代替；以...替代...",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000297",
+    "english": "substitution",
+    "meaning": "替代",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000298",
+    "english": "venture",
+    "meaning": "高危冒險；高風險投資 / 冒險；以...為賭注",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000299",
+    "english": "compound",
+    "meaning": "混合物；化合物；建築；場地；基地 / 複合的 / 使...複雜",
+    "partOfSpeech": [
+      "noun",
+      "verb",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000300",
+    "english": "undergraduate",
+    "meaning": "大學生",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000301",
+    "english": "conduct",
+    "meaning": "進行；指揮；傳導 / 行為",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000302",
+    "english": "conductor",
+    "meaning": "指揮家；導體",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000303",
+    "english": "grant",
+    "meaning": "補助金 / 准許；授與；給予",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000304",
+    "english": "purchase",
+    "meaning": "購買 / 購買；購買物",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000305",
+    "english": "stain",
+    "meaning": "汙點 / 弄髒；玷汙",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000306",
+    "english": "stainless",
+    "meaning": "無瑕的；不會生鏽的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000307",
+    "english": "thrust",
+    "meaning": "插；塞；刺；戳 / 刺；戳；推；擠",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000308",
+    "english": "strain",
+    "meaning": "緊張；負擔；壓力 / 拉緊；盡全力",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000309",
+    "english": "convict",
+    "meaning": "定罪 / 服刑中罪犯",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000310",
+    "english": "conviction",
+    "meaning": "定罪",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000311",
+    "english": "ex-con",
+    "meaning": "前科犯",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000312",
+    "english": "bid",
+    "meaning": "出價 / 出價；競標",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000313",
+    "english": "decay",
+    "meaning": "腐壞；衰敗；腐朽 / 腐壞；衰敗；腐朽",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000314",
+    "english": "abortion",
+    "meaning": "墮胎",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11",
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000315",
+    "english": "miscarriage",
+    "meaning": "意外流產",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000316",
+    "english": "abort",
+    "meaning": "流產；中止",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11",
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000317",
+    "english": "abundant",
+    "meaning": "充裕的；豐富的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000318",
+    "english": "adore",
+    "meaning": "崇拜；愛慕；喜愛",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11",
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000319",
+    "english": "adorable",
+    "meaning": "漂亮的；可愛的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U11",
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000320",
+    "english": "awe",
+    "meaning": "敬畏 / 使...敬畏",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000321",
+    "english": "banner",
+    "meaning": "橫幅",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000322",
+    "english": "barren",
+    "meaning": "貧瘠的；不孕的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000323",
+    "english": "batch",
+    "meaning": "一批 / 分批",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000324",
+    "english": "boredom",
+    "meaning": "厭煩",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000325",
+    "english": "boxer",
+    "meaning": "拳擊手",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000326",
+    "english": "bronze",
+    "meaning": "青銅 / 青銅的",
+    "partOfSpeech": [
+      "noun",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000327",
+    "english": "bruise",
+    "meaning": "瘀傷 / 擦傷",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000328",
+    "english": "chord",
+    "meaning": "和弦；和音",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000329",
+    "english": "chubby",
+    "meaning": "圓胖的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000330",
+    "english": "compassion",
+    "meaning": "同情",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000331",
+    "english": "compassionate",
+    "meaning": "同情的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000332",
+    "english": "cuisine",
+    "meaning": "烹調方式；菜餚",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000333",
+    "english": "erupt",
+    "meaning": "爆發",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000334",
+    "english": "eruption",
+    "meaning": "爆發",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000335",
+    "english": "flip",
+    "meaning": "輕彈；快速翻轉 / 輕彈；快速翻轉",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000336",
+    "english": "fluency",
+    "meaning": "流利",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000337",
+    "english": "foul",
+    "meaning": "惡臭的；汙穢的；犯規的；下流地 / 犯規地 / 犯規 / 犯規；汙染",
+    "partOfSpeech": [
+      "noun",
+      "verb",
+      "adjective",
+      "adverb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000338",
+    "english": "gut",
+    "meaning": "內臟；膽量 / 取出內臟；毀損；拆除內部",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000339",
+    "english": "bowel",
+    "meaning": "腸",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000340",
+    "english": "jug",
+    "meaning": "罐；壺",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000341",
+    "english": "lump",
+    "meaning": "小塊；腫塊；一塊方糖 / 混為一談",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000342",
+    "english": "mammal",
+    "meaning": "哺乳動物",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000343",
+    "english": "manifest",
+    "meaning": "顯示；表現",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000344",
+    "english": "meantime",
+    "meaning": "與此同時 / 同時",
+    "partOfSpeech": [
+      "noun",
+      "adverb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000345",
+    "english": "midst",
+    "meaning": "正中央 / 在...之中",
+    "partOfSpeech": [
+      "noun",
+      "preposition"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000346",
+    "english": "milestone",
+    "meaning": "里程碑",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000347",
+    "english": "mint",
+    "meaning": "薄荷",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000348",
+    "english": "mumble",
+    "meaning": "嘀咕 / 嘀咕",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000349",
+    "english": "olive",
+    "meaning": "橄欖；橄欖樹；橄欖綠 / 橄欖色的",
+    "partOfSpeech": [
+      "noun",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000350",
+    "english": "orchard",
+    "meaning": "果園",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000351",
+    "english": "pier",
+    "meaning": "碼頭",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000352",
+    "english": "pledge",
+    "meaning": "誓約 / 發誓",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000353",
+    "english": "poke",
+    "meaning": "戳；伸出 / 戳",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000354",
+    "english": "prey",
+    "meaning": "獵物；受害者；犧牲者 / 捕食；劫掠",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000355",
+    "english": "predator",
+    "meaning": "掠食者",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000356",
+    "english": "prolong",
+    "meaning": "延長",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000357",
+    "english": "prophet",
+    "meaning": "先知",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000358",
+    "english": "prophecy",
+    "meaning": "預言",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000359",
+    "english": "pyramid",
+    "meaning": "金字塔",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000360",
+    "english": "ragged",
+    "meaning": "破爛的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000361",
+    "english": "rag",
+    "meaning": "破布",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000362",
+    "english": "rattle",
+    "meaning": "發出嘎嘎聲；喋喋不休 / 嘎嘎作響的玩具",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000363",
+    "english": "reminder",
+    "meaning": "提醒物；提醒訊息",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000364",
+    "english": "rim",
+    "meaning": "邊緣 / 環繞",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000365",
+    "english": "rip",
+    "meaning": "撕開 / 裂縫",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000366",
+    "english": "salmon",
+    "meaning": "鮭魚 / 淺橙色的",
+    "partOfSpeech": [
+      "noun",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000367",
+    "english": "scent",
+    "meaning": "氣味 / 線索 / 聞到",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000368",
+    "english": "scramble",
+    "meaning": "攀爬 / 爭奪 / 炒",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000369",
+    "english": "server",
+    "meaning": "餐廳服務生 / 網路伺服器",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000370",
+    "english": "shield",
+    "meaning": "盾 / 保護",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000371",
+    "english": "windshield",
+    "meaning": "擋風玻璃",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000372",
+    "english": "shove",
+    "meaning": "推擠",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000373",
+    "english": "skeleton",
+    "meaning": "骷髏 / 骨架",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000374",
+    "english": "skull",
+    "meaning": "頭蓋骨",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000375",
+    "english": "sniff",
+    "meaning": "吸入 / 吸氣聲 / 對...嗤之以鼻 / 探聽",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000376",
+    "english": "spine",
+    "meaning": "脊椎骨",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000377",
+    "english": "sponge",
+    "meaning": "海綿",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000378",
+    "english": "squash",
+    "meaning": "壓爛 / 鎮壓 / 瓜類",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000379",
+    "english": "squat",
+    "meaning": "蹲踞 / 蜷伏 / 蹲",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000380",
+    "english": "stew",
+    "meaning": "燉菜 / 燉",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000381",
+    "english": "stink",
+    "meaning": "惡臭 / 發臭 / 令人厭惡",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000382",
+    "english": "strand",
+    "meaning": "擱淺 / 陷入困境 / 縷 / 一部分",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000383",
+    "english": "strap",
+    "meaning": "皮帶 / 綑紮",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000384",
+    "english": "tangle",
+    "meaning": "纏成一團 / 混亂 / 糾纏",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000385",
+    "english": "throne",
+    "meaning": "王位",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000386",
+    "english": "tick",
+    "meaning": "滴答聲 / 滴答作響",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000387",
+    "english": "torch",
+    "meaning": "火把 / 手電筒 / 縱火",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000388",
+    "english": "torment",
+    "meaning": "煎熬",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000389",
+    "english": "traitor",
+    "meaning": "叛徒",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000390",
+    "english": "triple",
+    "meaning": "三倍的 / 增加三倍",
+    "partOfSpeech": [
+      "verb",
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000391",
+    "english": "tuna",
+    "meaning": "鮪魚",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000392",
+    "english": "update",
+    "meaning": "最新狀況 / 更新",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000393",
+    "english": "upgrade",
+    "meaning": "升級",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000394",
+    "english": "viewpoint",
+    "meaning": "觀點",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000395",
+    "english": "warehouse",
+    "meaning": "倉庫",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000396",
+    "english": "wary",
+    "meaning": "小心的 / 慎重的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000397",
+    "english": "weird",
+    "meaning": "怪異的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000398",
+    "english": "whine",
+    "meaning": "哀叫",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000399",
+    "english": "wither",
+    "meaning": "枯萎 / 衰微",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000400",
+    "english": "administration",
+    "meaning": "管理 / 行政 / 政府",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13",
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000401",
+    "english": "administrative",
+    "meaning": "行政管理上的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13",
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000402",
+    "english": "administrator",
+    "meaning": "管理者；行政人員",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13",
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000403",
+    "english": "session",
+    "meaning": "期間",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000404",
+    "english": "backyard",
+    "meaning": "後院",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000405",
+    "english": "risky",
+    "meaning": "冒險的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000406",
+    "english": "nonprofit",
+    "meaning": "非營利的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "晟景Lv5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000407",
+    "english": "abrupt",
+    "meaning": "突然的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000408",
+    "english": "abruptly",
+    "meaning": "突然地",
+    "partOfSpeech": [
+      "adverb"
+    ],
+    "lessonIds": [
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000409",
+    "english": "abuse",
+    "meaning": "辱罵；虐待；濫用 / 辱罵；虐待；濫用",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000410",
+    "english": "accessible",
+    "meaning": "易理解的；易達的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000411",
+    "english": "accord",
+    "meaning": "協議；一致 / 一致；調解；給予",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000412",
+    "english": "accounting",
+    "meaning": "會計",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000413",
+    "english": "ace",
+    "meaning": "發球得分；最強的人",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000414",
+    "english": "acknowledge",
+    "meaning": "承認；公認；感謝",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000415",
+    "english": "acknowledgement",
+    "meaning": "公認；承認",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000416",
+    "english": "acquaint",
+    "meaning": "使熟悉",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000417",
+    "english": "acquisition",
+    "meaning": "獲得；收購；招募",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000418",
+    "english": "activist",
+    "meaning": "激進份子",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000419",
+    "english": "acute",
+    "meaning": "敏銳的；急性的；嚴重的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000420",
+    "english": "adulthood",
+    "meaning": "成年",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000421",
+    "english": "adverse",
+    "meaning": "負面的；有害的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000422",
+    "english": "advocate",
+    "meaning": "提倡 / 支持者",
+    "partOfSpeech": [
+      "noun",
+      "verb"
+    ],
+    "lessonIds": [
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000423",
+    "english": "affection",
+    "meaning": "感情；喜愛",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000424",
+    "english": "allocate",
+    "meaning": "配給；分配",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000425",
+    "english": "alongside",
+    "meaning": "在...旁邊 / 在...旁邊",
+    "partOfSpeech": [
+      "adverb",
+      "preposition"
+    ],
+    "lessonIds": [
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000426",
+    "english": "alter",
+    "meaning": "改變；修改",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000427",
+    "english": "alteration",
+    "meaning": "變更；修改",
+    "partOfSpeech": [
+      "noun"
+    ],
+    "lessonIds": [
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000428",
+    "english": "amend",
+    "meaning": "改良；修改；修訂",
+    "partOfSpeech": [
+      "verb"
+    ],
+    "lessonIds": [
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000429",
+    "english": "ample",
+    "meaning": "充分的",
+    "partOfSpeech": [
+      "adjective"
+    ],
+    "lessonIds": [
+      "死神單字Lv5 a"
+    ],
+    "isWrong": false
+  }
+]
