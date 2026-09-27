@@ -443,7 +443,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U6"
+      "晟景Lv5U6",
+      "死神單字Lv5U5"
     ],
     "isWrong": false
   },
@@ -477,18 +478,21 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "謹慎"
+          "謹慎",
+          "小心"
         ]
       },
       {
         "partOfSpeech": "verb",
         "definitions": [
-          "告誡"
+          "告誡",
+          "警告"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U6"
+      "晟景Lv5U6",
+      "死神單字Lv5U4"
     ],
     "isWrong": false
   },
@@ -499,12 +503,14 @@
       {
         "partOfSpeech": "adjective",
         "definitions": [
-          "謹慎的"
+          "謹慎的",
+          "小心的"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U6"
+      "晟景Lv5U6",
+      "死神單字Lv5U4"
     ],
     "isWrong": false
   },
@@ -585,12 +591,14 @@
       {
         "partOfSpeech": "verb",
         "definitions": [
-          "隱藏"
+          "隱藏",
+          "隱瞞"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U6"
+      "晟景Lv5U6",
+      "死神單字Lv5U5"
     ],
     "isWrong": false
   },
@@ -915,12 +923,15 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "大量"
+          "大量",
+          "大部分",
+          "體積"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U6"
+      "晟景Lv5U6",
+      "死神單字Lv5U3"
     ],
     "isWrong": false
   },
@@ -964,19 +975,24 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "妥協"
+          "妥協",
+          "折衷",
+          "讓步"
         ]
       },
       {
         "partOfSpeech": "verb",
         "definitions": [
           "妥協",
-          "損及"
+          "損及",
+          "折衷",
+          "讓步"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U6"
+      "晟景Lv5U6",
+      "死神單字Lv5U5"
     ],
     "isWrong": false
   },
@@ -1074,7 +1090,9 @@
         "partOfSpeech": "noun",
         "definitions": [
           "強風",
-          "爆震"
+          "爆震",
+          "巨響",
+          "爆炸"
         ]
       },
       {
@@ -1085,7 +1103,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U7"
+      "晟景Lv5U7",
+      "死神單字Lv5U3"
     ],
     "isWrong": false
   },
@@ -1156,7 +1175,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U7"
+      "晟景Lv5U7",
+      "死神單字Lv5U5"
     ],
     "isWrong": false
   },
@@ -1172,7 +1192,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U7"
+      "晟景Lv5U7",
+      "死神單字Lv5U5"
     ],
     "isWrong": false
   },
@@ -1378,7 +1399,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U7"
+      "晟景Lv5U7",
+      "死神單字Lv5U3"
     ],
     "isWrong": false
   },
@@ -1880,18 +1902,21 @@
         "partOfSpeech": "noun",
         "definitions": [
           "串",
-          "束"
+          "束",
+          "一群"
         ]
       },
       {
         "partOfSpeech": "verb",
         "definitions": [
-          "群聚"
+          "群聚",
+          "聚集"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U7"
+      "晟景Lv5U7",
+      "死神單字Lv5U4"
     ],
     "isWrong": false
   },
@@ -2487,7 +2512,9 @@
       {
         "partOfSpeech": "verb",
         "definitions": [
-          "使緊密"
+          "使緊密",
+          "壓縮",
+          "擠壓"
         ]
       },
       {
@@ -2495,12 +2522,15 @@
         "definitions": [
           "緊密的",
           "迷你的",
-          "小巧的"
+          "小巧的",
+          "緊湊的",
+          "密實的"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U8"
+      "晟景Lv5U8",
+      "死神單字Lv5U5"
     ],
     "isWrong": false
   },
@@ -2974,12 +3004,14 @@
         "partOfSpeech": "verb",
         "definitions": [
           "提防",
-          "小心"
+          "小心",
+          "當心"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U9"
+      "晟景Lv5U9",
+      "死神單字Lv5U3"
     ],
     "isWrong": false
   },
@@ -2990,7 +3022,10 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "一道閃電"
+          "一道閃電",
+          "插銷",
+          "螺栓",
+          "一道"
         ]
       },
       {
@@ -3001,7 +3036,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U9"
+      "晟景Lv5U9",
+      "死神單字Lv5U3"
     ],
     "isWrong": false
   },
@@ -3058,7 +3094,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U9"
+      "晟景Lv5U9",
+      "死神單字Lv5U3"
     ],
     "isWrong": false
   },
@@ -3074,7 +3111,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U9"
+      "晟景Lv5U9",
+      "死神單字Lv5U3"
     ],
     "isWrong": false
   },
@@ -3112,7 +3150,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U9"
+      "晟景Lv5U9",
+      "死神單字Lv5U3"
     ],
     "isWrong": false
   },
@@ -3123,12 +3162,14 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "名人"
+          "名人",
+          "名聲"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U9"
+      "晟景Lv5U9",
+      "死神單字Lv5U4"
     ],
     "isWrong": false
   },
@@ -3139,7 +3180,9 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "證明書"
+          "證明書",
+          "證明",
+          "證書"
         ]
       },
       {
@@ -3150,7 +3193,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U9"
+      "晟景Lv5U9",
+      "死神單字Lv5U4"
     ],
     "isWrong": false
   },
@@ -3161,12 +3205,14 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "唱詩班"
+          "唱詩班",
+          "合唱團"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U9"
+      "晟景Lv5U9",
+      "死神單字Lv5U4"
     ],
     "isWrong": false
   },
@@ -3183,7 +3229,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U9"
+      "晟景Lv5U9",
+      "死神單字Lv5U4"
     ],
     "isWrong": false
   },
@@ -3194,12 +3241,14 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "諧星"
+          "諧星",
+          "喜劇演員"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U9"
+      "晟景Lv5U9",
+      "死神單字Lv5U5"
     ],
     "isWrong": false
   },
@@ -3210,12 +3259,15 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "名嘴"
+          "名嘴",
+          "（廣播或電視的）解說員",
+          "評論員"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U9"
+      "晟景Lv5U9",
+      "死神單字Lv5U5"
     ],
     "isWrong": false
   },
@@ -3228,12 +3280,15 @@
         "definitions": [
           "實況播報",
           "評論",
-          "註解"
+          "註解",
+          "系統性的註解",
+          "（電視或電台上的）講評（與介詞 on 並用）"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U9"
+      "晟景Lv5U9",
+      "死神單字Lv5U5"
     ],
     "isWrong": false
   },
@@ -3244,18 +3299,21 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "恭維"
+          "恭維",
+          "讚美"
         ]
       },
       {
         "partOfSpeech": "verb",
         "definitions": [
-          "恭維"
+          "恭維",
+          "讚美"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U9"
+      "晟景Lv5U9",
+      "死神單字Lv5U5"
     ],
     "isWrong": false
   },
@@ -3272,7 +3330,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U9"
+      "晟景Lv5U9",
+      "死神單字Lv5U5"
     ],
     "isWrong": false
   },
@@ -3284,12 +3343,15 @@
         "partOfSpeech": "noun",
         "definitions": [
           "理解",
-          "理解力"
+          "理解力",
+          "理解（力）",
+          "領悟（能力）"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U9"
+      "晟景Lv5U9",
+      "死神單字Lv5U5"
     ],
     "isWrong": false
   },
@@ -3302,10 +3364,17 @@
         "definitions": [
           "可理解的"
         ]
+      },
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "可理解的"
+        ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U9"
+      "晟景Lv5U9",
+      "死神單字Lv5U5"
     ],
     "isWrong": false
   },
@@ -4192,18 +4261,21 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "模糊"
+          "模糊",
+          "模糊的東西"
         ]
       },
       {
         "partOfSpeech": "verb",
         "definitions": [
-          "變模糊"
+          "變模糊",
+          "使模糊"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U10"
+      "晟景Lv5U10",
+      "死神單字Lv5U3"
     ],
     "isWrong": false
   },
@@ -4214,12 +4286,14 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "保鑣"
+          "保鑣",
+          "保鏢"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U10"
+      "晟景Lv5U10",
+      "死神單字Lv5U3"
     ],
     "isWrong": false
   },
@@ -4242,7 +4316,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U10"
+      "晟景Lv5U10",
+      "死神單字Lv5U3"
     ],
     "isWrong": false
   },
@@ -4281,7 +4356,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U10"
+      "晟景Lv5U10",
+      "死神單字Lv5U3"
     ],
     "isWrong": false
   },
@@ -4293,12 +4369,16 @@
         "partOfSpeech": "noun",
         "definitions": [
           "嘉年華",
-          "露天遊樂場"
+          "露天遊樂場",
+          "嘉年華會",
+          "狂歡節",
+          "園遊會"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U10"
+      "晟景Lv5U10",
+      "死神單字Lv5U4"
     ],
     "isWrong": false
   },
@@ -4309,12 +4389,14 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "主廚"
+          "主廚",
+          "廚師"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U10"
+      "晟景Lv5U10",
+      "死神單字Lv5U4"
     ],
     "isWrong": false
   },
@@ -5472,24 +5554,28 @@
           "化合物",
           "建築",
           "場地",
-          "基地"
+          "基地",
+          "合成物"
         ]
       },
       {
         "partOfSpeech": "verb",
         "definitions": [
-          "使...複雜"
+          "使...複雜",
+          "混合"
         ]
       },
       {
         "partOfSpeech": "adjective",
         "definitions": [
-          "複合的"
+          "複合的",
+          "合成的"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U11"
+      "晟景Lv5U11",
+      "死神單字Lv5U5"
     ],
     "isWrong": false
   },
@@ -5516,7 +5602,8 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "行為"
+          "行為",
+          "舉止"
         ]
       },
       {
@@ -5524,12 +5611,15 @@
         "definitions": [
           "進行",
           "指揮",
-          "傳導"
+          "傳導",
+          "組織",
+          "處理"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U11"
+      "晟景Lv5U11",
+      "死神單字Lv5U5"
     ],
     "isWrong": false
   },
@@ -5758,12 +5848,14 @@
       {
         "partOfSpeech": "verb",
         "definitions": [
-          "出價"
+          "出價",
+          "競標"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U11"
+      "晟景Lv5U11",
+      "死神單字Lv5U3"
     ],
     "isWrong": false
   },
@@ -5985,12 +6077,14 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "厭煩"
+          "厭煩",
+          "無聊"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U12"
+      "晟景Lv5U12",
+      "死神單字Lv5U3"
     ],
     "isWrong": false
   },
@@ -6023,12 +6117,15 @@
       {
         "partOfSpeech": "adjective",
         "definitions": [
-          "青銅的"
+          "青銅的",
+          "銅色的",
+          "銅製的"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U12"
+      "晟景Lv5U12",
+      "死神單字Lv5U3"
     ],
     "isWrong": false
   },
@@ -6045,12 +6142,15 @@
       {
         "partOfSpeech": "verb",
         "definitions": [
-          "擦傷"
+          "擦傷",
+          "撞傷",
+          "碰傷"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U12"
+      "晟景Lv5U12",
+      "死神單字Lv5U3"
     ],
     "isWrong": false
   },
@@ -6067,7 +6167,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U12"
+      "晟景Lv5U12",
+      "死神單字Lv5U4"
     ],
     "isWrong": false
   },
@@ -6078,12 +6179,14 @@
       {
         "partOfSpeech": "adjective",
         "definitions": [
-          "圓胖的"
+          "圓胖的",
+          "（尤指兒童）圓圓胖胖的"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U12"
+      "晟景Lv5U12",
+      "死神單字Lv5U4"
     ],
     "isWrong": false
   },
@@ -6094,12 +6197,14 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "同情"
+          "同情",
+          "同情心"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U12"
+      "晟景Lv5U12",
+      "死神單字Lv5U5"
     ],
     "isWrong": false
   },
@@ -6110,12 +6215,14 @@
       {
         "partOfSpeech": "adjective",
         "definitions": [
-          "同情的"
+          "同情的",
+          "有同情心的"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U12"
+      "晟景Lv5U12",
+      "死神單字Lv5U5"
     ],
     "isWrong": false
   },
@@ -6283,7 +6390,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U12"
+      "晟景Lv5U12",
+      "死神單字Lv5U3"
     ],
     "isWrong": false
   },
@@ -8399,6 +8507,1759 @@
     ],
     "lessonIds": [
       "死神單字Lv5U2"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000453",
+    "english": "betray",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "背叛",
+          "暴露"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U3"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000454",
+    "english": "bias",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "偏見"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "偏心"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U3"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000455",
+    "english": "bizarre",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "奇怪的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U3"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000456",
+    "english": "blacksmith",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "鐵匠"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U3"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000457",
+    "english": "blizzard",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "暴風雪"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U3"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000458",
+    "english": "blueprint",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "藍圖"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U3"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000459",
+    "english": "blush",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "臉紅"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U3"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000460",
+    "english": "bog",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "泥沼"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "使動彈不得"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U3"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000461",
+    "english": "botany",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "植物學"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U3"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000462",
+    "english": "bound",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "跳躍"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "跳躍"
+        ]
+      },
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "注定的",
+          "捆綁的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U3"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000463",
+    "english": "boundary",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "邊界",
+          "界線"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U3"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000464",
+    "english": "boundless",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "無限的",
+          "無窮的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U3"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000465",
+    "english": "boyhood",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "少年期"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U3"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000466",
+    "english": "braid",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "辮子",
+          "穗帶"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "編織",
+          "編辮子"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U3"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000467",
+    "english": "breakthrough",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "突破"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U3"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000468",
+    "english": "brooch",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "女用胸針"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U3"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000469",
+    "english": "brood",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "一窩",
+          "一群"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "孵蛋",
+          "憂思"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U3"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000470",
+    "english": "bulge",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "凸起",
+          "膨脹"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U3"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000471",
+    "english": "bureau",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "（政府的）局、處"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U3"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000472",
+    "english": "bureaucracy",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "官僚主義",
+          "官僚體制"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U3"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000473",
+    "english": "burial",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "葬禮",
+          "埋葬"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U3"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000474",
+    "english": "cactus",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "仙人掌"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U3"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000475",
+    "english": "calcium",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "鈣"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U3"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000476",
+    "english": "calf",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "小腿",
+          "小牛",
+          "幼獸"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U3"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000477",
+    "english": "cannon",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "大砲"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U3"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000478",
+    "english": "canvas",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "帆布",
+          "畫布"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U3"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000479",
+    "english": "capability",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "能力",
+          "軍事武力"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U3"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000480",
+    "english": "carnation",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "康乃馨"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000481",
+    "english": "carp",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "鯉魚"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "挑剔",
+          "吹毛求疵"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000482",
+    "english": "casino",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "賭場"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000483",
+    "english": "categorize",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "將……分類"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000484",
+    "english": "cathedral",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "大教堂"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000485",
+    "english": "cautiously",
+    "meanings": [
+      {
+        "partOfSpeech": "adverb",
+        "definitions": [
+          "小心地",
+          "謹慎地"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000486",
+    "english": "cellar",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "地窖",
+          "酒窖"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000487",
+    "english": "cello",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "大提琴"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000488",
+    "english": "cemetery",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "公墓",
+          "墓地"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000489",
+    "english": "centigrade",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "攝氏"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000490",
+    "english": "ceremony",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "典禮"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000491",
+    "english": "certainty",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "確定性（不可數）",
+          "確定的事（可數）"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000492",
+    "english": "chaos",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "混亂",
+          "無秩序狀態"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000493",
+    "english": "chapel",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "小禮拜堂"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000494",
+    "english": "characterize",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "描繪……的特性",
+          "具有……的特色（常用被動語態）"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000495",
+    "english": "chatter",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "喋喋不休"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "喋喋不休"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000496",
+    "english": "chatterbox",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "話多的人"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000497",
+    "english": "check-in",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "登記",
+          "報到"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000498",
+    "english": "check-out",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "結帳離開"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000499",
+    "english": "checkbook",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "支票簿"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000500",
+    "english": "chore",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "雜務"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000501",
+    "english": "chronic",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "（尤指疾病或不好的事物）慢性的",
+          "長期的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000502",
+    "english": "chunk",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "（肉、木材等的）厚片",
+          "大塊"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000503",
+    "english": "circuit",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "電路",
+          "環道",
+          "圓圈",
+          "巡迴"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "環行"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000504",
+    "english": "cite",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "引用",
+          "舉例"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000505",
+    "english": "citizenship",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "公民身份",
+          "公民權"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000506",
+    "english": "civic",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "市民的",
+          "公民的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000507",
+    "english": "civics",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "公民學"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000508",
+    "english": "clan",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "氏族",
+          "家族"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000509",
+    "english": "clarity",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "清楚"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000510",
+    "english": "cling",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "依附",
+          "附著",
+          "抓緊",
+          "抱緊（不及物，後面搭配to）"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000511",
+    "english": "clinical",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "臨床的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000512",
+    "english": "clover",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "酢漿草",
+          "紅花草"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000513",
+    "english": "clutch",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "離合器"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "（通常指因恐懼、焦慮或痛苦而）緊抓",
+          "緊握"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000514",
+    "english": "cocaine",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "古柯鹼",
+          "可卡因"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000515",
+    "english": "cocoon",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "繭"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000516",
+    "english": "coffin",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "棺材",
+          "靈柩"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000517",
+    "english": "coherent",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "連貫的",
+          "一致的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000518",
+    "english": "coil",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "捲",
+          "線圈"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "捲起來"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U4"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000519",
+    "english": "coincidence",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "巧合"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000520",
+    "english": "collaboration",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "合作",
+          "通敵"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000521",
+    "english": "collective",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "集體的",
+          "共同的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000522",
+    "english": "collector",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "收藏家",
+          "收稅員",
+          "收款人"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000523",
+    "english": "colonel",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "（陸、空）上校"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000524",
+    "english": "colonial",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "殖民的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000525",
+    "english": "columnist",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "專欄作家"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000526",
+    "english": "combat",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "戰鬥"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "打擊"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000527",
+    "english": "commend",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "讚揚",
+          "稱讚",
+          "表揚"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000528",
+    "english": "commission",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "回扣",
+          "佣金",
+          "（負責調查問題的）委員會"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "委任"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000529",
+    "english": "commissioner",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "委任者",
+          "長官",
+          "專員"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000530",
+    "english": "commitment",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "承諾（可數）",
+          "奉獻（不可數）"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000531",
+    "english": "communal",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "公共的",
+          "共有的",
+          "集體的",
+          "公用的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000532",
+    "english": "commune",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "公社",
+          "群居團體"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "親密交談",
+          "交流",
+          "接觸",
+          "交融"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000533",
+    "english": "communism",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "共產主義"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000534",
+    "english": "communist",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "共產主義者"
+        ]
+      },
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "共產的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000535",
+    "english": "comparable",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "可相比的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000536",
+    "english": "compatible",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "相容的",
+          "可共存的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000537",
+    "english": "compel",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "迫使"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000538",
+    "english": "compensate",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "賠償",
+          "補償",
+          "彌補"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000539",
+    "english": "compensation",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "補償（不可數）"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000540",
+    "english": "competence",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "能力",
+          "才幹"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000541",
+    "english": "competent",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "有能力的",
+          "勝任的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000542",
+    "english": "complexity",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "複雜性（不可數）",
+          "複雜之處（常用複數）"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000543",
+    "english": "complication",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "複雜",
+          "困難",
+          "併發症（常用複數）"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000544",
+    "english": "comply",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "服從",
+          "遵守"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000545",
+    "english": "component",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "零件",
+          "成分"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000546",
+    "english": "comprise",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "包含",
+          "包括",
+          "由……組成"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000547",
+    "english": "compulsory",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "強制的",
+          "勢在必行的",
+          "義務的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000548",
+    "english": "concede",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "承認（失敗）",
+          "讓步"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000549",
+    "english": "conceive",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "懷孕",
+          "構思",
+          "設想"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000550",
+    "english": "conception",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "懷孕",
+          "看法",
+          "觀念",
+          "概念"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000551",
+    "english": "condemn",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "譴責"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字Lv5U5"
     ],
     "isWrong": false
   }

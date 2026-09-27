@@ -53,7 +53,7 @@ flowchart TD
 
 ## Canonical word
 
-公用庫現在有 **452 筆唯一英文、478 個課程歸屬**。同一英文的大小寫變體視為同一 entity；`english.trim().toLowerCase()` 重複會被驗證拒絕。修改英文、中文或課程都不改 ID。
+公用庫現在有 **551 筆唯一英文、622 個課程歸屬**。同一英文的大小寫變體視為同一 entity；`english.trim().toLowerCase()` 重複會被驗證拒絕。修改英文、中文或課程都不改 ID。
 
 ```json
 {
@@ -90,7 +90,19 @@ flowchart TD
 
 - 原「死神單字Lv5 a」改名為「死神單字Lv5U1」，保留原有 40 個單字、word IDs 與課程 ID `死神單字Lv5 a`。這個 ID 是原課程的永久識別，不是新舊欄位 alias；既存 `addedLessonIds`、`removedLessonIds`、`hiddenLessonIds`、個人改名與 custom word 歸屬因此不需改寫或 migration。同名私人資料夾也不會被更名。
 - 先登記「死神單字Lv5U2」，再依「整理單字陣列」對話（`6a9fd9bd-0e48-83ee-b050-d92c50781145`）匯入 32 個單字：23 筆新字配發 `w_000430` 至 `w_000452`；9 筆既有字沿用原 ID，加入 U2 並保留原課程。`batch` 的名詞補「一組」，原動詞「分批」保留。沒有改動其他既有中文或凍結 migration 檔。
-- 這次的 `auction` 是來源清單中的正式匯入資料；先前只拿它示範畫面時並未新增。接下來的新 ID 必須從未使用的 `w_000453` 起配發，仍不得改寫初始凍結配置。
+- 這次的 `auction` 是來源清單中的正式匯入資料；先前只拿它示範畫面時並未新增。U2 匯入後的下一號為 `w_000453`，後續配號見下節，仍不得改寫初始凍結配置。
+
+### 2026-09-27 U3、U4、U5 匯入
+
+依「整理單字標籤」對話（`6aa1126c-ee44-83e9-82cd-c4e2a5af3e58`）的三份最終 `death_words_Lv5U*_checked.json` 匯入，並在 `PUBLIC_LESSONS` 登記課程。完整英文清單與固定 ID 由 `tests/word-data.test.cjs` 驗證。
+
+| 課程 | 單字數 | 沿用既有 ID | 新字數 | 新 ID 範圍 |
+| --- | --- | --- | --- | --- |
+| 死神單字Lv5U3 | 44 | 17 | 27 | `w_000453`–`w_000479` |
+| 死神單字Lv5U4 | 50 | 11 | 39 | `w_000480`–`w_000518` |
+| 死神單字Lv5U5 | 50 | 17 | 33 | `w_000519`–`w_000551` |
+
+既有字保留 ID、所有既有詞性解釋及課程，依詞性合併新 definitions，課程加入 `lessonIds`；不使用頂層 `meaning`、`partOfSpeech` 或 `tags`。U5 包含最後補齊的 `communal` 與 `commune`。原附件保留的 `comprehensible` 舊 noun 組亦原樣保留，另加入教材的 adjective 組，沒有在本次匯入刪除舊資料。所有 `migration/` 凍結來源不變，個人 Firestore 資料不改寫。下一個未用 ID 為 `w_000552`。
 
 ## 個人 Firestore schema
 

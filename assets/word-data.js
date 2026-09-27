@@ -10,7 +10,10 @@
     // Register courses here before adding their first words so empty courses exist.
     const PUBLIC_LESSONS = Object.freeze({
         '死神單字Lv5 a': '死神單字Lv5U1',
-        '死神單字Lv5U2': '死神單字Lv5U2'
+        '死神單字Lv5U2': '死神單字Lv5U2',
+        '死神單字Lv5U3': '死神單字Lv5U3',
+        '死神單字Lv5U4': '死神單字Lv5U4',
+        '死神單字Lv5U5': '死神單字Lv5U5'
     });
     function getPublicLessonName(id) {
         return Object.prototype.hasOwnProperty.call(PUBLIC_LESSONS, id) ? PUBLIC_LESSONS[id] : id;

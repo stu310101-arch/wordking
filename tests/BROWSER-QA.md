@@ -82,3 +82,12 @@
 - 本次交付暫時預覽：https://dee-washing-pavilion-criterion.trycloudflare.com 。網址透過本機 demo 的暫時通道提供，電腦／網路與通道需持續運作；失效時重新建立通道即可，不影響 Git 或 Firestore 資料。先前 quality-architects-autumn-supplemental 與 pet-doug-jewelry-installed 網址已失效。
 
 以上是發布前的隔離測試紀錄，不代表真實使用者已完成 migration。發布順序為先部署 Firestore rules、再推送 GitHub Pages 的 main 分支；真實舊帳號在之後登入時才依協定遷移。
+
+## 2026-09-27：U3、U4、U5 資料匯入
+
+使用原始前端 `http://127.0.0.1:4173/?page=library`，Chrome 訪客實測（未登入或寫入正式帳號）：
+
+- 桌機 1366×900：資料夾顯示 U1=40、U2=32、U3=44、U4=50、U5=50；實際進入 U3/U4，分別渲染 44/50 張卡。翻開 `bias`、`carp`，名詞與動詞分組正確，沒有水平溢出。
+- 手機 390×844：U5 渲染 50 張卡，沒有水平溢出。搜尋 `communal` 出現形容詞四個定義及 U5 歸屬，Enter 可跳轉，翻面顯示「形容詞：公共的；共有的；集體的；公用的」。頁面 console error 為 0。
+- 96 項 Node 回歸測試、catalog validator 與獨立來源聯集比對皆通過：551 字、622 個課程歸屬，舊 452 字內容和 17 個 migration 檔案完整保留。
+- 本次只更新公用 catalog 與課程登記，不改 Firebase rules 或私人資料。使用者已明確要求直接發布，免除本次預覽確認。
