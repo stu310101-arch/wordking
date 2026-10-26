@@ -39,7 +39,10 @@ test('U2 imports 32 spellings with shared identities and retains all existing co
  for(const old of before){
   const word=words.find(w=>w.id===old.id);assert.equal(word.english,old.english);
   const addedLessons=Object.entries(addedLessonWords).filter(([,expected])=>expected.some(w=>w.english===old.english)).map(([lesson])=>lesson);
-  assert.deepEqual(word.lessonIds,[...old.lessonIds,...(Object.hasOwn(shared,old.english)?['死神單字Lv5U2']:[]),...addedLessons]);
+  const photo10=new Set(['extinct','fascinate','fatigue','flip','fluency','format','foul','gasp']);
+  const photo11=new Set(['glare','gorgeous','grant','gravity','grim','grip','gut','haul','herb','herbal']);
+  const photoLessons=[...(photo10.has(old.english)?['死神單字L5U10']:[]),...(photo11.has(old.english)?['死神單字L5U11']:[])];
+  assert.deepEqual(word.lessonIds,[...old.lessonIds,...(Object.hasOwn(shared,old.english)?['死神單字Lv5U2']:[]),...addedLessons,...photoLessons]);
   assert.equal(word.isWrong,old.isWrong);
  }
  for(const [english,id] of Object.entries(shared))assert.equal(u2.find(w=>w.english===english).id,id);
@@ -110,7 +113,7 @@ test('folder rename keeps ID; delete removes only private membership including h
 test('reset clears all private state and canonical APIs reject old or prototype fields',()=>{const m=model();m.updateWordOverride('w_000001',{meanings:M('mine')});m.hidePublicWord('w_000001');m.setFolder('f',{name:'mine'});m.createCustomWord('c',{english:'custom'});m.setSettings({bgmEnabled:false});m.reset();assert.deepEqual(m.exportState(),{userOverrides:{},customWords:{},hiddenWordIds:[],userFolders:{},settings:{}});for(const key of ['meaning','partOfSpeech','tags','folderId','defaultId','lessonIds'])assert.throws(()=>m.updateWordOverride('w_000001',{[key]:[]}));assert.throws(()=>m.setSettings(JSON.parse('{"__proto__":{"bad":true}}')),/Unsafe/);});
 
 
-test('photo imports L5U10 and L5U11 retain source order, grouped POS, and unique word identities',()=>{
+test('photo imports L5U10 and L5U11 retain complete spellings, grouped POS, and unique identities',()=>{
  const words=require('../data/words.json');
  const expected={
   "死神單字L5U10":["explicit","exploit","extension","extensive","exterior","external","extinct","fabric","fabulous","facilitate","facility","faculty","fad","fascinate","fatigue","federation","fiber","fiddle","fiscal","flap","fleet","flick","flip","fluency","foil","forgetful","format","forum","foul","fraction","fragment","fraud","freight","frontier","fussy","galaxy","gasp","gathering","generate","generator"],
