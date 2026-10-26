@@ -134,7 +134,7 @@ test('photo imports L5U10 and L5U11 retain complete spellings, grouped POS, and 
  assert.equal(assigned.size,82);
  assert.equal(words.length,615);
  assert.equal(words.reduce((sum,w)=>sum+w.lessonIds.length,0),704);
- assert.deepEqual(words.find(w=>w.english==='extension').meanings,[{partOfSpeech:'noun',definitions:['伸長','延期']}]);
+ assert.deepEqual(words.find(w=>w.english==='extension').meanings,[{partOfSpeech:'noun',definitions:['延期','延長','擴大']}]);
  assert.ok(words.find(w=>w.english==='glisten').meanings.some(g=>g.partOfSpeech==='verb'&&g.definitions.includes('發光')));
  for(const english of ['extinct','fascinate','fatigue','flip','fluency','format','foul','gasp','glare','gorgeous','grant','gravity','grim','grip','gut','haul','herb','herbal']){
   assert.equal(words.filter(w=>w.english===english).length,1,`${english} preserves existing ID`);

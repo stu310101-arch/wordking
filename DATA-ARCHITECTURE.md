@@ -113,7 +113,7 @@ flowchart TD
 | 死神單字L5U10（explicit～generator） | 40 | 8 | 32 | `w_000552`–`w_000583` |
 | 死神單字L5U11（genetic～hood） | 42 | 10 | 32 | `w_000584`–`w_000615` |
 
-原手寫部分詞性標註與常見英語用法不符；`extension`、`fraud` 的名詞，以及 `glisten` 的動詞按字典詞性儲存。手寫的部分不易辨識中文依文義整理。既有 Frozen migration 檔及個人 Firestore 資料不修改。下一個新 ID 為 `w_000616`。
+依使用者複核：`extension` 為名詞（延期、延長、擴大）；`fraud` 為名詞；`glisten` 只有動詞。另確認 `flap` 的「蓋口」、`hazard` 的「隱憂」、`fiddle` 的「篡改」。辨識把握不足九成的手寫中文或詞性應先詢問，不自行猜測。既有 Frozen migration 檔及個人 Firestore 資料不修改。下一個新 ID 為 `w_000616`。
 
 ## 個人 Firestore schema
 
