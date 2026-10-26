@@ -53,7 +53,7 @@ flowchart TD
 
 ## Canonical word
 
-公用庫現在有 **551 筆唯一英文、622 個課程歸屬**。同一英文的大小寫變體視為同一 entity；`english.trim().toLowerCase()` 重複會被驗證拒絕。修改英文、中文或課程都不改 ID。
+公用庫現在有 **615 筆唯一英文、704 個課程歸屬**。同一英文的大小寫變體視為同一 entity；`english.trim().toLowerCase()` 重複會被驗證拒絕。修改英文、中文或課程都不改 ID。
 
 ```json
 {
@@ -103,6 +103,17 @@ flowchart TD
 | 死神單字Lv5U5 | 50 | 17 | 33 | `w_000519`–`w_000551` |
 
 既有字保留 ID、所有既有詞性解釋及課程，依詞性合併新 definitions，課程加入 `lessonIds`；不使用頂層 `meaning`、`partOfSpeech` 或 `tags`。U5 包含最後補齊的 `communal` 與 `commune`。原附件保留的 `comprehensible` 舊 noun 組亦原樣保留，另加入教材的 adjective 組，沒有在本次匯入刪除舊資料。所有 `migration/` 凍結來源不變，個人 Firestore 資料不改寫。下一個未用 ID 為 `w_000552`。
+
+### 2026-10-26 死神單字 L5U10、L5U11 匯入
+
+依兩張手寫照片新增下列課程；課程 ID 與顯示名稱皆使用使用者指定的「死神單字L5U10」與「死神單字L5U11」（不更動既有 Lv5U1–U5 名稱）。詞性採 canonical meanings 分組，舊英文沿用原 ID 並保留原有定義與課程，照片的新解釋按詞性補入。
+
+| 課程 | 單字數 | 沿用既有 ID | 新增單字 | 新 ID 範圍 |
+| --- | ---: | ---: | ---: | --- |
+| 死神單字L5U10（explicit～generator） | 40 | 8 | 32 | `w_000552`–`w_000583` |
+| 死神單字L5U11（genetic～hood） | 42 | 10 | 32 | `w_000584`–`w_000615` |
+
+原手寫部分詞性標註與常見英語用法不符；`extension`、`fraud` 的名詞，以及 `glisten` 的動詞按字典詞性儲存。手寫的部分不易辨識中文依文義整理。既有 Frozen migration 檔及個人 Firestore 資料不修改。下一個新 ID 為 `w_000616`。
 
 ## 個人 Firestore schema
 

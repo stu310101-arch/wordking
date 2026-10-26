@@ -901,18 +901,24 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "漁獲量"
+          "漁獲量",
+          "拉",
+          "拖",
+          "搬運"
         ]
       },
       {
         "partOfSpeech": "verb",
         "definitions": [
-          "拖曳"
+          "拖曳",
+          "拉",
+          "拖"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U6"
+      "晟景Lv5U6",
+      "死神單字L5U11"
     ],
     "isWrong": false
   },
@@ -1847,12 +1853,16 @@
       {
         "partOfSpeech": "adjective",
         "definitions": [
-          "嚴厲的"
+          "嚴厲的",
+          "冷酷的",
+          "可怕的",
+          "嚴峻的"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U7"
+      "晟景Lv5U7",
+      "死神單字L5U11"
     ],
     "isWrong": false
   },
@@ -2452,7 +2462,8 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "疲倦"
+          "疲倦",
+          "疲勞"
         ]
       },
       {
@@ -2463,7 +2474,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U8"
+      "晟景Lv5U8",
+      "死神單字L5U10"
     ],
     "isWrong": false
   },
@@ -2490,12 +2502,14 @@
       {
         "partOfSpeech": "verb",
         "definitions": [
-          "使...著迷"
+          "使...著迷",
+          "使…著迷"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U8"
+      "晟景Lv5U8",
+      "死神單字L5U10"
     ],
     "isWrong": false
   },
@@ -3569,7 +3583,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U9"
+      "晟景Lv5U9",
+      "死神單字L5U10"
     ],
     "isWrong": false
   },
@@ -3603,12 +3618,14 @@
       {
         "partOfSpeech": "verb",
         "definitions": [
-          "格式化"
+          "格式化",
+          "編排"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U9"
+      "晟景Lv5U9",
+      "死神單字L5U10"
     ],
     "isWrong": false
   },
@@ -3621,12 +3638,14 @@
         "definitions": [
           "極好的",
           "極美的",
-          "宜人的"
+          "宜人的",
+          "美麗的"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U9"
+      "晟景Lv5U9",
+      "死神單字L5U11"
     ],
     "isWrong": false
   },
@@ -3637,12 +3656,14 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "地心引力"
+          "地心引力",
+          "嚴重性"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U9"
+      "晟景Lv5U9",
+      "死神單字L5U11"
     ],
     "isWrong": false
   },
@@ -3704,12 +3725,14 @@
         "partOfSpeech": "noun",
         "definitions": [
           "草藥",
-          "香草植物"
+          "香草植物",
+          "藥草"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U9"
+      "晟景Lv5U9",
+      "死神單字L5U11"
     ],
     "isWrong": false
   },
@@ -3721,12 +3744,14 @@
         "partOfSpeech": "adjective",
         "definitions": [
           "草藥的",
-          "香草的"
+          "香草的",
+          "藥草的"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U9"
+      "晟景Lv5U9",
+      "死神單字L5U11"
     ],
     "isWrong": false
   },
@@ -4704,7 +4729,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U10"
+      "晟景Lv5U10",
+      "死神單字L5U10"
     ],
     "isWrong": false
   },
@@ -4716,7 +4742,8 @@
         "partOfSpeech": "noun",
         "definitions": [
           "強光",
-          "怒視"
+          "怒視",
+          "刺眼強光"
         ]
       },
       {
@@ -4728,7 +4755,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U10"
+      "晟景Lv5U10",
+      "死神單字L5U11"
     ],
     "isWrong": false
   },
@@ -5423,7 +5451,8 @@
         "partOfSpeech": "noun",
         "definitions": [
           "抓握",
-          "掌控"
+          "掌控",
+          "緊握"
         ]
       },
       {
@@ -5431,12 +5460,14 @@
         "definitions": [
           "抓握",
           "掌控",
-          "吸引"
+          "吸引",
+          "緊握"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U11"
+      "晟景Lv5U11",
+      "死神單字L5U11"
     ],
     "isWrong": false
   },
@@ -5655,12 +5686,14 @@
         "definitions": [
           "准許",
           "授與",
-          "給予"
+          "給予",
+          "授予"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U11"
+      "晟景Lv5U11",
+      "死神單字L5U11"
     ],
     "isWrong": false
   },
@@ -6283,19 +6316,23 @@
         "partOfSpeech": "noun",
         "definitions": [
           "輕彈",
-          "快速翻轉"
+          "快速翻轉",
+          "空翻"
         ]
       },
       {
         "partOfSpeech": "verb",
         "definitions": [
           "輕彈",
-          "快速翻轉"
+          "快速翻轉",
+          "翻轉",
+          "擲"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U12"
+      "晟景Lv5U12",
+      "死神單字L5U10"
     ],
     "isWrong": false
   },
@@ -6311,7 +6348,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U12"
+      "晟景Lv5U12",
+      "死神單字L5U10"
     ],
     "isWrong": false
   },
@@ -6338,7 +6376,9 @@
           "惡臭的",
           "汙穢的",
           "犯規的",
-          "下流地"
+          "下流地",
+          "骯髒的",
+          "惡劣的"
         ]
       },
       {
@@ -6349,7 +6389,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U12"
+      "晟景Lv5U12",
+      "死神單字L5U10"
     ],
     "isWrong": false
   },
@@ -6361,7 +6402,9 @@
         "partOfSpeech": "noun",
         "definitions": [
           "內臟",
-          "膽量"
+          "膽量",
+          "腸道",
+          "勇氣"
         ]
       },
       {
@@ -6374,7 +6417,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U12"
+      "晟景Lv5U12",
+      "死神單字L5U11"
     ],
     "isWrong": false
   },
@@ -10260,6 +10304,1142 @@
     ],
     "lessonIds": [
       "死神單字Lv5U5"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000552",
+    "english": "explicit",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "明確的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000553",
+    "english": "exploit",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "剝削",
+          "開發",
+          "利用"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000554",
+    "english": "extension",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "伸長",
+          "延期"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000555",
+    "english": "extensive",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "廣泛的",
+          "大量的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000556",
+    "english": "exterior",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "外部"
+        ]
+      },
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "外部的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000557",
+    "english": "external",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "外部的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000558",
+    "english": "fabric",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "布料"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000559",
+    "english": "fabulous",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "很棒的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000560",
+    "english": "facilitate",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "促進",
+          "幫助"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000561",
+    "english": "facility",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "設施",
+          "設備"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000562",
+    "english": "faculty",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "才能",
+          "能力",
+          "教職員",
+          "系所"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000563",
+    "english": "fad",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "曇花一現"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000564",
+    "english": "federation",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "聯邦",
+          "聯盟"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000565",
+    "english": "fiber",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "纖維"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000566",
+    "english": "fiddle",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "小提琴"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "篡改",
+          "擺弄"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000567",
+    "english": "fiscal",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "國庫的",
+          "財政的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000568",
+    "english": "flap",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "蓋口"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "拍打"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000569",
+    "english": "fleet",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "船隊",
+          "車隊",
+          "艦隊"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000570",
+    "english": "flick",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "輕彈",
+          "電影"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "輕拍",
+          "輕彈"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000571",
+    "english": "foil",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "箔"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "挫敗",
+          "阻止"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000572",
+    "english": "forgetful",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "健忘的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000573",
+    "english": "forum",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "論壇"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000574",
+    "english": "fraction",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "小部分",
+          "微量"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000575",
+    "english": "fragment",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "碎片",
+          "片段"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000576",
+    "english": "fraud",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "欺騙"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000577",
+    "english": "freight",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "貨物",
+          "貨運"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "運送"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000578",
+    "english": "frontier",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "邊境",
+          "國境"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000579",
+    "english": "fussy",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "挑剔的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000580",
+    "english": "galaxy",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "銀河系",
+          "星系",
+          "傑出的人"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000581",
+    "english": "gathering",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "聚會"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000582",
+    "english": "generate",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "產生",
+          "引起"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000583",
+    "english": "generator",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "發電機",
+          "產生器"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U10"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000584",
+    "english": "genetic",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "基因的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000585",
+    "english": "genetics",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "基因學"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000586",
+    "english": "glee",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "高興"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000587",
+    "english": "gleeful",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "高興的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000588",
+    "english": "glisten",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "閃耀",
+          "發光"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000589",
+    "english": "gloomy",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "陰暗的",
+          "悲傷的",
+          "令人沮喪的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000590",
+    "english": "gnaw",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "啃",
+          "咬"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000591",
+    "english": "gobble",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "狼吞虎嚥"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000592",
+    "english": "gorge",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "峽谷"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "狼吞虎嚥"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000593",
+    "english": "graphic",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "生動的",
+          "寫實的",
+          "血腥的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000594",
+    "english": "grieve",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "使悲痛"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000595",
+    "english": "grill",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "烤架"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "烤"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000596",
+    "english": "gross",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "總共的",
+          "噁心的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000597",
+    "english": "grove",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "樹叢",
+          "小樹林"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000598",
+    "english": "gulp",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "大口吃、喝"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000599",
+    "english": "gust",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "一陣強風"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000600",
+    "english": "gypsy",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "吉普賽人"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000601",
+    "english": "habitat",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "棲地"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000602",
+    "english": "hairdo",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "髮型"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000603",
+    "english": "handicapped",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "殘障人士"
+        ]
+      },
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "殘障的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000604",
+    "english": "hardy",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "強壯的",
+          "耐寒的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000605",
+    "english": "hazard",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "危險",
+          "隱憂"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000606",
+    "english": "heavenly",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "天堂的",
+          "神聖的",
+          "極好的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000607",
+    "english": "heed",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "注意"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "注意"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000608",
+    "english": "heir",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "繼承人"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000609",
+    "english": "heiress",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "女繼承人"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000610",
+    "english": "hence",
+    "meanings": [
+      {
+        "partOfSpeech": "adverb",
+        "definitions": [
+          "因此"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000611",
+    "english": "herald",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "先鋒",
+          "信使"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "通報",
+          "預告"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000612",
+    "english": "hermit",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "隱士"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000613",
+    "english": "hiss",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "嘶聲"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000614",
+    "english": "honk",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "喇叭聲"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "按喇叭"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000615",
+    "english": "hood",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "兜帽",
+          "引擎蓋"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U11"
     ],
     "isWrong": false
   }

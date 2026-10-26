@@ -29,7 +29,7 @@ const addedLessonImports={
 const addedLessonWords=Object.fromEntries(Object.entries(addedLessonImports).map(([lesson,source])=>[
  lesson,source.trim().split(/\s+/).map(pair=>{const [english,number]=pair.split(':');return {english,id:`w_${number.padStart(6,'0')}`};})
 ]));
-test('expanded catalog retains all 892 historical identity mappings and frozen backups',()=>{assert.deepEqual(validateCatalogFiles(),{words:551,memberships:622,aliases:17,legacyIds:446,mappedIds:892,lessonFiles:9,frozenFiles:14});});
+test('expanded catalog retains all 892 historical identity mappings and frozen backups',()=>{assert.deepEqual(validateCatalogFiles(),{words:615,memberships:704,aliases:17,legacyIds:446,mappedIds:892,lessonFiles:9,frozenFiles:14});});
 test('U2 imports 32 spellings with shared identities and retains all existing course memberships',()=>{
  const words=require('../data/words.json'), before=require('../migration/schema-v5-catalog.json');
  const shared={antique:'w_000157',applause:'w_000081',apt:'w_000060',asset:'w_000108',attendance:'w_000148',ballot:'w_000142',barren:'w_000322',batch:'w_000323',behalf:'w_000017'};
@@ -86,12 +86,12 @@ test('communal and commune remain distinct words with their own meanings and par
  assert.ok(commune.lessonIds.includes('死神單字Lv5U5'));
 });
 test('registered public lessons exist before import and a renamed title retains its identity',()=>{
- assert.deepEqual(data.getPublicLessonIds([]),['死神單字Lv5 a','死神單字Lv5U2','死神單字Lv5U3','死神單字Lv5U4','死神單字Lv5U5']);
+ assert.deepEqual(data.getPublicLessonIds([]),['死神單字Lv5 a','死神單字Lv5U2','死神單字Lv5U3','死神單字Lv5U4','死神單字Lv5U5','死神單字L5U10','死神單字L5U11']);
  assert.equal(data.getPublicLessonName('死神單字Lv5 a'),'死神單字Lv5U1');
  assert.equal(data.getPublicLessonName('晟景Lv5U6'),'晟景Lv5U6');
  assert.equal(data.getPublicLessonName('constructor'),'constructor');
  const ids=data.getPublicLessonIds([{lessonIds:['死神單字Lv5 a','晟景Lv5U6']}]);ids.push('rogue');
- assert.deepEqual(data.getPublicLessonIds([]),['死神單字Lv5 a','死神單字Lv5U2','死神單字Lv5U3','死神單字Lv5U4','死神單字Lv5U5']);
+ assert.deepEqual(data.getPublicLessonIds([]),['死神單字Lv5 a','死神單字Lv5U2','死神單字Lv5U3','死神單字Lv5U4','死神單字Lv5U5','死神單字L5U10','死神單字L5U11']);
 });
 test('opaque identity survives English, grouped meanings and lesson edits',()=>{const m=model();m.updateWordOverride('w_000001',{english:'changed',meanings:M('個人')});m.setWordLessons('w_000001',['U8']);assert.equal(m.getEffectiveWord('w_000001').id,'w_000001');assert.equal(data.normalizeCatalog([{...catalog()[0],english:'other',lessonIds:[]}])[0].id,'w_000001');assert.throws(()=>data.normalizeCatalog([{...catalog()[0],id:'U6::penetrate'}]),/ID/);});
 test('canonical catalog forbids duplicate case-insensitive English and standalone meaning/POS',()=>{assert.throws(()=>data.normalizeCatalog([...catalog(),{...catalog()[0],id:'w_000003',english:'PENETRATE'}]),/Duplicate/);assert.throws(()=>data.normalizeCatalog([...catalog(),catalog()[0]]),/Duplicate/);for(const field of ['meaning','partOfSpeech','tags','folderId','folderIds','source','defaultId'])assert.throws(()=>data.normalizeCatalog([{...catalog()[0],[field]:[]}]),/Unknown/);});
@@ -108,3 +108,32 @@ test('hide/restore retain meanings and custom deletion never deletes public word
 test('new and renamed English cannot collide including hidden words',()=>{const m=model();m.hidePublicWord('w_000001');assert.throws(()=>m.createCustomWord('c',{english:'PENETRATE'}),/Duplicate/);m.createCustomWord('c',{english:'mine'});assert.throws(()=>m.updateCustomWord('c',{english:'Record'}),/Duplicate/);assert.throws(()=>m.updateWordOverride('w_000002',{english:'Penetrate'}),/Duplicate/);assert.throws(()=>model({customWords:{c:{english:'record'}}}),/Duplicate/);});
 test('folder rename keeps ID; delete removes only private membership including hidden words',()=>{const m=model();m.setFolder('f',{name:'U6'});m.setWordFolders('w_000001',['f']);m.setFolder('f',{name:'new'});assert.deepEqual(m.getEffectiveWord('w_000001').folderIds,['f']);m.hidePublicWord('w_000001');m.deleteFolder('f');assert.deepEqual(m.getEffectiveWord('w_000001').folderIds,[]);assert.deepEqual(m.getEffectiveWord('w_000001').lessonIds,['U6']);});
 test('reset clears all private state and canonical APIs reject old or prototype fields',()=>{const m=model();m.updateWordOverride('w_000001',{meanings:M('mine')});m.hidePublicWord('w_000001');m.setFolder('f',{name:'mine'});m.createCustomWord('c',{english:'custom'});m.setSettings({bgmEnabled:false});m.reset();assert.deepEqual(m.exportState(),{userOverrides:{},customWords:{},hiddenWordIds:[],userFolders:{},settings:{}});for(const key of ['meaning','partOfSpeech','tags','folderId','defaultId','lessonIds'])assert.throws(()=>m.updateWordOverride('w_000001',{[key]:[]}));assert.throws(()=>m.setSettings(JSON.parse('{"__proto__":{"bad":true}}')),/Unsafe/);});
+
+
+test('photo imports L5U10 and L5U11 retain source order, grouped POS, and unique word identities',()=>{
+ const words=require('../data/words.json');
+ const expected={
+  "死神單字L5U10":["explicit","exploit","extension","extensive","exterior","external","extinct","fabric","fabulous","facilitate","facility","faculty","fad","fascinate","fatigue","federation","fiber","fiddle","fiscal","flap","fleet","flick","flip","fluency","foil","forgetful","format","forum","foul","fraction","fragment","fraud","freight","frontier","fussy","galaxy","gasp","gathering","generate","generator"],
+  "死神單字L5U11":["genetic","genetics","glare","glee","gleeful","glisten","gloomy","gnaw","gobble","gorge","gorgeous","grant","graphic","gravity","grieve","grill","grim","grip","gross","grove","gulp","gust","gut","gypsy","habitat","hairdo","handicapped","hardy","haul","hazard","heavenly","heed","heir","heiress","hence","herald","herb","herbal","hermit","hiss","honk","hood"]
+ };
+ const assigned=new Set();
+ for(const [lesson,names] of Object.entries(expected)){
+  const selected=words.filter(w=>w.lessonIds.includes(lesson));
+  assert.equal(selected.length,names.length,`${lesson} count`);
+  assert.deepEqual(selected.map(w=>w.english).sort(),[...names].sort(),`${lesson} exact spellings`);
+  for(const english of names){
+   const matches=words.filter(w=>w.english.toLowerCase()===english);
+   assert.equal(matches.length,1,`${english} has a single identity across lessons`);
+   assert.equal(matches[0].isWrong,false);
+   assigned.add(matches[0].id);
+  }
+ }
+ assert.equal(assigned.size,82);
+ assert.equal(words.length,615);
+ assert.equal(words.reduce((sum,w)=>sum+w.lessonIds.length,0),704);
+ assert.deepEqual(words.find(w=>w.english==='extension').meanings,[{partOfSpeech:'noun',definitions:['伸長','延期']}]);
+ assert.ok(words.find(w=>w.english==='glisten').meanings.some(g=>g.partOfSpeech==='verb'&&g.definitions.includes('發光')));
+ for(const english of ['extinct','fascinate','fatigue','flip','fluency','format','foul','gasp','glare','gorgeous','grant','gravity','grim','grip','gut','haul','herb','herbal']){
+  assert.equal(words.filter(w=>w.english===english).length,1,`${english} preserves existing ID`);
+ }
+});
