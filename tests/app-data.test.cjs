@@ -117,7 +117,7 @@ test('U1 title change preserves personal hidden lessons, removed memberships, cu
  const h=harness(initial);h.context.__fullCatalog=fullCatalog;
  h.run('publicCatalog=wordData.normalizeCatalog(__fullCatalog);applyUserData({snapshot:__snapshot});');
  assert.equal(h.run("getFolderDisplayName('lesson:死神單字Lv5 a')"),'死神單字Lv5U1');
- assert.equal(h.run("getFolderDisplayName('folder:private')"),'死神單字Lv5 a');
+ assert.equal(h.run("getFolderDisplayName('folder:private')"),'死神單字Lv5U1');
  assert.equal(h.run("state.folders.includes('lesson:死神單字Lv5 a')"),false);
  assert.equal(word(h,existing.id).lessonIds.includes('死神單字Lv5 a'),false);
  assert.deepEqual(copy(h.run('snapshotUserState()')),{customWords:{},hiddenWordIds:[],...initial});

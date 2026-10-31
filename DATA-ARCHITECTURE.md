@@ -126,6 +126,14 @@ flowchart TD
 
 下一個新 ID 為 `w_000673`。
 
+### 課程系列與私人階層
+
+「晟景Lv5」與「死神單字Lv5」使用固定檢視鍵 `series:shengjing-lv5` 與 `series:shishen-lv5`。死神單字各回統一顯示為「死神單字Lv5U…」，原課程 ID 仍沿用。系列依課程 ID 歸類各回，也依既有私人資料夾的教材名稱辨識預設系列。
+
+個人可在 `settings.folderParents` 以檢視鍵記錄各資料夾的上層。未設定時套用預設階層，空字串表示本人已將該資料夾移到最外層。上層隱藏或不存在時，子資料夾顯示在最近的可見祖先或最外層。單字歸屬仍由 `lessonIds` 與 `folderIds` 記錄。
+
+練習可同時選多個資料夾，上層範圍包含子資料夾。拼字和選擇題共用按 word ID 去重的題單。切換顯示的資料夾會保留當次挑選的單字，切換帳號會重設選取。
+
 ## 個人 Firestore schema
 
 所有 client 私人資料都位於 `users/{uid}`，不建立可寫公用 Firestore catalog。實際公用內容隨網站 Git 發布；登入者無法透過 Firestore 寫入 `data/words.json`。
@@ -268,7 +276,7 @@ git diff --check
 
 rules runner 使用 Java 21+ 與官方 Firestore Emulator；可透過 `WORDKING_JAVA_BIN` 指定 Java executable。測試不連正式資料庫。
 
-目前資料／UI 接線／migration／persistence／Auth 測試 98 項，Firestore Emulator 測試 8 項。涵蓋 opaque ID 穩定、同英文唯一、各詞性獨立中文、編輯時直接建立資料夾／取消／同批儲存、A/B/visitor 隔離、不可 mutate public、public update / field reset、課程 diff / 同名資料夾、custom CRUD、hide/restore/reset、所有舊欄位與 alias/root、v5 升級及 journal 接續、重複 migration、staging / 中途批次 / 最後 ack 故障、lease takeover、revision 衝突及 stale session。
+目前資料／UI 接線／migration／persistence／Auth 測試 112 項，Firestore Emulator 測試 8 項。涵蓋 opaque ID 穩定、同英文唯一、各詞性獨立中文、編輯時直接建立資料夾／取消／同批儲存、A/B/visitor 隔離、不可 mutate public、public update / field reset、課程 diff / 同名資料夾、custom CRUD、hide/restore/reset、所有舊欄位與 alias/root、v5 升級及 journal 接續、重複 migration、staging / 中途批次 / 最後 ack 故障、lease takeover、revision 衝突及 stale session。
 
 `npm run preview` 在 loopback 4173 提供原始網站；`npm run preview:demo` 在 4175 使用原始網站資產，僅將 Firebase import 替換成瀏覽器內隔離 fixture。測試工具列提供 A / B / 訪客、故障與恢復網路。fixture 使用 sessionStorage，不會連真實 Google 帳號或 Firestore，頁面對外預覽也沒有私人帳號資料。伺服器白名單不公開 `.git`、設定、tests 或工作區其他檔案。
 

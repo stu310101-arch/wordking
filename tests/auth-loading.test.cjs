@@ -215,10 +215,17 @@ test('switching accounts clears old data immediately and ignores its late read',
     const first = h.run("handleAuthStateChanged({uid: 'alice'})");
     await h.flush();
     h.run("state.words = [{english:'stale'}]; state.settings.lessonFolderNames = {'unit-1':'Alice'}; state.game.currentWords = state.words;");
+    const privateElements = ['library-word-cards', 'library-breadcrumb', 'library-heading', 'move-folder-parent', 'new-folder-location', 'practice-scope', 'practice-focus'];
+    h.context.privateElements = privateElements;
+    h.run(`state.currentLibraryFolder = 'folder:alice'; state.folderParents = {'folder:alice': ''};
+        privateElements.forEach(id => document.getElementById(id).textContent = 'Alice 的資料夾');`);
     const second = h.run("handleAuthStateChanged({uid: 'bob'})");
     assert.equal(h.run('state.words.length'), 0);
     assert.equal(h.run('state.game.currentWords.length'), 0);
     assert.equal(h.run('Object.keys(state.settings.lessonFolderNames).length'), 0);
+    assert.equal(h.run('state.currentLibraryFolder'), '');
+    assert.equal(h.run('Object.keys(state.folderParents).length'), 0);
+    assert.ok(privateElements.every(id => h.elements.get(id).textContent === ''));
     await h.flush();
     bob.resolve(userData({ ...personalWord, english: 'bob-only' }, 9));
     await second;

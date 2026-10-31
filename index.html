@@ -125,11 +125,11 @@
                         aria-autocomplete="list"
                         aria-controls="search-suggestions"
                         aria-expanded="false"
-                        aria-label="搜尋單字"
+                        aria-label="搜尋單字或資料夾"
                         autocomplete="off"
-                        placeholder="搜尋..."
+                        placeholder="單字或資料夾"
                         class="w-32 sm:w-48 pl-3 pr-8 py-1 rounded-full text-gray-800 text-sm focus:w-40 sm:focus:w-56 transition-all outline-none">
-                    <button id="btn-search" type="button" aria-label="搜尋單字" class="absolute right-2 text-gray-500 hover:text-indigo-600">
+                    <button id="btn-search" type="button" aria-label="搜尋單字或資料夾" class="absolute right-2 text-gray-500 hover:text-indigo-600">
                         <span aria-hidden="true">🔍</span>
                     </button>
                     <div
@@ -214,24 +214,33 @@
 
     <!-- 單字庫 -->
     <div id="view-library" class="hidden" hidden inert>
-        <div class="flex justify-between items-center mb-4">
+        <div class="flex flex-wrap gap-2 justify-between items-center mb-4">
             <button id="btn-library-back" class="text-gray-500 font-bold px-3 py-2 bg-gray-200 rounded-lg text-sm">← 返回首頁</button>
-            <div class="flex gap-2">
+            <div class="flex flex-wrap gap-2">
+                <button id="btn-create-folder" type="button" class="bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-bold">＋ 新增資料夾</button>
                 <button id="btn-edit-folders" class="bg-orange-500 text-white px-3 py-2 rounded-lg text-sm font-bold shadow-md active:scale-95 transition">管理資料夾</button>
                 <button id="btn-add-word" class="bg-indigo-600 text-white px-3 h-10 rounded-lg flex items-center justify-center shadow-lg text-sm font-bold active:scale-95 transition">＋ 新增單字</button>
             </div>
         </div>
 
         <div id="edit-hint" class="hidden bg-orange-100 text-orange-700 p-3 rounded-lg mb-4 text-sm font-bold text-center border border-orange-200" hidden inert>
-            ⚠️ 編輯模式：點擊資料夾進行管理
+            點選資料夾即可開啟，點選「管理」可重新命名、移動或刪除。
             <div class="mt-2 flex justify-center gap-2">
-                <button class="bg-green-600 text-white px-3 py-1 rounded text-xs active:scale-95 transition">＋ 新增資料夾</button>
-                <button class="bg-gray-500 text-white px-3 py-1 rounded text-xs active:scale-95 transition">完成編輯</button>
+                <button id="btn-finish-folder-edit" class="bg-gray-500 text-white px-3 py-1 rounded text-xs active:scale-95 transition">完成編輯</button>
             </div>
         </div>
 
-        <h2 class="text-xl font-bold text-indigo-900 mb-4">資料夾</h2>
+        <nav id="library-breadcrumb" aria-label="資料夾路徑" class="flex flex-wrap gap-2 items-center text-sm text-indigo-700 mb-4"></nav>
+        <h2 id="library-heading" class="text-xl font-bold text-indigo-900 mb-4">資料夾</h2>
         <div class="grid grid-cols-2 gap-3" id="category-grid"></div>
+        <section id="library-letters" class="mt-4" aria-label="英文字母索引">
+            <h3 class="text-lg font-bold text-indigo-900 mb-3">依字首瀏覽</h3>
+            <div id="library-letter-grid" class="flex flex-wrap gap-2"></div>
+        </section>
+        <section id="library-direct-words" hidden inert class="hidden mt-4">
+            <h3 class="text-lg font-bold text-indigo-900 mb-3">這個資料夾的單字</h3>
+            <div id="library-word-cards" class="flex flex-col gap-4"></div>
+        </section>
         <div id="empty-library-hint" class="hidden text-center py-10" hidden inert>
             <p class="text-lg font-bold text-gray-600">單字庫目前沒有單字</p>
             <p class="text-sm text-gray-400 mt-2">新增第一個單字，開始建立你的單字庫。</p>
@@ -256,20 +265,22 @@
 
             <div class="bg-white p-6 rounded-2xl shadow-lg border">
                 <!-- Step 1: 選擇資料夾 -->
-                <div class="mb-6">
-                    <label class="block font-bold text-gray-700 mb-3 text-lg">📂 1. 選擇資料夾</label>
-                    <select id="practice-scope" class="w-full p-4 border-2 border-indigo-100 rounded-xl text-lg bg-white outline-none focus:border-indigo-500"></select>
-                </div>
+                <fieldset class="mb-6">
+                    <legend class="block font-bold text-gray-700 mb-2 text-lg">📂 1. 選擇資料夾（可複選）</legend>
+                    <p class="text-sm text-gray-600 mb-2">勾選資料夾即可指定範圍。上層資料夾包含所有子資料夾，共用單字只出一題。</p>
+                    <div id="practice-scope" class="max-h-48 overflow-y-auto custom-scrollbar border-2 border-indigo-100 rounded-xl p-2"></div>
+                </fieldset>
 
                 <!-- Step 2: 勾選單字 -->
                 <div class="mb-6">
-                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-2">
-                        <label class="block font-bold text-gray-700 text-lg">📝 2. 勾選要練習的單字</label>
-                        <div class="flex flex-wrap gap-2">
-                            <button id="btn-practice-select-all" type="button" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded">全選</button>
-                            <button id="btn-practice-select-none" type="button" class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded">取消</button>
-                            <button id="btn-practice-exclude-review" type="button" class="text-xs bg-red-50 text-red-600 px-2 py-1 rounded disabled:opacity-40 disabled:cursor-not-allowed">已在待複習內的除外</button>
-                        </div>
+                    <h3 class="block font-bold text-gray-700 text-lg mb-2">📝 2. 勾選要練習的單字</h3>
+                    <label for="practice-focus" class="block text-sm font-bold text-gray-700">顯示單字清單</label>
+                    <select id="practice-focus" class="w-full p-2 border-2 border-indigo-100 rounded-xl bg-white"></select>
+                    <p class="text-sm text-gray-600 mt-1 mb-2">可切換資料夾分別挑字。下方按鈕套用到目前清單，同一單字在各資料夾的勾選狀態相通。</p>
+                    <div class="flex flex-wrap gap-2 mb-2">
+                        <button id="btn-practice-select-all" type="button" class="text-sm bg-indigo-50 text-indigo-600 px-3 py-2 rounded">全選清單</button>
+                        <button id="btn-practice-select-none" type="button" class="text-sm bg-gray-100 text-gray-500 px-3 py-2 rounded">取消全選</button>
+                        <button id="btn-practice-exclude-review" type="button" class="text-sm bg-red-50 text-red-600 px-3 py-2 rounded disabled:opacity-40 disabled:cursor-not-allowed">取消待複習單字</button>
                     </div>
                     <div id="practice-word-selection" class="max-h-48 overflow-y-auto custom-scrollbar border-2 border-gray-100 rounded-xl p-2 bg-gray-50">
                     </div>
@@ -447,13 +458,16 @@
 
 <!-- 資料夾管理 - 選擇操作 Modal -->
 <div id="folder-action-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center p-4 z-[110]" role="dialog" aria-modal="true" hidden inert>
-    <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center">
-        <h3 class="text-xl font-bold mb-4">管理資料夾: <span id="action-folder-name" class="text-indigo-600"></span></h3>
+    <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center max-h-[90dvh] overflow-y-auto">
+        <h3 class="text-xl font-bold mb-4">管理「<span id="action-folder-name" class="text-indigo-600"></span>」</h3>
         <div class="flex flex-col gap-3">
-            <button class="w-full py-3 bg-blue-500 text-white rounded-xl font-bold active:scale-95 transition">重命名</button>
-            <button class="w-full py-3 bg-orange-500 text-white rounded-xl font-bold active:scale-95 transition">刪除資料夾 (保留單字)</button>
-            <button class="w-full py-3 bg-red-600 text-white rounded-xl font-bold active:scale-95 transition">刪除資料夾與單字</button>
-            <button class="w-full py-3 bg-gray-200 text-gray-600 rounded-xl font-bold active:scale-95 transition">取消</button>
+            <button id="btn-rename-folder" class="w-full py-3 bg-blue-500 text-white rounded-xl font-bold active:scale-95 transition">重新命名</button>
+            <label for="move-folder-parent" class="text-sm text-left font-bold text-gray-600">移動到</label>
+            <select id="move-folder-parent" class="w-full p-3 border-2 border-gray-200 rounded-xl bg-white"></select>
+            <button id="btn-move-folder" class="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold">移動資料夾</button>
+            <button id="btn-delete-folder" class="w-full py-3 bg-orange-500 text-white rounded-xl font-bold active:scale-95 transition">刪除資料夾 (保留單字)</button>
+            <button id="btn-delete-folder-words" class="w-full py-3 bg-red-600 text-white rounded-xl font-bold active:scale-95 transition">刪除資料夾與單字</button>
+            <button id="btn-close-folder-action" class="w-full py-3 bg-gray-200 text-gray-600 rounded-xl font-bold active:scale-95 transition">取消</button>
         </div>
     </div>
 </div>
@@ -487,6 +501,7 @@
 <div id="new-folder-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center p-4 z-[120]" role="dialog" aria-modal="true" hidden inert>
     <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
         <h3 class="text-xl font-bold mb-4 text-center">新增資料夾</h3>
+        <p id="new-folder-location" class="text-sm text-gray-600 mb-3"></p>
         <input type="text" id="input-new-folder-name" class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 outline-none text-lg mb-4" placeholder="輸入名稱">
         <div class="grid grid-cols-2 gap-3">
             <button class="py-3 text-gray-500 font-bold bg-gray-100 rounded-xl active:bg-gray-200 transition">取消</button>
@@ -564,9 +579,9 @@
 </div>
 
 <!-- 共用資料合併規則與主程式 -->
-<script src="./assets/word-data.js?v=20260927-u3-u5"></script>
+<script src="./assets/word-data.js?v=20261031-folders"></script>
 <script src="./assets/migration.js?v=20260908-u2"></script>
 <script src="./assets/persistence.js?v=20260908-u2"></script>
-<script type="module" src="./assets/app.js?v=20260908-u2"></script>
+<script type="module" src="./assets/app.js?v=20261031-folders"></script>
 </body>
 </html>

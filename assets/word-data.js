@@ -14,16 +14,78 @@
         '死神單字Lv5U3': '死神單字Lv5U3',
         '死神單字Lv5U4': '死神單字Lv5U4',
         '死神單字Lv5U5': '死神單字Lv5U5',
-        '死神單字L5U10': '死神單字L5U10',
-        '死神單字L5U11': '死神單字L5U11',
-        '死神單字L5U12': '死神單字L5U12',
-        '死神單字L5U13': '死神單字L5U13'
+        '死神單字L5U10': '死神單字Lv5U10',
+        '死神單字L5U11': '死神單字Lv5U11',
+        '死神單字L5U12': '死神單字Lv5U12',
+        '死神單字L5U13': '死神單字Lv5U13'
+    });
+    const PUBLIC_SERIES = Object.freeze({
+        'series:shengjing-lv5': '晟景Lv5',
+        'series:shishen-lv5': '死神單字Lv5'
     });
     function getPublicLessonName(id) {
-        return Object.prototype.hasOwnProperty.call(PUBLIC_LESSONS, id) ? PUBLIC_LESSONS[id] : id;
+        if (own(PUBLIC_LESSONS, id)) return PUBLIC_LESSONS[id];
+        return typeof id === 'string' ? id.replace(/^死神單字L5U(\d+)$/, '死神單字Lv5U$1') : id;
     }
     function getPublicLessonIds(words = []) {
         return [...new Set([...Object.keys(PUBLIC_LESSONS), ...words.flatMap(word => word.lessonIds || [])])];
+    }
+    function hierarchyKey(key) {
+        return typeof key === 'string' && (/^(lesson|folder):.+/.test(key) || own(PUBLIC_SERIES, key));
+    }
+    function getFolderParents(visibleKeys, settingsFolderParents = {}, nameForKey = () => '') {
+        const visible = new Set(visibleKeys);
+        function parentOf(key) {
+            if (!hierarchyKey(key)) return '';
+            if (settingsFolderParents && own(settingsFolderParents, key)) {
+                const parent = settingsFolderParents[key];
+                if (parent === '' || hierarchyKey(parent)) return parent;
+            }
+            if (own(PUBLIC_SERIES, key)) return '';
+            const name = getPublicLessonName(key.startsWith('lesson:') ? key.slice(7) : nameForKey(key));
+            if (/^死神單字Lv5U\d+$/.test(name)) return 'series:shishen-lv5';
+            if (/^晟景Lv5U\d+$/.test(name)) return 'series:shengjing-lv5';
+            return '';
+        }
+        // Skip missing or hidden parents, following their own parent links if available.
+        const parents = Object.fromEntries([...visible].map(key => {
+            let parent = parentOf(key);
+            const skipped = new Set();
+            while (parent && !visible.has(parent)) {
+                if (skipped.has(parent)) return [key, ''];
+                skipped.add(parent);
+                parent = parentOf(parent);
+            }
+            return [key, parent];
+        }));
+        // A stale or malformed account may contain a cycle. Keep its ordinary children.
+        const checked = new Set();
+        for (const start of visible) {
+            let cursor = start;
+            const path = new Set();
+            while (cursor && !checked.has(cursor) && !path.has(cursor)) {
+                path.add(cursor);
+                cursor = parents[cursor];
+            }
+            let inCycle = false;
+            for (const key of path) {
+                if (key === cursor) inCycle = true;
+                if (inCycle) parents[key] = '';
+                checked.add(key);
+            }
+        }
+        return parents;
+    }
+    function canMoveFolder(key, parent, parents) {
+        if (!hierarchyKey(key) || !own(parents, key)) return false;
+        if (parent === '') return true;
+        if (!hierarchyKey(parent) || !own(parents, parent)) return false;
+        const seen = new Set([key]);
+        for (let cursor = parent; cursor; cursor = parents[cursor]) {
+            if (seen.has(cursor)) return false;
+            seen.add(cursor);
+        }
+        return true;
     }
     const PARTS_OF_SPEECH = Object.freeze(['noun', 'verb', 'adjective', 'adverb', 'pronoun',
         'preposition', 'conjunction', 'interjection', 'other', 'determiner', 'article', 'numeral', 'auxiliary', 'phrase']);
@@ -374,5 +436,6 @@
             getSettings, setSettings, updateSettings: setSettings, clearSetting, reset, exportState });
     }
     return Object.freeze({ SCHEMA_VERSION, PARTS_OF_SPEECH, FIELD_NAMES, OVERRIDE_FIELDS,
+        PUBLIC_SERIES, getFolderParents, canMoveFolder,
         normalizeMeanings, normalizeCatalog, getPublicLessonName, getPublicLessonIds, createUserWordState });
 });

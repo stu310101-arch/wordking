@@ -118,10 +118,48 @@ test('communal and commune remain distinct words with their own meanings and par
 test('registered public lessons exist before import and a renamed title retains its identity',()=>{
  assert.deepEqual(data.getPublicLessonIds([]),['死神單字Lv5 a','死神單字Lv5U2','死神單字Lv5U3','死神單字Lv5U4','死神單字Lv5U5','死神單字L5U10','死神單字L5U11','死神單字L5U12','死神單字L5U13']);
  assert.equal(data.getPublicLessonName('死神單字Lv5 a'),'死神單字Lv5U1');
+ assert.equal(data.getPublicLessonName('死神單字L5U13'),'死神單字Lv5U13');
+ assert.equal(data.getPublicLessonName('死神單字L5U6'),'死神單字Lv5U6');
  assert.equal(data.getPublicLessonName('晟景Lv5U6'),'晟景Lv5U6');
  assert.equal(data.getPublicLessonName('constructor'),'constructor');
  const ids=data.getPublicLessonIds([{lessonIds:['死神單字Lv5 a','晟景Lv5U6']}]);ids.push('rogue');
  assert.deepEqual(data.getPublicLessonIds([]),['死神單字Lv5 a','死神單字Lv5U2','死神單字Lv5U3','死神單字Lv5U4','死神單字Lv5U5','死神單字L5U10','死神單字L5U11','死神單字L5U12','死神單字L5U13']);
+});
+test('series group existing lesson identities and legacy named private folders, separately from word membership', () => {
+ const death = 'series:shishen-lv5', sheng = 'series:shengjing-lv5';
+ assert.deepEqual(data.PUBLIC_SERIES, { [sheng]: '晟景Lv5', [death]: '死神單字Lv5' });
+ const words = require('../data/words.json');
+ const lessonIds = data.getPublicLessonIds(words);
+ const names = { 'folder:f6': '死神單字L5U6', 'folder:f7': '死神單字Lv5U7', 'folder:f8': '晟景Lv5U8', 'folder:f9': '自選單字' };
+ const visible = [death, sheng, ...lessonIds.map(id => 'lesson:' + id), ...Object.keys(names)];
+ const parents = data.getFolderParents(visible, {}, key => names[key]);
+ for (const id of lessonIds) assert.equal(parents['lesson:' + id], id.startsWith('死神單字') ? death : sheng, id);
+ assert.deepEqual([parents[death], parents[sheng], ...Object.keys(names).map(key => parents[key])], ['', '', death, death, sheng, '']);
+});
+test('personal moves survive reload, preserve explicit root, and skip unavailable ancestor folders', () => {
+ const series = 'series:shishen-lv5', lesson = 'lesson:死神單字L5U13', hiddenLesson = 'lesson:死神單字L5U12';
+ const inner = 'folder:inner', outer = 'folder:outer', missing = 'folder:gone';
+ const visible = [series, lesson, inner, outer], a = model(), b = model();
+ a.setSettings({ folderParents: { [lesson]: '', [inner]: missing, [missing]: outer, [outer]: hiddenLesson } });
+ const saved = model(a.exportState()).getSettings().folderParents;
+ assert.deepEqual(data.getFolderParents(visible, saved), { [series]: '', [lesson]: '', [inner]: outer, [outer]: series });
+ assert.equal(data.getFolderParents(visible, b.getSettings().folderParents)[lesson], series);
+ assert.equal(data.getFolderParents(visible, { [lesson]: missing })[lesson], '');
+});
+test('hierarchy rejects moves under descendants and recovers an acyclic tree from malformed settings', () => {
+ const a = 'folder:a', b = 'folder:b', child = 'folder:child', system = '待複習';
+ const visible = [child, b, a, system];
+ const cyclic = data.getFolderParents(visible, { [a]: b, [b]: a, [child]: a, [system]: b });
+ assert.deepEqual(cyclic, { [child]: a, [b]: '', [a]: '', [system]: '' });
+ assert.equal(data.canMoveFolder(a, child, cyclic), false);
+ assert.equal(data.canMoveFolder(a, a, cyclic), false);
+ assert.equal(data.canMoveFolder(child, 'folder:missing', cyclic), false);
+ assert.equal(data.canMoveFolder(child, system, cyclic), false);
+ assert.equal(data.canMoveFolder(system, a, cyclic), false);
+ assert.equal(data.canMoveFolder(a, b, cyclic), true);
+ assert.equal(data.canMoveFolder(child, '', cyclic), true);
+ const hiddenCycle = { [a]: 'folder:gone', 'folder:gone': 'folder:missing', 'folder:missing': 'folder:gone' };
+ assert.equal(data.getFolderParents(visible, hiddenCycle)[a], '');
 });
 test('opaque identity survives English, grouped meanings and lesson edits',()=>{const m=model();m.updateWordOverride('w_000001',{english:'changed',meanings:M('個人')});m.setWordLessons('w_000001',['U8']);assert.equal(m.getEffectiveWord('w_000001').id,'w_000001');assert.equal(data.normalizeCatalog([{...catalog()[0],english:'other',lessonIds:[]}])[0].id,'w_000001');assert.throws(()=>data.normalizeCatalog([{...catalog()[0],id:'U6::penetrate'}]),/ID/);});
 test('canonical catalog forbids duplicate case-insensitive English and standalone meaning/POS',()=>{assert.throws(()=>data.normalizeCatalog([...catalog(),{...catalog()[0],id:'w_000003',english:'PENETRATE'}]),/Duplicate/);assert.throws(()=>data.normalizeCatalog([...catalog(),catalog()[0]]),/Duplicate/);for(const field of ['meaning','partOfSpeech','tags','folderId','folderIds','source','defaultId'])assert.throws(()=>data.normalizeCatalog([{...catalog()[0],[field]:[]}]),/Unknown/);});
