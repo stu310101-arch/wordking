@@ -15,7 +15,9 @@
         '死神單字Lv5U4': '死神單字Lv5U4',
         '死神單字Lv5U5': '死神單字Lv5U5',
         '死神單字L5U10': '死神單字L5U10',
-        '死神單字L5U11': '死神單字L5U11'
+        '死神單字L5U11': '死神單字L5U11',
+        '死神單字L5U12': '死神單字L5U12',
+        '死神單字L5U13': '死神單字L5U13'
     });
     function getPublicLessonName(id) {
         return Object.prototype.hasOwnProperty.call(PUBLIC_LESSONS, id) ? PUBLIC_LESSONS[id] : id;

@@ -673,12 +673,14 @@
       {
         "partOfSpeech": "adjective",
         "definitions": [
-          "無限的"
+          "無限的",
+          "極大的"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U6"
+      "晟景Lv5U6",
+      "死神單字L5U12"
     ],
     "isWrong": false
   },
@@ -1210,12 +1212,15 @@
       {
         "partOfSpeech": "verb",
         "definitions": [
-          "放任"
+          "放任",
+          "沉溺於",
+          "放縱"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U7"
+      "晟景Lv5U7",
+      "死神單字L5U12"
     ],
     "isWrong": false
   },
@@ -1367,12 +1372,15 @@
       {
         "partOfSpeech": "adjective",
         "definitions": [
-          "無限的"
+          "無限的",
+          "巨大的",
+          "極好的"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U7"
+      "晟景Lv5U7",
+      "死神單字L5U12"
     ],
     "isWrong": false
   },
@@ -1560,7 +1568,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U7"
+      "晟景Lv5U7",
+      "死神單字L5U13"
     ],
     "isWrong": false
   },
@@ -2032,18 +2041,21 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "目的"
+          "目的",
+          "意圖"
         ]
       },
       {
         "partOfSpeech": "adjective",
         "definitions": [
-          "一心一意想要..."
+          "一心一意想要...",
+          "專注的"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U8"
+      "晟景Lv5U8",
+      "死神單字L5U13"
     ],
     "isWrong": false
   },
@@ -2566,7 +2578,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U8"
+      "晟景Lv5U8",
+      "死神單字L5U13"
     ],
     "isWrong": false
   },
@@ -2719,7 +2732,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U8"
+      "晟景Lv5U8",
+      "死神單字L5U12"
     ],
     "isWrong": false
   },
@@ -3767,7 +3781,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U9"
+      "晟景Lv5U9",
+      "死神單字L5U12"
     ],
     "isWrong": false
   },
@@ -3799,7 +3814,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U9"
+      "晟景Lv5U9",
+      "死神單字L5U13"
     ],
     "isWrong": false
   },
@@ -4867,7 +4883,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U10"
+      "晟景Lv5U10",
+      "死神單字L5U13"
     ],
     "isWrong": false
   },
@@ -5411,18 +5428,22 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "研究機構"
+          "研究機構",
+          "機構",
+          "學院"
         ]
       },
       {
         "partOfSpeech": "verb",
         "definitions": [
-          "制定"
+          "制定",
+          "展開"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U11"
+      "晟景Lv5U11",
+      "死神單字L5U12"
     ],
     "isWrong": false
   },
@@ -5434,12 +5455,14 @@
         "partOfSpeech": "noun",
         "definitions": [
           "制定",
-          "公益機構"
+          "公益機構",
+          "機構"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U11"
+      "晟景Lv5U11",
+      "死神單字L5U12"
     ],
     "isWrong": false
   },
@@ -6452,7 +6475,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U12"
+      "晟景Lv5U12",
+      "死神單字L5U13"
     ],
     "isWrong": false
   },
@@ -11441,6 +11465,981 @@
     ],
     "lessonIds": [
       "死神單字L5U11"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000616",
+    "english": "hoof",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "蹄"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000617",
+    "english": "hormone",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "荷爾蒙"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000618",
+    "english": "hound",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "獵犬"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "騷擾"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000619",
+    "english": "hurl",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "投擲"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000620",
+    "english": "hymn",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "聖歌"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000621",
+    "english": "illusion",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "幻覺",
+          "錯覺"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000622",
+    "english": "impetus",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "動力"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000623",
+    "english": "implement",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "實施"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000624",
+    "english": "implication",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "暗示"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000625",
+    "english": "impulsive",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "衝動的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000626",
+    "english": "inborn",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "天生的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000627",
+    "english": "incense",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "香柱"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "激怒"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000628",
+    "english": "incentive",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "動機",
+          "動力",
+          "刺激"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000629",
+    "english": "incorporate",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "包含"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000630",
+    "english": "indigenous",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "土生土長的",
+          "天生的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000631",
+    "english": "indispensable",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "不可或缺的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000632",
+    "english": "indulgence",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "放縱",
+          "沉迷"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000633",
+    "english": "infect",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "感染"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000634",
+    "english": "inherent",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "內在的",
+          "與生俱來的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000635",
+    "english": "initiate",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "開始",
+          "使入會"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000636",
+    "english": "initiative",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "進取心",
+          "主動權",
+          "新措施"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000637",
+    "english": "inquire",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "詢問"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000638",
+    "english": "inquiry",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "詢問",
+          "調查"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000639",
+    "english": "insane",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "瘋狂的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000640",
+    "english": "insecure",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "不安全的",
+          "沒信心的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000641",
+    "english": "insider",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "知情者"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000642",
+    "english": "insight",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "洞察力",
+          "深入瞭解"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U12"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000643",
+    "english": "intact",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "完整的",
+          "原封不動的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000644",
+    "english": "integrate",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "融入",
+          "整合"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000645",
+    "english": "integrity",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "正直",
+          "完整"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000646",
+    "english": "intensify",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "加強",
+          "加劇"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000647",
+    "english": "interference",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "阻礙",
+          "干預"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000648",
+    "english": "interval",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "間隔",
+          "中場休息"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000649",
+    "english": "intervention",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "干預",
+          "介入"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000650",
+    "english": "inward",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "內在的",
+          "內心的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000651",
+    "english": "inwards",
+    "meanings": [
+      {
+        "partOfSpeech": "adverb",
+        "definitions": [
+          "內在地",
+          "內向地",
+          "向內地"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000652",
+    "english": "irony",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "諷刺"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000653",
+    "english": "jack",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "千斤頂",
+          "插孔",
+          "傢伙"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000654",
+    "english": "jaywalk",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "違規穿越馬路"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000655",
+    "english": "jeer",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "嘲笑"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "嘲笑"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000656",
+    "english": "jury",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "陪審團"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000657",
+    "english": "lame",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "跛腳的",
+          "沒說服力"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000658",
+    "english": "lasting",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "長久的",
+          "持續的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000659",
+    "english": "lava",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "岩漿"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000660",
+    "english": "league",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "聯盟"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000661",
+    "english": "legible",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "清晰的",
+          "易讀的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000662",
+    "english": "legislation",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "立法程序",
+          "法規"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000663",
+    "english": "legislative",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "法律的",
+          "立法的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000664",
+    "english": "legislature",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "立法機構"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000665",
+    "english": "legitimate",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "合理化"
+        ]
+      },
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "合理的",
+          "合法的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000666",
+    "english": "lest",
+    "meanings": [
+      {
+        "partOfSpeech": "conjunction",
+        "definitions": [
+          "免得"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000667",
+    "english": "lifespan",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "壽命",
+          "效期"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000668",
+    "english": "likewise",
+    "meanings": [
+      {
+        "partOfSpeech": "adverb",
+        "definitions": [
+          "同樣地"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000669",
+    "english": "lime",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "萊姆",
+          "石灰"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000670",
+    "english": "livelihood",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "生計"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000671",
+    "english": "locomotive",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "火車頭"
+        ]
+      },
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "運動的",
+          "有運動能力的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000672",
+    "english": "locust",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "蝗蟲"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U13"
     ],
     "isWrong": false
   }

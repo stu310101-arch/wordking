@@ -4,7 +4,7 @@ const data=require('../assets/word-data.js');const {M}=require('./helpers/groupe
 const {validateCatalogFiles}=require('../config/validate-words.cjs');
 const catalog=()=>[{id:'w_000001',english:'penetrate',meanings:M('穿透；滲透'),lessonIds:['U6']},{id:'w_000002',english:'record',meanings:[...M('紀錄',['noun']),...M('記錄；錄製')],lessonIds:['U8']}];
 const model=(state={})=>data.createUserWordState(catalog(),state);
-// Import spellings and identity assignments from the reviewed U3/U4/U5 source.
+// Import spellings and identity assignments from the reviewed handwritten lessons.
 // Keep these expectations independent of the runtime catalog and local working files.
 const addedLessonImports={
  '死神單字Lv5U3': `betray:453 beware:164 bias:454 bid:312 bizarre:455 blacksmith:456 blast:62 blizzard:457
@@ -24,12 +24,22 @@ const addedLessonImports={
  compact:138 comparable:535 compassion:330 compassionate:331 compatible:536 compel:537 compensate:538 compensation:539
  competence:540 competent:541 complexity:542 complication:543 compliment:179 comply:544 component:545 compound:299
  comprehend:180 comprehensible:182 comprehension:181 comprise:546 compromise:56 compulsory:547 conceal:34
- concede:548 conceive:549 conception:550 condemn:551 conduct:301`
+ concede:548 conceive:549 conception:550 condemn:551 conduct:301`,
+ '死神單字L5U12': `hoof:616 hormone:617 hostage:203 hound:618 hurl:619 hymn:620 illusion:621 immense:77
+ impetus:622 implement:623 implication:624 impulsive:625 inborn:626 incense:627 incentive:628 incorporate:629
+ indifferent:147 indigenous:630 indispensable:631 indulge:68 indulgence:632 infect:633 infinite:39 inherent:634
+ initiate:635 initiative:636 inquire:637 inquiry:638 insane:639 insecure:640 insider:641 insight:642
+ institute:291 institution:292`,
+ '死神單字L5U13': `intact:643 integrate:644 integrity:645 intensify:646 intent:112 interference:647 interval:648 intervention:649
+ inward:650 inwards:651 irony:652 jack:653 jaywalk:654 jeer:655 jug:340 jury:656 juvenile:139
+ lame:657 landlord:205 lasting:658 lava:659 lawsuit:263 league:660 legible:661 legislation:662
+ legislative:663 legislature:664 legitimate:665 lest:666 lifespan:667 likelihood:87 likewise:668 lime:669
+ livelihood:670 locomotive:671 locust:672`
 };
 const addedLessonWords=Object.fromEntries(Object.entries(addedLessonImports).map(([lesson,source])=>[
  lesson,source.trim().split(/\s+/).map(pair=>{const [english,number]=pair.split(':');return {english,id:`w_${number.padStart(6,'0')}`};})
 ]));
-test('expanded catalog retains all 892 historical identity mappings and frozen backups',()=>{assert.deepEqual(validateCatalogFiles(),{words:615,memberships:704,aliases:17,legacyIds:446,mappedIds:892,lessonFiles:9,frozenFiles:14});});
+test('expanded catalog retains all 892 historical identity mappings and frozen backups',()=>{assert.deepEqual(validateCatalogFiles(),{words:672,memberships:774,aliases:17,legacyIds:446,mappedIds:892,lessonFiles:9,frozenFiles:14});});
 test('U2 imports 32 spellings with shared identities and retains all existing course memberships',()=>{
  const words=require('../data/words.json'), before=require('../migration/schema-v5-catalog.json');
  const shared={antique:'w_000157',applause:'w_000081',apt:'w_000060',asset:'w_000108',attendance:'w_000148',ballot:'w_000142',barren:'w_000322',batch:'w_000323',behalf:'w_000017'};
@@ -53,9 +63,9 @@ test('U2 imports 32 spellings with shared identities and retains all existing co
  assert.deepEqual(u2.find(w=>w.english==='arctic').meanings,[...M('北極',['noun']),...M('北極的',['adjective'])]);
  assert.deepEqual(u2.find(w=>w.english==='antarctic').meanings,[...M('南極',['noun']),...M('南極的',['adjective'])]);
 });
-test('U3, U4 and U5 import every reviewed spelling exactly once with stable shared identities',()=>{
+test('reviewed lessons import every spelling exactly once with stable shared and new identities',()=>{
  const words=require('../data/words.json');
- const counts={'死神單字Lv5U3':44,'死神單字Lv5U4':50,'死神單字Lv5U5':50};
+ const counts={'死神單字Lv5U3':44,'死神單字Lv5U4':50,'死神單字Lv5U5':50,'死神單字L5U12':34,'死神單字L5U13':36};
  assert.deepEqual(Object.keys(addedLessonWords),Object.keys(counts));
  for(const [lesson,expected] of Object.entries(addedLessonWords)){
   const imported=words.filter(w=>w.lessonIds.includes(lesson));
@@ -68,6 +78,23 @@ test('U3, U4 and U5 import every reviewed spelling exactly once with stable shar
    assert.equal(matches[0].id,entry.id,`${entry.english} retains its assigned identity`);
    assert.equal(matches[0].isWrong,false);
   }
+ }
+});
+test('L5U12 and L5U13 preserve reviewed Chinese definitions and parts of speech',()=>{
+ const words=require('../data/words.json');
+ const reviewed={
+  indispensable:M('不可或缺的',['adjective']),
+  immense:M('無限的；巨大的；極好的',['adjective']),
+  institute:[...M('研究機構；機構；學院',['noun']),...M('制定；展開')],
+  institution:M('制定；公益機構；機構',['noun']),
+  intent:[...M('目的；意圖',['noun']),...M('一心一意想要...；專注的',['adjective'])],
+  inwards:M('內在地；內向地；向內地',['adverb']),
+  jug:M('罐；壺',['noun']),
+  locomotive:[...M('火車頭',['noun']),...M('運動的；有運動能力的',['adjective'])],
+  interference:M('阻礙；干預',['noun'])
+ };
+ for(const [english,meanings] of Object.entries(reviewed)){
+  assert.deepEqual(words.find(w=>w.english===english).meanings,meanings,english);
  }
 });
 test('each imported unit keeps noun and verb definitions in separate groups',()=>{
@@ -89,12 +116,12 @@ test('communal and commune remain distinct words with their own meanings and par
  assert.ok(commune.lessonIds.includes('死神單字Lv5U5'));
 });
 test('registered public lessons exist before import and a renamed title retains its identity',()=>{
- assert.deepEqual(data.getPublicLessonIds([]),['死神單字Lv5 a','死神單字Lv5U2','死神單字Lv5U3','死神單字Lv5U4','死神單字Lv5U5','死神單字L5U10','死神單字L5U11']);
+ assert.deepEqual(data.getPublicLessonIds([]),['死神單字Lv5 a','死神單字Lv5U2','死神單字Lv5U3','死神單字Lv5U4','死神單字Lv5U5','死神單字L5U10','死神單字L5U11','死神單字L5U12','死神單字L5U13']);
  assert.equal(data.getPublicLessonName('死神單字Lv5 a'),'死神單字Lv5U1');
  assert.equal(data.getPublicLessonName('晟景Lv5U6'),'晟景Lv5U6');
  assert.equal(data.getPublicLessonName('constructor'),'constructor');
  const ids=data.getPublicLessonIds([{lessonIds:['死神單字Lv5 a','晟景Lv5U6']}]);ids.push('rogue');
- assert.deepEqual(data.getPublicLessonIds([]),['死神單字Lv5 a','死神單字Lv5U2','死神單字Lv5U3','死神單字Lv5U4','死神單字Lv5U5','死神單字L5U10','死神單字L5U11']);
+ assert.deepEqual(data.getPublicLessonIds([]),['死神單字Lv5 a','死神單字Lv5U2','死神單字Lv5U3','死神單字Lv5U4','死神單字Lv5U5','死神單字L5U10','死神單字L5U11','死神單字L5U12','死神單字L5U13']);
 });
 test('opaque identity survives English, grouped meanings and lesson edits',()=>{const m=model();m.updateWordOverride('w_000001',{english:'changed',meanings:M('個人')});m.setWordLessons('w_000001',['U8']);assert.equal(m.getEffectiveWord('w_000001').id,'w_000001');assert.equal(data.normalizeCatalog([{...catalog()[0],english:'other',lessonIds:[]}])[0].id,'w_000001');assert.throws(()=>data.normalizeCatalog([{...catalog()[0],id:'U6::penetrate'}]),/ID/);});
 test('canonical catalog forbids duplicate case-insensitive English and standalone meaning/POS',()=>{assert.throws(()=>data.normalizeCatalog([...catalog(),{...catalog()[0],id:'w_000003',english:'PENETRATE'}]),/Duplicate/);assert.throws(()=>data.normalizeCatalog([...catalog(),catalog()[0]]),/Duplicate/);for(const field of ['meaning','partOfSpeech','tags','folderId','folderIds','source','defaultId'])assert.throws(()=>data.normalizeCatalog([{...catalog()[0],[field]:[]}]),/Unknown/);});
@@ -132,8 +159,8 @@ test('photo imports L5U10 and L5U11 retain complete spellings, grouped POS, and 
   }
  }
  assert.equal(assigned.size,82);
- assert.equal(words.length,615);
- assert.equal(words.reduce((sum,w)=>sum+w.lessonIds.length,0),704);
+ assert.equal(words.length,672);
+ assert.equal(words.reduce((sum,w)=>sum+w.lessonIds.length,0),774);
  assert.deepEqual(words.find(w=>w.english==='extension').meanings,[{partOfSpeech:'noun',definitions:['延期','延長','擴大']}]);
  assert.ok(words.find(w=>w.english==='glisten').meanings.some(g=>g.partOfSpeech==='verb'&&g.definitions.includes('發光')));
  for(const english of ['extinct','fascinate','fatigue','flip','fluency','format','foul','gasp','glare','gorgeous','grant','gravity','grim','grip','gut','haul','herb','herbal']){
