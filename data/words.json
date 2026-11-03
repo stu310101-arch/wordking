@@ -328,12 +328,14 @@
       {
         "partOfSpeech": "verb",
         "definitions": [
-          "使最小化"
+          "使最小化",
+          "降至最低"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U6"
+      "晟景Lv5U6",
+      "死神單字L5U14"
     ],
     "isWrong": false
   },
@@ -344,18 +346,21 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "小複製品"
+          "小複製品",
+          "小模型"
         ]
       },
       {
         "partOfSpeech": "adjective",
         "definitions": [
-          "迷你的"
+          "迷你的",
+          "小型的"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U6"
+      "晟景Lv5U6",
+      "死神單字L5U14"
     ],
     "isWrong": false
   },
@@ -1044,12 +1049,15 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "可能性"
+          "可能性",
+          "機率",
+          "賠率"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U7"
+      "晟景Lv5U7",
+      "死神單字L5U15"
     ],
     "isWrong": false
   },
@@ -1909,7 +1917,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U7"
+      "晟景Lv5U7",
+      "死神單字L5U15"
     ],
     "isWrong": false
   },
@@ -2018,19 +2027,23 @@
       {
         "partOfSpeech": "verb",
         "definitions": [
-          "嘲弄"
+          "嘲弄",
+          "取笑",
+          "模仿"
         ]
       },
       {
         "partOfSpeech": "adjective",
         "definitions": [
           "模擬的",
-          "假的"
+          "假的",
+          "仿製的"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U8"
+      "晟景Lv5U8",
+      "死神單字L5U14"
     ],
     "isWrong": false
   },
@@ -2326,7 +2339,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U8"
+      "晟景Lv5U8",
+      "死神單字L5U15"
     ],
     "isWrong": false
   },
@@ -2338,12 +2352,14 @@
         "partOfSpeech": "verb",
         "definitions": [
           "提名",
-          "任命"
+          "任命",
+          "指派"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U8"
+      "晟景Lv5U8",
+      "死神單字L5U15"
     ],
     "isWrong": false
   },
@@ -2354,12 +2370,14 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "提名"
+          "提名",
+          "任命"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U8"
+      "晟景Lv5U8",
+      "死神單字L5U15"
     ],
     "isWrong": false
   },
@@ -2375,7 +2393,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U8"
+      "晟景Lv5U8",
+      "死神單字L5U15"
     ],
     "isWrong": false
   },
@@ -2426,12 +2445,14 @@
       {
         "partOfSpeech": "verb",
         "definitions": [
-          "通知"
+          "通知",
+          "告知"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U8"
+      "晟景Lv5U8",
+      "死神單字L5U15"
     ],
     "isWrong": false
   },
@@ -3881,12 +3902,14 @@
         "partOfSpeech": "noun",
         "definitions": [
           "大廈",
-          "官邸"
+          "官邸",
+          "豪宅"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U9"
+      "晟景Lv5U9",
+      "死神單字L5U14"
     ],
     "isWrong": false
   },
@@ -3898,12 +3921,16 @@
         "partOfSpeech": "adjective",
         "definitions": [
           "惡意的",
-          "惡劣的"
+          "惡劣的",
+          "令人反感的",
+          "髒的",
+          "嚴重的"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U9"
+      "晟景Lv5U9",
+      "死神單字L5U15"
     ],
     "isWrong": false
   },
@@ -4955,12 +4982,14 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "芥末"
+          "芥末",
+          "黃芥末"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U11"
+      "晟景Lv5U11",
+      "死神單字L5U15"
     ],
     "isWrong": false
   },
@@ -6528,12 +6557,14 @@
         "partOfSpeech": "verb",
         "definitions": [
           "顯示",
-          "表現"
+          "表現",
+          "表明"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U12"
+      "晟景Lv5U12",
+      "死神單字L5U14"
     ],
     "isWrong": false
   },
@@ -6544,7 +6575,8 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "與此同時"
+          "與此同時",
+          "同時"
         ]
       },
       {
@@ -6555,7 +6587,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U12"
+      "晟景Lv5U12",
+      "死神單字L5U14"
     ],
     "isWrong": false
   },
@@ -6566,7 +6599,8 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "正中央"
+          "正中央",
+          "中間"
         ]
       },
       {
@@ -6577,7 +6611,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U12"
+      "晟景Lv5U12",
+      "死神單字L5U14"
     ],
     "isWrong": false
   },
@@ -6604,12 +6639,14 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "薄荷"
+          "薄荷",
+          "薄荷糖"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U12"
+      "晟景Lv5U12",
+      "死神單字L5U14"
     ],
     "isWrong": false
   },
@@ -6626,12 +6663,15 @@
       {
         "partOfSpeech": "verb",
         "definitions": [
-          "嘀咕"
+          "嘀咕",
+          "含糊地說",
+          "咕噥"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U12"
+      "晟景Lv5U12",
+      "死神單字L5U15"
     ],
     "isWrong": false
   },
@@ -12440,6 +12480,1050 @@
     ],
     "lessonIds": [
       "死神單字L5U13"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000673",
+    "english": "lodging",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "住宿"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000674",
+    "english": "loft",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "閣樓"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000675",
+    "english": "loom",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "織布機"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "逼近",
+          "若隱若現"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000676",
+    "english": "lounge",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "會客廳",
+          "休息室"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000677",
+    "english": "lumber",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "木材"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000678",
+    "english": "maintenance",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "維護",
+          "保養"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000679",
+    "english": "manifestation",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "顯示",
+          "表明"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000680",
+    "english": "manipulate",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "操縱"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000681",
+    "english": "marshal",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "統帥",
+          "隊長"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "集中",
+          "管理"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000682",
+    "english": "mash",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "搗碎"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000683",
+    "english": "massacre",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "屠殺"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "屠殺"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000684",
+    "english": "mattress",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "床墊"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000685",
+    "english": "mayonnaise",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "美乃滋"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000686",
+    "english": "measles",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "麻疹"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000687",
+    "english": "mechanics",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "力學",
+          "機械學"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000688",
+    "english": "mechanism",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "機械裝置",
+          "制度",
+          "方法",
+          "機制"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000689",
+    "english": "meddle",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "干涉"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000690",
+    "english": "medication",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "藥物",
+          "藥劑"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000691",
+    "english": "menace",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "威脅",
+          "討厭的人/物"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "威脅"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000692",
+    "english": "mentor",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "導師",
+          "指導者"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000693",
+    "english": "merge",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "合併"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000694",
+    "english": "metaphor",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "隱喻"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000695",
+    "english": "metropolitan",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "大都市的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000696",
+    "english": "migration",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "遷移"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000697",
+    "english": "mileage",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "里程數"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000698",
+    "english": "misconduct",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "不當行為",
+          "失職"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000699",
+    "english": "miser",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "守財奴",
+          "吝嗇鬼"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000700",
+    "english": "missionary",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "傳教士"
+        ]
+      },
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "傳教士的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000701",
+    "english": "mode",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "模式",
+          "方法"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U14"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000702",
+    "english": "mold",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "模具",
+          "黴菌"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "塑造",
+          "發霉"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000703",
+    "english": "monopoly",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "壟斷",
+          "獨占權",
+          "獨占企業"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000704",
+    "english": "morality",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "道德"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000705",
+    "english": "mortgage",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "典當",
+          "貸款"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "抵押",
+          "典當"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000706",
+    "english": "moss",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "苔蘚",
+          "青苔"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000707",
+    "english": "mount",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "山"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "爬上",
+          "上升"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000708",
+    "english": "municipal",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "市立的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000709",
+    "english": "mutter",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "嘀咕"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000710",
+    "english": "mutton",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "羊肉"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000711",
+    "english": "narrative",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "故事",
+          "敘述"
+        ]
+      },
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "故事的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000712",
+    "english": "navigator",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "領航員"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000713",
+    "english": "neutral",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "汽車空檔",
+          "中立者"
+        ]
+      },
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "中立的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000714",
+    "english": "nibble",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "一小口"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "小口咬"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000715",
+    "english": "nightingale",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "夜鶯"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000716",
+    "english": "nobility",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "貴族",
+          "高貴"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000717",
+    "english": "nonetheless",
+    "meanings": [
+      {
+        "partOfSpeech": "adverb",
+        "definitions": [
+          "然而",
+          "儘管"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000718",
+    "english": "nonverbal",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "非言語的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000719",
+    "english": "nonviolent",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "非暴力的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000720",
+    "english": "norm",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "常態",
+          "標準",
+          "規範"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000721",
+    "english": "notably",
+    "meanings": [
+      {
+        "partOfSpeech": "adverb",
+        "definitions": [
+          "格外地",
+          "特別地",
+          "明顯地"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000722",
+    "english": "noteworthy",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "值得注意的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000723",
+    "english": "notion",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "觀念",
+          "看法"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000724",
+    "english": "novelty",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "新奇"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000725",
+    "english": "nutrient",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "養分"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000726",
+    "english": "nutrition",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "營養"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000727",
+    "english": "oar",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "槳"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000728",
+    "english": "oblong",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "長方型",
+          "橢圓型"
+        ]
+      },
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "長方型的",
+          "橢圓型的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000729",
+    "english": "obscure",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "使看不清",
+          "使難懂"
+        ]
+      },
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "不出名的",
+          "模糊的",
+          "難懂的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000730",
+    "english": "observer",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "觀察員"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U15"
     ],
     "isWrong": false
   }

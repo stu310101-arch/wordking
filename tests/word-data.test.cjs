@@ -34,12 +34,22 @@ const addedLessonImports={
  inward:650 inwards:651 irony:652 jack:653 jaywalk:654 jeer:655 jug:340 jury:656 juvenile:139
  lame:657 landlord:205 lasting:658 lava:659 lawsuit:263 league:660 legible:661 legislation:662
  legislative:663 legislature:664 legitimate:665 lest:666 lifespan:667 likelihood:87 likewise:668 lime:669
- livelihood:670 locomotive:671 locust:672`
+ livelihood:670 locomotive:671 locust:672`,
+ '死神單字L5U14': `lodging:673 loft:674 loom:675 lounge:676 lumber:677 maintenance:678 manifest:343 manifestation:679 manipulate:680
+ mansion:209 marshal:681 mash:682 massacre:683 mattress:684 mayonnaise:685 meantime:344 measles:686 mechanics:687
+ mechanism:688 meddle:689 medication:690 menace:691 mentor:692 merge:693 metaphor:694 metropolitan:695 midst:345
+ migration:696 mileage:697 miniature:21 minimize:20 mint:347 misconduct:698 miser:699 missionary:700 mock:111
+ mode:701`,
+ '死神單字L5U15': `mold:702 molecule:126 monopoly:703 morality:704 mortgage:705 moss:706 mount:707 mumble:348 municipal:708
+ mustard:267 mutter:709 mutton:710 narrative:711 nasty:210 navigator:712 neutral:713 nibble:714 nightingale:715
+ nobility:716 nominate:127 nomination:128 nominee:129 nonetheless:717 nonverbal:718 nonviolent:719 norm:720 notably:721
+ noteworthy:722 noticeable:105 notify:132 notion:723 novelty:724 nutrient:725 nutrition:726 oar:727 oblong:728
+ obscure:729 observer:730 odds:59`
 };
 const addedLessonWords=Object.fromEntries(Object.entries(addedLessonImports).map(([lesson,source])=>[
  lesson,source.trim().split(/\s+/).map(pair=>{const [english,number]=pair.split(':');return {english,id:`w_${number.padStart(6,'0')}`};})
 ]));
-test('expanded catalog retains all 892 historical identity mappings and frozen backups',()=>{assert.deepEqual(validateCatalogFiles(),{words:672,memberships:774,aliases:17,legacyIds:446,mappedIds:892,lessonFiles:9,frozenFiles:14});});
+test('expanded catalog retains all 892 historical identity mappings and frozen backups',()=>{assert.deepEqual(validateCatalogFiles(),{words:730,memberships:850,aliases:17,legacyIds:446,mappedIds:892,lessonFiles:9,frozenFiles:14});});
 test('U2 imports 32 spellings with shared identities and retains all existing course memberships',()=>{
  const words=require('../data/words.json'), before=require('../migration/schema-v5-catalog.json');
  const shared={antique:'w_000157',applause:'w_000081',apt:'w_000060',asset:'w_000108',attendance:'w_000148',ballot:'w_000142',barren:'w_000322',batch:'w_000323',behalf:'w_000017'};
@@ -65,7 +75,7 @@ test('U2 imports 32 spellings with shared identities and retains all existing co
 });
 test('reviewed lessons import every spelling exactly once with stable shared and new identities',()=>{
  const words=require('../data/words.json');
- const counts={'死神單字Lv5U3':44,'死神單字Lv5U4':50,'死神單字Lv5U5':50,'死神單字L5U12':34,'死神單字L5U13':36};
+ const counts={'死神單字Lv5U3':44,'死神單字Lv5U4':50,'死神單字Lv5U5':50,'死神單字L5U12':34,'死神單字L5U13':36,'死神單字L5U14':37,'死神單字L5U15':39};
  assert.deepEqual(Object.keys(addedLessonWords),Object.keys(counts));
  for(const [lesson,expected] of Object.entries(addedLessonWords)){
   const imported=words.filter(w=>w.lessonIds.includes(lesson));
@@ -97,6 +107,20 @@ test('L5U12 and L5U13 preserve reviewed Chinese definitions and parts of speech'
   assert.deepEqual(words.find(w=>w.english===english).meanings,meanings,english);
  }
 });
+test('L5U14 and L5U15 preserve reviewer-confirmed loom and mutton and existing meanings',()=>{
+ const words=require('../data/words.json');
+ const find=english=>words.find(w=>w.english===english);
+ assert.deepEqual(find('loom').meanings,[{partOfSpeech:'noun',definitions:['織布機']},{partOfSpeech:'verb',definitions:['逼近','若隱若現']}]);
+ assert.deepEqual(find('mutton').meanings,[{partOfSpeech:'noun',definitions:['羊肉']}]);
+ assert.equal(find('loom').id,'w_000675');
+ assert.equal(find('mutton').id,'w_000710');
+ assert.deepEqual(find('mumble').meanings,[{partOfSpeech:'noun',definitions:['嘀咕']},{partOfSpeech:'verb',definitions:['含糊地說','咕噥']}]);
+ assert.deepEqual(find('mansion').meanings,[{partOfSpeech:'noun',definitions:['大廈','官邸','豪宅']}]);
+ assert.deepEqual(find('odds').meanings,[{partOfSpeech:'noun',definitions:['可能性','機率','賠率']}]);
+ assert.deepEqual(find('mock').lessonIds,['晟景Lv5U8','死神單字L5U14']);
+ assert.equal(words.filter(w=>w.lessonIds.includes('死神單字L5U14')).length,37);
+ assert.equal(words.filter(w=>w.lessonIds.includes('死神單字L5U15')).length,39);
+});
 test('each imported unit keeps noun and verb definitions in separate groups',()=>{
  const words=require('../data/words.json');
  const examples=[
@@ -116,14 +140,16 @@ test('communal and commune remain distinct words with their own meanings and par
  assert.ok(commune.lessonIds.includes('死神單字Lv5U5'));
 });
 test('registered public lessons exist before import and a renamed title retains its identity',()=>{
- assert.deepEqual(data.getPublicLessonIds([]),['死神單字Lv5 a','死神單字Lv5U2','死神單字Lv5U3','死神單字Lv5U4','死神單字Lv5U5','死神單字L5U10','死神單字L5U11','死神單字L5U12','死神單字L5U13']);
+ assert.deepEqual(data.getPublicLessonIds([]),['死神單字Lv5 a','死神單字Lv5U2','死神單字Lv5U3','死神單字Lv5U4','死神單字Lv5U5','死神單字L5U10','死神單字L5U11','死神單字L5U12','死神單字L5U13','死神單字L5U14','死神單字L5U15']);
  assert.equal(data.getPublicLessonName('死神單字Lv5 a'),'死神單字Lv5U1');
  assert.equal(data.getPublicLessonName('死神單字L5U13'),'死神單字Lv5U13');
+ assert.equal(data.getPublicLessonName('死神單字L5U14'),'死神單字Lv5U14');
+ assert.equal(data.getPublicLessonName('死神單字L5U15'),'死神單字Lv5U15');
  assert.equal(data.getPublicLessonName('死神單字L5U6'),'死神單字Lv5U6');
  assert.equal(data.getPublicLessonName('晟景Lv5U6'),'晟景Lv5U6');
  assert.equal(data.getPublicLessonName('constructor'),'constructor');
  const ids=data.getPublicLessonIds([{lessonIds:['死神單字Lv5 a','晟景Lv5U6']}]);ids.push('rogue');
- assert.deepEqual(data.getPublicLessonIds([]),['死神單字Lv5 a','死神單字Lv5U2','死神單字Lv5U3','死神單字Lv5U4','死神單字Lv5U5','死神單字L5U10','死神單字L5U11','死神單字L5U12','死神單字L5U13']);
+ assert.deepEqual(data.getPublicLessonIds([]),['死神單字Lv5 a','死神單字Lv5U2','死神單字Lv5U3','死神單字Lv5U4','死神單字Lv5U5','死神單字L5U10','死神單字L5U11','死神單字L5U12','死神單字L5U13','死神單字L5U14','死神單字L5U15']);
 });
 test('series group existing lesson identities and legacy named private folders, separately from word membership', () => {
  const death = 'series:shishen-lv5', sheng = 'series:shengjing-lv5';
@@ -197,8 +223,8 @@ test('photo imports L5U10 and L5U11 retain complete spellings, grouped POS, and 
   }
  }
  assert.equal(assigned.size,82);
- assert.equal(words.length,672);
- assert.equal(words.reduce((sum,w)=>sum+w.lessonIds.length,0),774);
+ assert.equal(words.length,730);
+ assert.equal(words.reduce((sum,w)=>sum+w.lessonIds.length,0),850);
  assert.deepEqual(words.find(w=>w.english==='extension').meanings,[{partOfSpeech:'noun',definitions:['延期','延長','擴大']}]);
  assert.ok(words.find(w=>w.english==='glisten').meanings.some(g=>g.partOfSpeech==='verb'&&g.definitions.includes('發光')));
  for(const english of ['extinct','fascinate','fatigue','flip','fluency','format','foul','gasp','glare','gorgeous','grant','gravity','grim','grip','gut','haul','herb','herbal']){
