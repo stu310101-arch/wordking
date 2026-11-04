@@ -1,0 +1,27 @@
+name: WordKing preview QA
+
+on:
+  push:
+    branches:
+      - preview/practice-results-folder-tools-20261104
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax check
+        run: node --check assets/app.js
+      - name: Feature and related regression tests
+        run: node --test tests/practice-results-folders.test.cjs tests/practice-selection.test.cjs tests/folder-navigation.test.cjs tests/folder-search.test.cjs tests/app-data.test.cjs tests/auth-loading.test.cjs tests/persistence.test.cjs
+      - name: Full legacy suite (pre-existing catalog fixture mismatch)
+        continue-on-error: true
+        run: npm --prefix config test

@@ -121,6 +121,7 @@ const state = {
     folderNames: {},
     folderParents: {},
     currentLibraryFolder: '',
+    librarySelectedWordIds: new Set(),
     settings: { ...DEFAULT_SETTINGS },
     audio: {
         bgmElement: null
@@ -135,7 +136,9 @@ const state = {
         viewingHistoryIndex: null,
         currentChoiceOptions: [],
         currentHadMistake: false,
-        spellingDrafts: {}
+        spellingDrafts: {},
+        removeFolderId: '',
+        removeSelection: new Set()
     },
     isEditing: false,
     editingWordIndex: -1,
@@ -399,6 +402,8 @@ function clearPracticeSession() {
     state.game.currentChoiceOptions = [];
     state.game.currentHadMistake = false;
     state.game.spellingDrafts = {};
+    state.game.removeFolderId = '';
+    state.game.removeSelection = new Set();
 }
 
 function resetToDefaultState() {
@@ -794,6 +799,7 @@ function clearPersonalSessionData() {
     state.folderNames = {};
     state.folderParents = {};
     state.currentLibraryFolder = '';
+    state.librarySelectedWordIds.clear();
     state.settings = cloneSettings(DEFAULT_SETTINGS);
     state.folderIds = [];
     resetPracticeSelection();
@@ -822,7 +828,8 @@ function clearPersonalSessionData() {
     ['category-grid', 'words-container', 'library-breadcrumb', 'library-heading', 'library-word-cards', 'library-letter-grid',
         'move-folder-parent', 'new-folder-location', 'folder-list', 'practice-scope', 'practice-focus', 'practice-word-selection', 'selection-count', 'spelling-definition-area',
         'spelling-hint', 'spelling-feedback', 'spelling-review-answer', 'choice-feedback',
-        'choice-options', 'choice-question', 'result-skipped-items', 'result-folder-select',
+        'choice-options', 'choice-question', 'result-skipped-items', 'result-correct-items',
+        'result-folder-select', 'result-remove-folder-select', 'result-remove-items',
         'action-folder-name', 'confirm-title', 'confirm-desc', 'folder-selection-container',
         'word-folder-feedback', 'personal-word-actions'].forEach(id => {
         document.getElementById(id)?.replaceChildren();
@@ -1614,6 +1621,7 @@ async function confirmNewFolder() {
 }
 
 function openLibraryFolder(key = '', { pushHistory = true } = {}) {
+    if (key !== state.currentLibraryFolder) state.librarySelectedWordIds.clear();
     refreshFolders();
     const virtual = state.categories.includes(key) || key === WRONG_FOLDER || key === UNFILED_FOLDER;
     const exists = !key || state.folderIds.includes(key) || state.categories.includes(key);
@@ -2048,7 +2056,12 @@ async function saveNewWord() {
     if (!ok) return;
     closeAddModal();
 
-    if (!document.getElementById('view-word-list').classList.contains('hidden')) {
+    if (!document.getElementById('view-game-result').classList.contains('hidden')) {
+        const selectedIds = new Set(state.game.reviewSelection.map(getWordKey));
+        syncResultWordReferences();
+        renderResultWordList(selectedIds);
+        renderResultFolderOptions(document.getElementById('result-folder-select')?.value || '');
+    } else if (!document.getElementById('view-word-list').classList.contains('hidden')) {
         const listTitle = document.getElementById('list-title');
         renderWordList(listTitle.dataset.folderId || listTitle.innerText);
     } else {
@@ -2098,6 +2111,7 @@ function renderLibrary() {
     const hasDirectWords = !!current && groupInfo(current).kind !== 'series';
     setElementVisible(document.getElementById('library-direct-words'), hasDirectWords);
     if (hasDirectWords) renderFolderWordCards(current, cards);
+    updateLibraryBulkControls();
     setElementVisible(document.getElementById('empty-library-hint'), !current && !state.words.length && children.length <= 1);
     const letters = document.getElementById('library-letter-grid');
     letters.replaceChildren();
@@ -2190,7 +2204,68 @@ function renderFolderWordCards(name, container) {
         return;
     }
 
-    filtered.forEach(w => container.appendChild(createWordCard(w)));
+    filtered.forEach(w => {
+        const card = createWordCard(w);
+        if (container.id === 'library-word-cards' && canAssignWordsToFolder(name)) {
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'library-word-checkbox absolute top-3 left-12 w-6 h-6 z-30 accent-indigo-600';
+            checkbox.checked = state.librarySelectedWordIds.has(getWordKey(w));
+            checkbox.setAttribute('aria-label', `選取 ${w.english} 移出目前資料夾`);
+            checkbox.addEventListener('click', event => event.stopPropagation());
+            checkbox.addEventListener('change', () => {
+                if (checkbox.checked) state.librarySelectedWordIds.add(getWordKey(w));
+                else state.librarySelectedWordIds.delete(getWordKey(w));
+                updateLibraryBulkControls();
+            });
+            card.appendChild(checkbox);
+        }
+        container.appendChild(card);
+    });
+}
+
+function getDirectWordsInFolder(folderId) {
+    return state.words.filter(word => getWordGroupIds(word).includes(folderId));
+}
+
+function updateLibraryBulkControls() {
+    const folderId = state.currentLibraryFolder;
+    const manageable = canAssignWordsToFolder(folderId);
+    setElementVisible(document.getElementById('library-bulk-actions'), manageable);
+    const valid = new Set(manageable ? getDirectWordsInFolder(folderId).map(getWordKey) : []);
+    state.librarySelectedWordIds = new Set([...state.librarySelectedWordIds].filter(id => valid.has(id)));
+    const count = state.librarySelectedWordIds.size;
+    const counter = document.getElementById('library-selected-count');
+    if (counter) counter.textContent = `已選 ${count} 個`;
+    const button = document.getElementById('btn-library-remove-words');
+    if (button) button.disabled = count === 0;
+}
+
+function selectAllLibraryWords(checked) {
+    if (!canAssignWordsToFolder(state.currentLibraryFolder)) return;
+    state.librarySelectedWordIds = new Set(checked
+        ? getDirectWordsInFolder(state.currentLibraryFolder).map(getWordKey) : []);
+    renderLibrary();
+}
+
+async function removeSelectedLibraryWords() {
+    if (!requireLoginForChange()) return;
+    const folderId = state.currentLibraryFolder;
+    if (!canAssignWordsToFolder(folderId) || !state.folderIds.includes(folderId)) return;
+    const ids = getDirectWordsInFolder(folderId)
+        .map(getWordKey).filter(id => state.librarySelectedWordIds.has(id));
+    if (!ids.length) return;
+    if (!confirm(`確定將 ${ids.length} 個單字移出「${getFolderDisplayName(folderId)}」？單字不會刪除，其他資料夾不變。`)) return;
+    const ok = await commitUserMutation(model => {
+        ids.forEach(id => {
+            const word = model.getEffectiveWord(id);
+            if (word) setWordGroups(model, id, getWordGroupIds(word).filter(key => key !== folderId));
+        });
+    });
+    if (!ok) return;
+    state.librarySelectedWordIds.clear();
+    renderLibrary();
+    alert(`已將 ${ids.length} 個單字移出「${getFolderDisplayName(folderId)}」。`);
 }
 
 function createWordCard(w) {
@@ -2524,6 +2599,8 @@ function setGameplayInputsEnabled(enabled) {
     document.querySelectorAll('#choice-options button').forEach(btn => {
         btn.disabled = !enabled;
     });
+    const choiceSkip = document.getElementById('btn-choice-skip');
+    if (choiceSkip) choiceSkip.disabled = !enabled;
 }
 
 function setProgressForIndex(prefix, index, total, isReview = false) {
@@ -2561,7 +2638,7 @@ function createAnswerRecord({ word, result, userAnswer = '', choices = [] }) {
         word,
         result,
         userAnswer,
-        correctAnswer: word.english,
+        correctAnswer: state.game.mode === 'choice-en-ch' ? formatMeaning(word.meanings) : word.english,
         meanings: cloneWord(word.meanings),
         choices: choices.map(choice => ({
             text: choice.text,
@@ -2682,10 +2759,13 @@ function renderChoiceOptions(word, options, isEnToCh) {
         btn.className = 'choice-btn w-full bg-white border-2 border-indigo-100 text-gray-700 font-bold py-4 rounded-xl text-lg shadow-sm hover:border-indigo-300';
         btn.innerText = isEnToCh ? formatMeaning(opt.meanings) : opt.english;
         btn.addEventListener('click', () => {
+            // Prevent skip and answer from both recording the same question.
+            if (state.game.answeredHistory[state.game.index]) return;
             const allBtns = document.querySelectorAll('.choice-btn');
             allBtns.forEach(b => {
                 b.disabled = true;
             });
+            setGameplayInputsEnabled(false);
 
             if (opt === word) {
                 btn.classList.add('choice-correct');
@@ -2730,6 +2810,30 @@ function renderChoiceOptions(word, options, isEnToCh) {
         });
         optionsContainer.appendChild(btn);
     });
+}
+
+function skipChoiceWord() {
+    if (isReviewingHistory() || state.game.answeredHistory[state.game.index] ||
+        document.getElementById('btn-choice-skip')?.disabled) return;
+    const word = getCurrentWord();
+    if (!word) return;
+    const isEnToCh = state.game.mode === 'choice-en-ch';
+    const correctText = isEnToCh ? formatMeaning(word.meanings) : word.english;
+    state.game.wrongWords.add(word);
+    const choices = state.game.currentChoiceOptions.map(choice => ({
+        text: isEnToCh ? formatMeaning(choice.meanings) : choice.english,
+        isCorrect: choice === word,
+        isSelected: false
+    }));
+    document.querySelectorAll('#choice-options button').forEach(btn => {
+        if (btn.innerText === correctText) btn.classList.add('choice-correct');
+    });
+    const feedback = document.getElementById('choice-feedback');
+    feedback.className = 'mt-4 text-orange-500 font-bold';
+    feedback.innerText = `跳過，答案：${correctText}`;
+    recordAnsweredQuestion(createAnswerRecord({ word, result: 'skipped', choices }));
+    setGameplayInputsEnabled(false);
+    scheduleGameAdvance(1200);
 }
 
 function showHistoryEntry(entryIndex) {
@@ -2878,6 +2982,10 @@ function endGame(isAborted = false) {
     setElementVisible(document.getElementById('view-game-choice'), false);
     setElementVisible(document.getElementById('view-game-result'), true);
 
+    // Invalidate pending auto-advance callbacks when the user settles early.
+    gameGeneration += 1;
+    state.game.removeFolderId = '';
+    state.game.removeSelection = new Set();
     document.getElementById('result-title').innerText = isAborted ? '練習已結算' : '練習完成！';
     document.getElementById('result-icon').innerText = isAborted ? '📌' : '🎉';
 
@@ -2889,27 +2997,65 @@ function endGame(isAborted = false) {
     renderResultWordList();
 }
 
+function getResultCorrectWords() {
+    const wrongIds = new Set(Array.from(state.game.wrongWords, getWordKey));
+    const current = new Map(state.words.map(word => [getWordKey(word), word]));
+    const seen = new Set();
+    return state.game.answeredHistory
+        .filter(record => record?.result === 'correct' && record.word)
+        .map(record => current.get(getWordKey(record.word)))
+        .filter(word => {
+            const id = word && getWordKey(word);
+            if (!id || wrongIds.has(id) || seen.has(id)) return false;
+            seen.add(id);
+            return true;
+        });
+}
+
 function renderResultWordList(selectedWordIds = null) {
     const wrongs = Array.from(state.game.wrongWords);
+    const corrects = getResultCorrectWords();
     const checkedIds = selectedWordIds || new Set(wrongs.map(getWordKey));
-    const list = document.getElementById('result-skipped-items');
-    state.game.reviewSelection = [];
-    list.replaceChildren();
+    state.game.reviewSelection = [...wrongs, ...corrects].filter(word => checkedIds.has(getWordKey(word)));
+
+    const wrongList = document.getElementById('result-skipped-items');
+    const correctList = document.getElementById('result-correct-items');
+    wrongList.replaceChildren();
+    correctList.replaceChildren();
+    document.getElementById('result-stat').innerText = `錯誤/跳過：${wrongs.length} 個`;
+    document.getElementById('result-correct-stat').innerText = `答對：${corrects.length} 個`;
 
     if (!wrongs.length) {
         const li = document.createElement('li');
         li.className = 'p-4 text-center text-green-600 font-bold bg-green-50 rounded-xl';
-        li.textContent = '👏 完美！沒有錯誤單字。';
-        list.appendChild(li);
+        li.textContent = '👏 沒有錯誤或跳過的單字。';
+        wrongList.appendChild(li);
     } else {
-        wrongs.forEach((word, idx) => {
-            const checked = checkedIds.has(getWordKey(word));
-            if (checked) state.game.reviewSelection.push(word);
-            list.appendChild(createReviewItem(word, idx, checked));
-        });
+        wrongs.forEach((word, index) =>
+            wrongList.appendChild(createReviewItem(word, index, checkedIds.has(getWordKey(word)), 'wrong')));
     }
 
+    if (!corrects.length) {
+        const li = document.createElement('li');
+        li.className = 'p-4 text-center text-gray-500 font-bold bg-white rounded-xl';
+        li.textContent = '目前沒有答對的單字。';
+        correctList.appendChild(li);
+    } else {
+        corrects.forEach((word, index) =>
+            correctList.appendChild(createReviewItem(word, index, checkedIds.has(getWordKey(word)), 'correct')));
+    }
     updateResultActionButtons();
+}
+
+function changeResultWordSelection(kind, checked) {
+    const ids = new Set(state.game.reviewSelection.map(getWordKey));
+    const words = kind === 'correct' ? getResultCorrectWords() : [...state.game.wrongWords];
+    words.forEach(word => {
+        const id = getWordKey(word);
+        if (checked) ids.add(id);
+        else ids.delete(id);
+    });
+    renderResultWordList(ids);
 }
 
 function canAssignWordsToFolder(key) {
@@ -2922,17 +3068,28 @@ function getAssignableResultFolderIds() {
 
 function renderResultFolderOptions(selectedFolderId = '') {
     refreshFolders();
-    const select = document.getElementById('result-folder-select');
-    if (!select) return;
-
     const folderIds = getAssignableResultFolderIds();
-    const placeholder = new Option(folderIds.length ? '選擇現有資料夾' : '目前沒有可選資料夾', '');
-    select.replaceChildren(placeholder);
-    folderIds.forEach(folderId => {
-        select.appendChild(new Option(getFolderPathLabel(folderId), folderId));
-    });
-    select.disabled = folderIds.length === 0;
-    if (selectedFolderId && folderIds.includes(selectedFolderId)) select.value = selectedFolderId;
+    const select = document.getElementById('result-folder-select');
+    if (select) {
+        select.replaceChildren(new Option(folderIds.length ? '選擇現有資料夾' : '目前沒有可選資料夾', ''));
+        folderIds.forEach(folderId => select.appendChild(new Option(getFolderPathLabel(folderId), folderId)));
+        select.disabled = folderIds.length === 0;
+        if (selectedFolderId && folderIds.includes(selectedFolderId)) select.value = selectedFolderId;
+    }
+
+    const removeSelect = document.getElementById('result-remove-folder-select');
+    if (removeSelect) {
+        const previous = state.game.removeFolderId;
+        removeSelect.replaceChildren(new Option(folderIds.length ? '選擇要開啟的資料夾' : '目前沒有可選資料夾', ''));
+        folderIds.forEach(folderId => removeSelect.appendChild(new Option(getFolderPathLabel(folderId), folderId)));
+        removeSelect.disabled = folderIds.length === 0;
+        if (previous && folderIds.includes(previous)) removeSelect.value = previous;
+        else {
+            state.game.removeFolderId = '';
+            state.game.removeSelection = new Set();
+        }
+    }
+    renderResultRemovalList();
     updateResultActionButtons();
 }
 
@@ -2972,7 +3129,12 @@ function syncResultWordReferences() {
         .filter(Boolean);
 }
 
-function createReviewItem(w, idx, checked = true) {
+function openResultWordEditor(wordId) {
+    const index = state.words.findIndex(word => getWordKey(word) === wordId);
+    if (index >= 0) openAddModal(index);
+}
+
+function createReviewItem(w, idx, checked = true, kind = 'wrong') {
     const li = document.createElement('li');
     li.className = 'bg-white p-3 rounded-xl border border-gray-100 shadow-sm';
     li.dataset.wordId = getWordKey(w);
@@ -2982,11 +3144,11 @@ function createReviewItem(w, idx, checked = true) {
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
-    checkbox.id = `review-chk-${idx}`;
+    checkbox.id = `result-${kind}-chk-${idx}`;
     checkbox.className = 'w-6 h-6 text-indigo-600 rounded flex-none';
     checkbox.checked = checked;
     checkbox.setAttribute('aria-label', `選取 ${w.english}`);
-    checkbox.addEventListener('change', () => toggleReviewItem(idx));
+    checkbox.addEventListener('change', () => toggleReviewItem(getWordKey(w), checkbox.checked));
 
     const wrap = document.createElement('div');
     wrap.className = 'flex flex-col flex-1 min-w-0';
@@ -3006,25 +3168,32 @@ function createReviewItem(w, idx, checked = true) {
     }
 
     const mean = document.createElement('span');
-    mean.className = 'text-gray-500 text-sm truncate';
+    mean.className = 'text-gray-500 text-sm';
     mean.textContent = getMeaningWithPartOfSpeech(w);
     wrap.append(row, mean);
 
-    rowWrap.append(checkbox, wrap);
+    const edit = document.createElement('button');
+    edit.type = 'button';
+    edit.className = 'text-sm px-2 py-2 rounded-lg bg-indigo-50 text-indigo-700 font-bold shrink-0';
+    edit.textContent = '✎ 編輯';
+    edit.setAttribute('aria-label', `編輯 ${w.english}`);
+    edit.addEventListener('click', () => openResultWordEditor(getWordKey(w)));
+
+    rowWrap.append(checkbox, wrap, edit);
     li.append(rowWrap);
     return li;
 }
 
-function toggleReviewItem(idx) {
-    const wrongs = Array.from(state.game.wrongWords);
-    const word = wrongs[idx];
-    const checkbox = document.getElementById(`review-chk-${idx}`);
-    if (!checkbox || !word) return;
-
-    if (checkbox.checked) {
-        if (!state.game.reviewSelection.includes(word)) state.game.reviewSelection.push(word);
+function toggleReviewItem(wordId, checked) {
+    const all = [...state.game.wrongWords, ...getResultCorrectWords()];
+    const word = all.find(item => getWordKey(item) === wordId);
+    if (!word) return;
+    if (checked) {
+        if (!state.game.reviewSelection.some(item => getWordKey(item) === wordId)) {
+            state.game.reviewSelection.push(word);
+        }
     } else {
-        state.game.reviewSelection = state.game.reviewSelection.filter(w => w !== word);
+        state.game.reviewSelection = state.game.reviewSelection.filter(item => getWordKey(item) !== wordId);
     }
     updateResultActionButtons();
 }
@@ -3109,6 +3278,7 @@ async function saveResultWordsToFolder() {
 
     syncResultWordReferences();
     renderResultWordList(selectedWordIds);
+    if (state.game.removeFolderId) renderResultRemovalList();
     if (newFolderInput) newFolderInput.value = '';
     renderResultFolderOptions(targetFolderId);
 
@@ -3120,6 +3290,115 @@ async function saveResultWordsToFolder() {
     } else {
         alert(`所選單字已在「${displayName}」中。`);
     }
+}
+
+function getResultRemovableWords() {
+    return state.game.removeFolderId ? getDirectWordsInFolder(state.game.removeFolderId) : [];
+}
+
+function updateResultRemovalButtons() {
+    const button = document.getElementById('btn-result-remove-words');
+    if (!button) return;
+    button.disabled = state.game.removeSelection.size === 0;
+    button.textContent = `移出所選單字（${state.game.removeSelection.size}）`;
+}
+
+function renderResultRemovalList() {
+    const folderId = state.game.removeFolderId;
+    const isOpen = !!folderId && getAssignableResultFolderIds().includes(folderId);
+    setElementVisible(document.getElementById('result-remove-panel'), isOpen);
+    const list = document.getElementById('result-remove-items');
+    if (!list) return;
+    list.replaceChildren();
+    if (!isOpen) return;
+
+    const words = getResultRemovableWords()
+        .sort((a, b) => a.english.localeCompare(b.english));
+    const availableIds = new Set(words.map(getWordKey));
+    state.game.removeSelection = new Set([...state.game.removeSelection].filter(id => availableIds.has(id)));
+    document.getElementById('result-remove-heading').textContent =
+        `${getFolderDisplayName(folderId)}（${words.length} 個單字）`;
+
+    if (!words.length) {
+        const hint = document.createElement('li');
+        hint.className = 'text-sm text-gray-600 p-2';
+        hint.textContent = '這個資料夾目前沒有直接歸屬的單字。';
+        list.appendChild(hint);
+    }
+    words.forEach(word => {
+        const li = document.createElement('li');
+        li.className = 'flex items-center gap-2 bg-white rounded-lg p-2';
+        const label = document.createElement('label');
+        label.className = 'flex items-center gap-2 flex-1 min-w-0';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'result-remove-checkbox w-5 h-5 flex-none';
+        checkbox.dataset.wordId = getWordKey(word);
+        checkbox.checked = state.game.removeSelection.has(getWordKey(word));
+        checkbox.addEventListener('change', () =>
+            changeResultRemovalSelection(getWordKey(word), checkbox.checked));
+        const name = document.createElement('span');
+        name.className = 'font-bold text-indigo-700 break-all';
+        name.textContent = word.english;
+        label.append(checkbox, name);
+        const edit = document.createElement('button');
+        edit.type = 'button';
+        edit.className = 'text-xs text-indigo-700 px-2 py-1 rounded bg-indigo-50';
+        edit.textContent = '編輯';
+        edit.addEventListener('click', () => openResultWordEditor(getWordKey(word)));
+        li.append(label, edit);
+        list.appendChild(li);
+    });
+    updateResultRemovalButtons();
+}
+
+function openResultRemovalFolder() {
+    const folderId = document.getElementById('result-remove-folder-select')?.value || '';
+    if (!getAssignableResultFolderIds().includes(folderId)) {
+        alert('請先選擇要管理的資料夾。');
+        return;
+    }
+    state.game.removeFolderId = folderId;
+    state.game.removeSelection = new Set();
+    renderResultRemovalList();
+}
+
+function changeResultRemovalSelection(wordId, checked) {
+    if (!getResultRemovableWords().some(word => getWordKey(word) === wordId)) return;
+    if (checked) state.game.removeSelection.add(wordId);
+    else state.game.removeSelection.delete(wordId);
+    updateResultRemovalButtons();
+}
+
+function selectAllResultRemovalWords(checked) {
+    state.game.removeSelection = new Set(checked ? getResultRemovableWords().map(getWordKey) : []);
+    renderResultRemovalList();
+}
+
+async function removeResultWordsFromFolder() {
+    if (!requireLoginForChange()) return;
+    const folderId = state.game.removeFolderId;
+    if (!getAssignableResultFolderIds().includes(folderId)) {
+        alert('此資料夾已不存在，請重新選擇。');
+        return;
+    }
+    const ids = getResultRemovableWords()
+        .map(getWordKey).filter(id => state.game.removeSelection.has(id));
+    if (!ids.length) return;
+    if (!confirm(`確定將 ${ids.length} 個單字移出「${getFolderDisplayName(folderId)}」？單字不會被刪除。`)) return;
+    const selectedIds = new Set(state.game.reviewSelection.map(getWordKey));
+    const ok = await commitUserMutation(model => {
+        ids.forEach(id => {
+            const word = model.getEffectiveWord(id);
+            if (word) setWordGroups(model, id, getWordGroupIds(word).filter(key => key !== folderId));
+        });
+    });
+    if (!ok) return;
+    state.game.removeSelection = new Set();
+    syncResultWordReferences();
+    renderResultWordList(selectedIds);
+    renderResultFolderOptions(document.getElementById('result-folder-select')?.value || '');
+    alert(`已將 ${ids.length} 個單字移出「${getFolderDisplayName(folderId)}」，其他資料夾不變。`);
 }
 
 function openSettingsModal() {
@@ -3371,6 +3650,12 @@ function rerenderVisibleView() {
         renderWordList(listTitle.dataset.folderId || listTitle.innerText);
     }
     if (visible.id === 'view-practice') renderPracticeOptions();
+    if (visible.id === 'view-game-result') {
+        const selectedIds = new Set(state.game.reviewSelection.map(getWordKey));
+        syncResultWordReferences();
+        renderResultWordList(selectedIds);
+        renderResultFolderOptions(document.getElementById('result-folder-select')?.value || '');
+    }
 }
 
 function bindStaticEvents() {
@@ -3409,6 +3694,9 @@ function bindStaticEvents() {
         openLibraryFolder(getResolvedFolderParents()[state.currentLibraryFolder] || '');
     });
     document.getElementById('btn-word-list-back')?.addEventListener('click', () => navigateTo('library'));
+    document.getElementById('btn-library-select-all')?.addEventListener('click', () => selectAllLibraryWords(true));
+    document.getElementById('btn-library-select-none')?.addEventListener('click', () => selectAllLibraryWords(false));
+    document.getElementById('btn-library-remove-words')?.addEventListener('click', removeSelectedLibraryWords);
 
     document.getElementById('btn-edit-folders')?.addEventListener('click', toggleEditMode);
     document.getElementById('btn-add-word')?.addEventListener('click', () => openAddModal());
@@ -3441,8 +3729,22 @@ function bindStaticEvents() {
     const spellingButtons = document.querySelectorAll('#view-game-spelling .space-y-4 button');
     spellingButtons[0]?.addEventListener('click', checkSpellingAnswer);
     spellingButtons[1]?.addEventListener('click', skipSpellingWord);
+    document.getElementById('btn-choice-skip')?.addEventListener('click', skipChoiceWord);
 
+    document.getElementById('btn-result-wrong-all')?.addEventListener('click', () => changeResultWordSelection('wrong', true));
+    document.getElementById('btn-result-wrong-none')?.addEventListener('click', () => changeResultWordSelection('wrong', false));
+    document.getElementById('btn-result-correct-all')?.addEventListener('click', () => changeResultWordSelection('correct', true));
+    document.getElementById('btn-result-correct-none')?.addEventListener('click', () => changeResultWordSelection('correct', false));
     document.getElementById('btn-save-review')?.addEventListener('click', saveReviewWords);
+    document.getElementById('btn-result-open-remove-folder')?.addEventListener('click', openResultRemovalFolder);
+    document.getElementById('result-remove-folder-select')?.addEventListener('change', () => {
+        state.game.removeFolderId = '';
+        state.game.removeSelection = new Set();
+        renderResultRemovalList();
+    });
+    document.getElementById('btn-result-remove-all')?.addEventListener('click', () => selectAllResultRemovalWords(true));
+    document.getElementById('btn-result-remove-none')?.addEventListener('click', () => selectAllResultRemovalWords(false));
+    document.getElementById('btn-result-remove-words')?.addEventListener('click', removeResultWordsFromFolder);
     document.getElementById('result-folder-select')?.addEventListener('change', handleResultFolderSelectChange);
     document.getElementById('btn-add-meaning-group')?.addEventListener('click', () => addMeaningGroup());
     document.getElementById('btn-add-word-folder')?.addEventListener('click', stageNewWordFolder);
