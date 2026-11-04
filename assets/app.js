@@ -121,6 +121,7 @@ const state = {
     folderNames: {},
     folderParents: {},
     currentLibraryFolder: '',
+    librarySelectedWordIds: new Set(),
     settings: { ...DEFAULT_SETTINGS },
     audio: {
         bgmElement: null
@@ -135,7 +136,9 @@ const state = {
         viewingHistoryIndex: null,
         currentChoiceOptions: [],
         currentHadMistake: false,
-        spellingDrafts: {}
+        spellingDrafts: {},
+        removeFolderId: '',
+        removeSelection: new Set()
     },
     isEditing: false,
     editingWordIndex: -1,
@@ -399,6 +402,8 @@ function clearPracticeSession() {
     state.game.currentChoiceOptions = [];
     state.game.currentHadMistake = false;
     state.game.spellingDrafts = {};
+    state.game.removeFolderId = '';
+    state.game.removeSelection = new Set();
 }
 
 function resetToDefaultState() {
@@ -794,6 +799,7 @@ function clearPersonalSessionData() {
     state.folderNames = {};
     state.folderParents = {};
     state.currentLibraryFolder = '';
+    state.librarySelectedWordIds.clear();
     state.settings = cloneSettings(DEFAULT_SETTINGS);
     state.folderIds = [];
     resetPracticeSelection();
@@ -822,7 +828,8 @@ function clearPersonalSessionData() {
     ['category-grid', 'words-container', 'library-breadcrumb', 'library-heading', 'library-word-cards', 'library-letter-grid',
         'move-folder-parent', 'new-folder-location', 'folder-list', 'practice-scope', 'practice-focus', 'practice-word-selection', 'selection-count', 'spelling-definition-area',
         'spelling-hint', 'spelling-feedback', 'spelling-review-answer', 'choice-feedback',
-        'choice-options', 'choice-question', 'result-skipped-items', 'result-folder-select',
+        'choice-options', 'choice-question', 'result-skipped-items', 'result-correct-items',
+        'result-folder-select', 'result-remove-folder-select', 'result-remove-items',
         'action-folder-name', 'confirm-title', 'confirm-desc', 'folder-selection-container',
         'word-folder-feedback', 'personal-word-actions'].forEach(id => {
         document.getElementById(id)?.replaceChildren();
@@ -1614,6 +1621,7 @@ async function confirmNewFolder() {
 }
 
 function openLibraryFolder(key = '', { pushHistory = true } = {}) {
+    if (key !== state.currentLibraryFolder) state.librarySelectedWordIds.clear();
     refreshFolders();
     const virtual = state.categories.includes(key) || key === WRONG_FOLDER || key === UNFILED_FOLDER;
     const exists = !key || state.folderIds.includes(key) || state.categories.includes(key);
@@ -2098,6 +2106,7 @@ function renderLibrary() {
     const hasDirectWords = !!current && groupInfo(current).kind !== 'series';
     setElementVisible(document.getElementById('library-direct-words'), hasDirectWords);
     if (hasDirectWords) renderFolderWordCards(current, cards);
+    updateLibraryBulkControls();
     setElementVisible(document.getElementById('empty-library-hint'), !current && !state.words.length && children.length <= 1);
     const letters = document.getElementById('library-letter-grid');
     letters.replaceChildren();
@@ -2190,7 +2199,68 @@ function renderFolderWordCards(name, container) {
         return;
     }
 
-    filtered.forEach(w => container.appendChild(createWordCard(w)));
+    filtered.forEach(w => {
+        const card = createWordCard(w);
+        if (container.id === 'library-word-cards' && canAssignWordsToFolder(name)) {
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'library-word-checkbox absolute top-3 left-12 w-6 h-6 z-30 accent-indigo-600';
+            checkbox.checked = state.librarySelectedWordIds.has(getWordKey(w));
+            checkbox.setAttribute('aria-label', `選取 ${w.english} 移出目前資料夾`);
+            checkbox.addEventListener('click', event => event.stopPropagation());
+            checkbox.addEventListener('change', () => {
+                if (checkbox.checked) state.librarySelectedWordIds.add(getWordKey(w));
+                else state.librarySelectedWordIds.delete(getWordKey(w));
+                updateLibraryBulkControls();
+            });
+            card.appendChild(checkbox);
+        }
+        container.appendChild(card);
+    });
+}
+
+function getDirectWordsInFolder(folderId) {
+    return state.words.filter(word => getWordGroupIds(word).includes(folderId));
+}
+
+function updateLibraryBulkControls() {
+    const folderId = state.currentLibraryFolder;
+    const manageable = canAssignWordsToFolder(folderId);
+    setElementVisible(document.getElementById('library-bulk-actions'), manageable);
+    const valid = new Set(manageable ? getDirectWordsInFolder(folderId).map(getWordKey) : []);
+    state.librarySelectedWordIds = new Set([...state.librarySelectedWordIds].filter(id => valid.has(id)));
+    const count = state.librarySelectedWordIds.size;
+    const counter = document.getElementById('library-selected-count');
+    if (counter) counter.textContent = `已選 ${count} 個`;
+    const button = document.getElementById('btn-library-remove-words');
+    if (button) button.disabled = count === 0;
+}
+
+function selectAllLibraryWords(checked) {
+    if (!canAssignWordsToFolder(state.currentLibraryFolder)) return;
+    state.librarySelectedWordIds = new Set(checked
+        ? getDirectWordsInFolder(state.currentLibraryFolder).map(getWordKey) : []);
+    renderLibrary();
+}
+
+async function removeSelectedLibraryWords() {
+    if (!requireLoginForChange()) return;
+    const folderId = state.currentLibraryFolder;
+    if (!canAssignWordsToFolder(folderId) || !state.folderIds.includes(folderId)) return;
+    const ids = getDirectWordsInFolder(folderId)
+        .map(getWordKey).filter(id => state.librarySelectedWordIds.has(id));
+    if (!ids.length) return;
+    if (!confirm(`確定將 ${ids.length} 個單字移出「${getFolderDisplayName(folderId)}」？單字不會刪除，其他資料夾不變。`)) return;
+    const ok = await commitUserMutation(model => {
+        ids.forEach(id => {
+            const word = model.getEffectiveWord(id);
+            if (word) setWordGroups(model, id, getWordGroupIds(word).filter(key => key !== folderId));
+        });
+    });
+    if (!ok) return;
+    state.librarySelectedWordIds.clear();
+    renderLibrary();
+    alert(`已將 ${ids.length} 個單字移出「${getFolderDisplayName(folderId)}」。`);
 }
 
 function createWordCard(w) {
@@ -2524,6 +2594,8 @@ function setGameplayInputsEnabled(enabled) {
     document.querySelectorAll('#choice-options button').forEach(btn => {
         btn.disabled = !enabled;
     });
+    const choiceSkip = document.getElementById('btn-choice-skip');
+    if (choiceSkip) choiceSkip.disabled = !enabled;
 }
 
 function setProgressForIndex(prefix, index, total, isReview = false) {
@@ -2561,7 +2633,7 @@ function createAnswerRecord({ word, result, userAnswer = '', choices = [] }) {
         word,
         result,
         userAnswer,
-        correctAnswer: word.english,
+        correctAnswer: state.game.mode === 'choice-en-ch' ? formatMeaning(word.meanings) : word.english,
         meanings: cloneWord(word.meanings),
         choices: choices.map(choice => ({
             text: choice.text,
@@ -2732,6 +2804,29 @@ function renderChoiceOptions(word, options, isEnToCh) {
     });
 }
 
+function skipChoiceWord() {
+    if (isReviewingHistory() || document.getElementById('btn-choice-skip')?.disabled) return;
+    const word = getCurrentWord();
+    if (!word) return;
+    const isEnToCh = state.game.mode === 'choice-en-ch';
+    const correctText = isEnToCh ? formatMeaning(word.meanings) : word.english;
+    state.game.wrongWords.add(word);
+    const choices = state.game.currentChoiceOptions.map(choice => ({
+        text: isEnToCh ? formatMeaning(choice.meanings) : choice.english,
+        isCorrect: choice === word,
+        isSelected: false
+    }));
+    document.querySelectorAll('#choice-options button').forEach(btn => {
+        if (btn.innerText === correctText) btn.classList.add('choice-correct');
+    });
+    const feedback = document.getElementById('choice-feedback');
+    feedback.className = 'mt-4 text-orange-500 font-bold';
+    feedback.innerText = `跳過，答案：${correctText}`;
+    recordAnsweredQuestion(createAnswerRecord({ word, result: 'skipped', choices }));
+    setGameplayInputsEnabled(false);
+    scheduleGameAdvance(1200);
+}
+
 function showHistoryEntry(entryIndex) {
     const entry = state.game.answeredHistory[entryIndex];
     if (!entry) return;
@@ -2878,6 +2973,10 @@ function endGame(isAborted = false) {
     setElementVisible(document.getElementById('view-game-choice'), false);
     setElementVisible(document.getElementById('view-game-result'), true);
 
+    // Invalidate pending auto-advance callbacks when the user settles early.
+    gameGeneration += 1;
+    state.game.removeFolderId = '';
+    state.game.removeSelection = new Set();
     document.getElementById('result-title').innerText = isAborted ? '練習已結算' : '練習完成！';
     document.getElementById('result-icon').innerText = isAborted ? '📌' : '🎉';
 
@@ -3409,6 +3508,9 @@ function bindStaticEvents() {
         openLibraryFolder(getResolvedFolderParents()[state.currentLibraryFolder] || '');
     });
     document.getElementById('btn-word-list-back')?.addEventListener('click', () => navigateTo('library'));
+    document.getElementById('btn-library-select-all')?.addEventListener('click', () => selectAllLibraryWords(true));
+    document.getElementById('btn-library-select-none')?.addEventListener('click', () => selectAllLibraryWords(false));
+    document.getElementById('btn-library-remove-words')?.addEventListener('click', removeSelectedLibraryWords);
 
     document.getElementById('btn-edit-folders')?.addEventListener('click', toggleEditMode);
     document.getElementById('btn-add-word')?.addEventListener('click', () => openAddModal());
@@ -3441,6 +3543,7 @@ function bindStaticEvents() {
     const spellingButtons = document.querySelectorAll('#view-game-spelling .space-y-4 button');
     spellingButtons[0]?.addEventListener('click', checkSpellingAnswer);
     spellingButtons[1]?.addEventListener('click', skipSpellingWord);
+    document.getElementById('btn-choice-skip')?.addEventListener('click', skipChoiceWord);
 
     document.getElementById('btn-save-review')?.addEventListener('click', saveReviewWords);
     document.getElementById('result-folder-select')?.addEventListener('change', handleResultFolderSelectChange);
