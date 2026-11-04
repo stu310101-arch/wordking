@@ -8,8 +8,7 @@ function setup() {
         'users/A': { schemaVersion: 6, revision: 0, migrationV6: { status: 'complete' } }
     });
     const h = createAppHarness({ firebase: cloud.firebase });
-    h.elements.get('spelling-progress-bar').style = {};
-    h.elements.get('choice-progress-bar').style = {};
+    h.run("document.getElementById('spelling-progress-bar').style = {}; document.getElementById('choice-progress-bar').style = {};");
     h.run(`
         publicCatalog = wordData.normalizeCatalog([
             { id: 'w_000001', english: 'apple', meanings: M('蘋果'), lessonIds: ['U1'] },
