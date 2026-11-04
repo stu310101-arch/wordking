@@ -2759,10 +2759,13 @@ function renderChoiceOptions(word, options, isEnToCh) {
         btn.className = 'choice-btn w-full bg-white border-2 border-indigo-100 text-gray-700 font-bold py-4 rounded-xl text-lg shadow-sm hover:border-indigo-300';
         btn.innerText = isEnToCh ? formatMeaning(opt.meanings) : opt.english;
         btn.addEventListener('click', () => {
+            // Prevent skip and answer from both recording the same question.
+            if (state.game.answeredHistory[state.game.index]) return;
             const allBtns = document.querySelectorAll('.choice-btn');
             allBtns.forEach(b => {
                 b.disabled = true;
             });
+            setGameplayInputsEnabled(false);
 
             if (opt === word) {
                 btn.classList.add('choice-correct');
@@ -2810,7 +2813,8 @@ function renderChoiceOptions(word, options, isEnToCh) {
 }
 
 function skipChoiceWord() {
-    if (isReviewingHistory() || document.getElementById('btn-choice-skip')?.disabled) return;
+    if (isReviewingHistory() || state.game.answeredHistory[state.game.index] ||
+        document.getElementById('btn-choice-skip')?.disabled) return;
     const word = getCurrentWord();
     if (!word) return;
     const isEnToCh = state.game.mode === 'choice-en-ch';
