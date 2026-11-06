@@ -114,7 +114,9 @@ test('L5U14 and L5U15 preserve reviewer-confirmed loom and mutton and existing m
  assert.deepEqual(find('mutton').meanings,[{partOfSpeech:'noun',definitions:['羊肉']}]);
  assert.equal(find('loom').id,'w_000675');
  assert.equal(find('mutton').id,'w_000710');
- assert.deepEqual(find('mumble').meanings,[{partOfSpeech:'noun',definitions:['嘀咕']},{partOfSpeech:'verb',definitions:['含糊地說','咕噥']}]);
+ // The frozen v5 catalog and original lesson already contain 嘀咕 as a verb;
+ // later imports must preserve it alongside their added definitions.
+ assert.deepEqual(find('mumble').meanings,[{partOfSpeech:'noun',definitions:['嘀咕']},{partOfSpeech:'verb',definitions:['嘀咕','含糊地說','咕噥']}]);
  assert.deepEqual(find('mansion').meanings,[{partOfSpeech:'noun',definitions:['大廈','官邸','豪宅']}]);
  assert.deepEqual(find('odds').meanings,[{partOfSpeech:'noun',definitions:['可能性','機率','賠率']}]);
  assert.deepEqual(find('mock').lessonIds,['晟景Lv5U8','死神單字L5U14']);

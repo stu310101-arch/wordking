@@ -104,7 +104,16 @@
         throw error;
     }
     function object(value, label) {
-        if (!value || Object.prototype.toString.call(value) !== '[object Object]') fail(`${label} must be an object.`);
+        if (!value || typeof value !== 'object' || Array.isArray(value)) fail(`${label} must be an object.`);
+        // Accept JSON maps (including null-prototype and other-realm objects),
+        // but never let inherited fields bypass the own-field schema checks.
+        const prototype = Object.getPrototypeOf(value);
+        if (prototype !== null && (Object.getPrototypeOf(prototype) !== null ||
+            !own(prototype, 'constructor') || typeof prototype.constructor !== 'function' ||
+            prototype.constructor.prototype !== prototype ||
+            Function.prototype.toString.call(prototype.constructor) !== Function.prototype.toString.call(Object))) {
+            fail(`${label} must be a plain object.`);
+        }
         return value;
     }
     // Detached JSON copies prevent both caller mutation and sharing across accounts.
@@ -348,6 +357,7 @@
         function restoreAllHidden() { hiddenWordIds.clear(); }
         function createCustomWord(id, fields) {
             if (id && typeof id === 'object') {
+                object(id, 'custom word');
                 const { id: suppliedId, ...suppliedFields } = id;
                 id = suppliedId;
                 fields = suppliedFields;

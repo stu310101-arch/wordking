@@ -1,0 +1,79 @@
+name: Verify WordKing
+
+on:
+  push:
+    branches: [main, 'codex/**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: config/package-lock.json
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install locked development dependencies
+        run: npm ci --prefix config --ignore-scripts
+      - name: Verify shipped dependencies and resource policy
+        run: npm run verify:runtime --prefix config
+      - name: Audit development dependencies
+        run: npm audit --prefix config --audit-level=moderate
+      - name: Validate data and run behavior regressions
+        run: |
+          npm run validate:data --prefix config
+          npm test --prefix config
+      - name: Verify generated CSS is committed
+        run: |
+          npm run build:css --prefix config
+          git diff --exit-code -- assets/tailwind.css
+      - name: Download verified Firestore emulator
+        env:
+          EMULATOR_PATH: ${{ runner.temp }}/cloud-firestore-emulator-v1.22.0.jar
+        run: |
+          curl --fail --silent --show-error --location --retry 3 --output "$EMULATOR_PATH" https://storage.googleapis.com/firebase-preview-drop/emulator/cloud-firestore-emulator-v1.22.0.jar
+          echo "9b6498b7f62714d67f48f59b3818883cd682dbcd46b9f59511de81c97bb5166c  $EMULATOR_PATH" | sha256sum --check
+          test "$(stat --format=%s "$EMULATOR_PATH")" = 136707194
+      - name: Test ownership and schema rules against real emulator
+        env:
+          FIRESTORE_EMULATOR_JAR: ${{ runner.temp }}/cloud-firestore-emulator-v1.22.0.jar
+        run: npm run test:rules --prefix config
+      - name: Install Chromium for isolated browser tests
+        working-directory: config
+        run: npx --no-install playwright install --with-deps chromium
+      - name: Test mobile and desktop installation, offline privacy, and practice
+        env:
+          WORDKING_TEST_ARTIFACTS: ${{ github.workspace }}/.test-artifacts/pwa
+        run: |
+          mkdir -p .test-artifacts
+          node tests/helpers/ui-fixture-server.cjs > .test-artifacts/fixture.log 2>&1 &
+          fixture_pid=$!
+          trap 'kill "$fixture_pid" 2>/dev/null || true' EXIT
+          node -e "(async()=>{for(let attempt=0;attempt<50;attempt++){try{const r=await fetch('http://127.0.0.1:4175/__fixture-info');if(r.ok)return;}catch{}await new Promise(resolve=>setTimeout(resolve,100));}process.exit(1);})()"
+          npm run test:browser --prefix config
+      - name: Preserve browser evidence
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: pwa-browser-evidence
+          path: .test-artifacts/
+          if-no-files-found: ignore
+          include-hidden-files: true
+          retention-days: 14

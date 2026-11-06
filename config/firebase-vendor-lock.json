@@ -1,0 +1,31 @@
+{
+  "version": "12.19.0",
+  "source": "Official Firebase CDN",
+  "transforms": [
+    "Replace Firebase app import with local sibling module",
+    "Remove unavailable source map link"
+  ],
+  "files": [
+    {
+      "file": "assets/vendor/firebase-12.19.0/firebase-app.js",
+      "url": "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js",
+      "upstreamSha256": "39a50952b5def557337b2290069c7d7371f3515ad46c44a43b9c520f734d8d14",
+      "localSha256": "39691e000b96df9124bcce7d77afb38121501c624774473be0766094ac3b5476",
+      "bytes": 106435
+    },
+    {
+      "file": "assets/vendor/firebase-12.19.0/firebase-auth.js",
+      "url": "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js",
+      "upstreamSha256": "59f60ce3adcb4c85a5260e963fd14134eec088de5b18ddfb9e95771c72f65264",
+      "localSha256": "ed36687bda5ba3337dc7af5451f72cf53cac044139cc255ad8c31cc1e52492b2",
+      "bytes": 157030
+    },
+    {
+      "file": "assets/vendor/firebase-12.19.0/firebase-firestore.js",
+      "url": "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js",
+      "upstreamSha256": "86cfce95e3b598a2c0188a06b98fa1adc0cdb378bfc0a5ea207dd7627f7e7460",
+      "localSha256": "331014a4ad65d4e8255738c8ce33e81480d1274e37ea7ac2239d847fdd01469f",
+      "bytes": 684895
+    }
+  ]
+}

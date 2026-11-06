@@ -36,7 +36,7 @@ function element(id) {
     };
 }
 
-function createAppHarness({ firebase = {}, persistence: injectedPersistence } = {}) {
+function createAppHarness({ firebase = {}, persistence: injectedPersistence, documentDataset = {} } = {}) {
     const elements = new Map();
     const getElement = id => {
         for (const root of elements.values()) {
@@ -62,7 +62,7 @@ function createAppHarness({ firebase = {}, persistence: injectedPersistence } = 
         requestAnimationFrame: callback => callback(),
         history: { replaceState() {}, pushState() {} },
         document: {
-            body: getElement('body'), getElementById: getElement,
+            body: getElement('body'), documentElement: Object.assign(getElement('html'), { dataset: { ...documentDataset } }), getElementById: getElement,
             querySelectorAll: selector => selector.startsWith('#word-meanings ') ? getElement('word-meanings').querySelectorAll(selector.split(' ')[1]) : getElement('folder-selection-container').querySelectorAll(selector),
             querySelector: selector => getElement(selector),
             addEventListener() {}, createElement: tag => element(tag)
@@ -73,6 +73,7 @@ function createAppHarness({ firebase = {}, persistence: injectedPersistence } = 
             addEventListener() {}
         },
         initializeApp: () => ({}), getAuth: () => auth, getFirestore: () => ({}),
+        setPersistence: async () => {}, browserSessionPersistence: { type: 'SESSION' }, inMemoryPersistence: { type: 'NONE' },
         GoogleAuthProvider: function GoogleAuthProvider() {},
         onAuthStateChanged: (_auth, callback, error) => { events.authCallback = callback; events.authError = error; },
         signInWithPopup: async () => ({}), signOut: async () => {},

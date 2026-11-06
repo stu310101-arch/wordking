@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">單字王：皇冠與打開的書</title>
+  <rect width="512" height="512" fill="#4f46e5"/>
+  <path fill="#fbbf24" d="M162 157L204 181L256 122L308 181L350 157L332 221H180Z"/>
+  <rect x="180" y="231" width="152" height="12" rx="6" fill="#fbbf24"/>
+  <path fill="#ffffff" d="M136 269L200 259L250 276V387L200 370L136 379Z"/>
+  <path fill="#e0e7ff" d="M262 276L312 259L376 269V379L312 370L262 387Z"/>
+  <path fill="none" stroke="#a5b4fc" stroke-width="9" stroke-linecap="round" d="M160 299L197 293L226 303M160 325L197 319L226 329"/>
+  <path fill="none" stroke="#818cf8" stroke-width="9" stroke-linecap="round" d="M286 303L315 293L352 299M286 329L315 319L352 325"/>
+</svg>

@@ -11,14 +11,68 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(userId)).data.get('schemaVersion', 0) >= 5;
     }
 
+    function partsOfSpeech() {
+      return ['noun', 'verb', 'adjective', 'adverb', 'pronoun', 'preposition',
+        'conjunction', 'interjection', 'other', 'determiner', 'article', 'numeral', 'auxiliary', 'phrase'];
+    }
+
+    function nonemptyText(value) {
+      return value is string && value.size() > 0;
+    }
+
+    function meaningGroup(group, parts) {
+      return group is map && group.keys().hasOnly(['partOfSpeech', 'definitions']) &&
+        group.partOfSpeech in parts && group.definitions is list;
+    }
+
+    function meaningGroupAt(groups, index, parts) {
+      return groups.size() <= index || meaningGroup(groups[index], parts);
+    }
+
+    function groupedMeanings(groups) {
+      let parts = partsOfSpeech();
+      // The schema has exactly fourteen possible POS groups. Rules have no
+      // generic list<T> check; check every possible group explicitly. The pure
+      // data model also checks each definition/membership string and duplicate
+      // POS groups before rendering or writing. Do not truncate legacy text.
+      return groups is list && groups.size() <= 14 &&
+        meaningGroupAt(groups, 0, parts) && meaningGroupAt(groups, 1, parts) &&
+        meaningGroupAt(groups, 2, parts) && meaningGroupAt(groups, 3, parts) &&
+        meaningGroupAt(groups, 4, parts) && meaningGroupAt(groups, 5, parts) &&
+        meaningGroupAt(groups, 6, parts) && meaningGroupAt(groups, 7, parts) &&
+        meaningGroupAt(groups, 8, parts) && meaningGroupAt(groups, 9, parts) &&
+        meaningGroupAt(groups, 10, parts) && meaningGroupAt(groups, 11, parts) &&
+        meaningGroupAt(groups, 12, parts) && meaningGroupAt(groups, 13, parts);
+    }
+
+    function validWord(data, version, custom) {
+      let contentFields = version == 6 ? ['meanings'] : ['meaning', 'partOfSpeech'];
+      let membershipFields = custom ? ['lessonIds', 'folderIds'] : ['addedLessonIds', 'removedLessonIds', 'folderIds'];
+      return data.keys().hasOnly(['english', 'isWrong', 'schemaVersion', 'updatedAt']
+          .concat(contentFields).concat(membershipFields)) &&
+        (!custom || data.keys().hasAll(['english', 'isWrong', 'lessonIds', 'folderIds'].concat(contentFields))) &&
+        nonemptyText(data.get('english', 'unmodified')) &&
+        data.get('isWrong', false) is bool &&
+        data.get('lessonIds', []) is list && data.get('folderIds', []) is list &&
+        data.get('addedLessonIds', []) is list && data.get('removedLessonIds', []) is list &&
+        (version == 6 ? groupedMeanings(data.get('meanings', [])) :
+          (data.get('meaning', '') is string && data.get('partOfSpeech', []) is list &&
+            data.get('partOfSpeech', []).hasOnly(partsOfSpeech())));
+    }
+
     function canonicalWrite(userId, name) {
       let version = getAfter(/databases/$(database)/documents/users/$(userId)).data.get('schemaVersion', 0);
-      let contentFields = version == 6 ? ['meanings'] : ['meaning', 'partOfSpeech'];
-      return version in [5, 6] && request.resource.data.get('schemaVersion', 0) == version &&
-        (name != 'wordOverrides' || request.resource.data.keys().hasOnly(
-          ['english', 'isWrong', 'addedLessonIds', 'removedLessonIds', 'folderIds', 'schemaVersion', 'updatedAt'].concat(contentFields))) &&
-        (name != 'customWords' || request.resource.data.keys().hasOnly(
-          ['english', 'isWrong', 'lessonIds', 'folderIds', 'schemaVersion', 'updatedAt'].concat(contentFields)));
+      let data = request.resource.data;
+      return version in [5, 6] && data.get('schemaVersion', 0) == version &&
+        data.get('updatedAt', '') is string &&
+        (name != 'wordOverrides' || validWord(data, version, false)) &&
+        (name != 'customWords' || validWord(data, version, true)) &&
+        (name != 'hiddenWords' || data.keys().hasOnly(['schemaVersion', 'updatedAt'])) &&
+        (name != 'folders' || (data.keys().hasOnly(['name', 'schemaVersion', 'updatedAt']) &&
+          nonemptyText(data.get('name', '')))) &&
+        // Older versions preserved additional settings. Keep those values and
+        // owner-only recovery backups, while refusing unsafe object keys.
+        (name != 'settings' || !data.keys().hasAny(['__proto__', 'constructor', 'prototype']));
     }
 
     match /users/{userId} {

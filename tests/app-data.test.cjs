@@ -79,7 +79,7 @@ test('case-insensitive duplicate form edits roll back newly created folders too'
  const h=harness();h.elements.get('new-word').value='RECORD';h.setMeanings(M('duplicate'));h.elements.get('new-folder-name').value='New folder';
  h.run('state.editingWordIndex=-1;document.querySelectorAll=()=>[];');await h.run('saveNewWord()');
  assert.equal(Object.keys(h.run('snapshotUserState().customWords')).length,0);assert.equal(Object.keys(h.run('snapshotUserState().userFolders')).length,0);
- assert.equal(h.writes.length,0);assert.match(h.events.alerts.at(-1),/Duplicate/);
+ assert.equal(h.writes.length,0);assert.match(h.events.alerts.at(-1),/已有相同的英文單字/);
 });
 test('folder rename changes display name only, keeping fixed folder IDs and word associations',async()=>{
  const h=harness({userFolders:{f_1:{name:'before'}},userOverrides:{w_000001:{folderIds:['f_1']}}});

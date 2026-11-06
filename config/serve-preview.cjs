@@ -3,13 +3,13 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
-const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.mp3': 'audio/mpeg', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon' };
+const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.webmanifest': 'application/manifest+json; charset=utf-8', '.mp3': 'audio/mpeg', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon' };
 const server = http.createServer((req, res) => {
     try {
         const requestPath = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
         const relative = requestPath === '/' ? 'index.html' : requestPath.slice(1);
         if (!['GET', 'HEAD'].includes(req.method) || relative.includes('\\') || relative.split('/').some(segment => segment.startsWith('.')) ||
-            !(relative === 'index.html' || /^(assets|data|migration|background music)\//.test(relative))) {
+            !(['index.html', 'sw.js', 'manifest.webmanifest'].includes(relative) || /^(assets|data|migration|background music)\//.test(relative))) {
             res.writeHead(404); res.end(); return;
         }
         const file = path.resolve(root, relative);

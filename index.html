@@ -3,10 +3,20 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta http-equiv="Content-Security-Policy"
-          content="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com https://www.googleapis.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://www.gstatic.com https://www.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://*.googleapis.com https://*.firebaseio.com; img-src 'self' data: https:; media-src 'self' https://www.soundhelix.com; frame-src https://accounts.google.com https://*.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self';">
+          content="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://www.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com; img-src 'self' data:; media-src 'self' https://www.soundhelix.com; frame-src https://accounts.google.com https://wordking-434f7.firebaseapp.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self';">
+    <meta name="referrer" content="no-referrer">
     <title>單字王 - 核心系統</title>
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="單字王">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" type="image/svg+xml" href="./assets/icons/icon.svg">
+    <link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/apple-touch-icon.png">
+    <link rel="stylesheet" href="./assets/pwa.css?v=20261106-pwa-security-1">
 
     <style>
         #app-loading {
@@ -26,7 +36,7 @@
             opacity: 0;
             pointer-events: none;
         }
-        #app-loading[hidden], #app-loading-retry[hidden] { display: none; }
+        #app-loading[hidden], #app-loading-retry[hidden], #app-loading-offline[hidden] { display: none; }
         #app-loading-retry {
             margin-top: 1.25rem;
             padding: 0.75rem 1.5rem;
@@ -73,8 +83,8 @@
         }
     </style>
 
-    <link rel="stylesheet" href="./assets/tailwind.css?v=20261106-practice-tree-skip">
-    <link rel="stylesheet" href="./assets/styles.css?v=20260908-u2">
+    <link rel="stylesheet" href="./assets/tailwind.css?v=20261106-pwa-security-1">
+    <link rel="stylesheet" href="./assets/styles.css?v=20261106-pwa-security-1">
 </head>
 <body class="bg-gray-50 min-h-screen font-sans pb-24" aria-busy="true">
 
@@ -84,6 +94,7 @@
         <h2 id="app-loading-title">單字王載入中</h2>
         <p id="app-loading-message">正在準備單字資料，請稍等。</p>
         <button id="app-loading-retry" type="button" hidden>重試載入</button>
+        <button id="app-loading-offline" type="button" class="block mx-auto mt-3 px-4 py-2 text-sm text-indigo-700 underline" hidden>只練習公用單字</button>
     </div>
 </div>
 
@@ -192,6 +203,24 @@
     </div>
 </nav>
 
+<section id="pwa-offline-banner" class="pwa-banner" role="status" aria-live="polite" hidden>
+    <div>
+        <strong id="pwa-network-title">目前離線</strong>
+        <p id="pwa-offline-message">可練習已載入的公用單字。登入、個人資料與同步需要連線。</p>
+    </div>
+    <button id="pwa-reconnect" type="button" class="pwa-button" hidden>重新連線</button>
+</section>
+<section id="pwa-update-banner" class="pwa-banner" role="status" aria-live="polite" hidden>
+    <div>
+        <strong>有新版單字王</strong>
+        <p>更新會重新載入，請先完成練習並儲存編輯。</p>
+    </div>
+    <div class="pwa-actions">
+        <button id="pwa-update-button" type="button" class="pwa-button pwa-button--primary">更新並重新載入</button>
+        <button id="pwa-update-later" type="button" class="pwa-button">稍後</button>
+    </div>
+</section>
+
 <main class="w-full px-4 py-6">
     <!-- 首頁 -->
     <div id="view-home" class="space-y-6 animate-in fade-in duration-500">
@@ -210,6 +239,26 @@
                 <span class="block text-gray-500 mt-1">拼字練習、選擇題挑戰</span>
             </button>
         </div>
+        <section id="pwa-home-card" class="pwa-card" aria-labelledby="pwa-install-title">
+            <div class="pwa-card-heading">
+                <img src="./assets/icons/icon-192.png" width="52" height="52" alt="" aria-hidden="true">
+                <div>
+                    <h3 id="pwa-install-title">把單字王加入主畫面</h3>
+                    <p>從手機主畫面直接開啟，公用單字備妥後也能離線練習。</p>
+                </div>
+            </div>
+            <div class="pwa-actions">
+                <button id="pwa-install" type="button" class="pwa-button pwa-button--primary" hidden>安裝單字王</button>
+            </div>
+            <details id="pwa-install-help">
+                <summary>查看手機安裝方式</summary>
+                <p><strong>iPhone／iPad：</strong>用 Safari 開啟本站，點「分享」→「加入主畫面」→「加入」。</p>
+                <p><strong>Android：</strong>點「安裝單字王」，或從瀏覽器選單選擇「安裝應用程式」或「新增至主畫面」。</p>
+                <p>若是在通訊軟體內開啟，請先用手機的瀏覽器開啟本站。</p>
+            </details>
+            <p id="pwa-status" class="pwa-note" role="status" aria-live="polite">正在準備公用單字的離線版本…</p>
+            <p class="pwa-note">離線練習僅使用公用單字；個人單字、資料夾與同步需要連線。音樂不會下載到離線版本。</p>
+        </section>
     </div>
 
     <!-- 單字庫 -->
@@ -584,9 +633,10 @@
 </div>
 
 <!-- 共用資料合併規則與主程式 -->
-<script src="./assets/word-data.js?v=20261031-folders"></script>
-<script src="./assets/migration.js?v=20260908-u2"></script>
-<script src="./assets/persistence.js?v=20260908-u2"></script>
-<script type="module" src="./assets/app.js?v=20261106-practice-tree-skip"></script>
+<script defer src="./assets/pwa.js?v=20261106-pwa-security-1"></script>
+<script src="./assets/word-data.js?v=20261106-pwa-security-1"></script>
+<script src="./assets/migration.js?v=20261106-pwa-security-1"></script>
+<script src="./assets/persistence.js?v=20261106-pwa-security-1"></script>
+<script type="module" src="./assets/app.js?v=20261106-pwa-security-1"></script>
 </body>
 </html>

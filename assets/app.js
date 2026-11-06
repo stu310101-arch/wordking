@@ -1,11 +1,14 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+import { initializeApp } from "./vendor/firebase-12.19.0/firebase-app.js";
 import {
     getAuth,
     onAuthStateChanged,
     GoogleAuthProvider,
     signInWithPopup,
-    signOut
-} from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+    signOut,
+    setPersistence,
+    browserSessionPersistence,
+    inMemoryPersistence
+} from "./vendor/firebase-12.19.0/firebase-auth.js";
 import {
     getFirestore,
     collection,
@@ -15,7 +18,7 @@ import {
     onSnapshot,
     runTransaction,
     deleteField
-} from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+} from "./vendor/firebase-12.19.0/firebase-firestore.js";
 
 const WORD_DATABASE_URL = './data/words.json';
 const wordData = globalThis.WordKingData;
@@ -27,6 +30,73 @@ const USER_LOAD_TIMEOUT_MS = 120000;
 const SEARCH_SUGGESTION_VISIBLE_COUNT = 5;
 const SEARCH_SUGGESTION_ROW_HEIGHT = 64;
 const MAX_SEARCH_SUGGESTIONS = 200;
+
+// Never expose Firebase responses, personal document paths or raw exception text.
+const SAFE_ERROR_MESSAGES = Object.freeze({
+    'auth/popup-blocked': '瀏覽器阻擋了登入視窗，請允許本站開啟彈出視窗後重試。',
+    'auth/popup-closed-by-user': '已取消登入。',
+    'auth/cancelled-popup-request': '已取消這次登入，請完成目前的登入視窗。',
+    'auth/network-request-failed': '連線失敗，請確認網路後重試。',
+    'auth/too-many-requests': '嘗試次數過多，請稍後再試。',
+    'auth/user-disabled': '目前無法使用此帳號登入，請確認 Google 帳號狀態。',
+    'auth/user-token-expired': '登入已失效，請重新登入。',
+    'auth/requires-recent-login': '請重新登入後再執行這項操作。',
+    'permission-denied': '目前沒有權限完成操作，請確認登入狀態後重試。',
+    'unauthenticated': '登入已失效，請重新登入。',
+    'unavailable': '暫時無法連線，請稍後重試。',
+    'resource-exhausted': '服務目前忙碌，請稍後再試。',
+    'INVALID_DATA': '資料格式不正確，請檢查輸入內容後重試。',
+    'DUPLICATE_ENGLISH': '已有相同的英文單字，請檢查內容後重試。',
+    'DUPLICATE_ID': '資料已存在，請重新載入後再試。',
+    'WORD_NOT_FOUND': '這個單字已不存在，請重新載入後再試。',
+    'FOLDER_NOT_FOUND': '這個資料夾已不存在，請重新選擇。',
+    'offline-public-mode': '目前僅能練習公用單字，請恢復連線並重新載入後再登入或同步。'
+});
+
+function publicErrorMessage(error, fallback = '操作未完成，請稍後再試。') {
+    return Object.hasOwn(SAFE_ERROR_MESSAGES, error?.code) ? SAFE_ERROR_MESSAGES[error.code] : fallback;
+}
+
+function logAppError(operation, error) {
+    const code = Object.hasOwn(SAFE_ERROR_MESSAGES, error?.code) ? error.code : 'unexpected-error';
+    console.error('WordKing operation failed', { operation, code });
+}
+
+function browserIsOffline() {
+    return typeof navigator !== 'undefined' && navigator.onLine === false;
+}
+
+function isEmbeddedContext() {
+    return typeof window.top !== 'undefined' && window.top !== window.self;
+}
+
+let offlinePublicMode = browserIsOffline() || document.documentElement?.dataset?.wordkingOffline === 'true';
+window.WordKingOffline = offlinePublicMode;
+
+function setOfflinePublicMode() {
+    offlinePublicMode = true;
+    window.WordKingOffline = true;
+    if (typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+        window.dispatchEvent(new CustomEvent('wordking-offline-mode', { detail: { active: true } }));
+    }
+}
+
+function offlineModeError() {
+    const error = new Error('Public practice mode cannot access cloud data.');
+    error.code = 'offline-public-mode';
+    return error;
+}
+
+async function enterOfflinePublicMode() {
+    if (offlinePublicMode && isUserDataReady && !currentUser) return;
+    const readyPublicPractice = !currentUser && isUserDataReady;
+    setOfflinePublicMode();
+    if (readyPublicPractice) {
+        updateAuthUI(null);
+        return;
+    }
+    await handleAuthStateChanged(null);
+}
 
 const PART_OF_SPEECH_OPTIONS = {
     noun: { label: '名詞', short: '(n.)' },
@@ -106,9 +176,10 @@ let gameGeneration = 0;
 
 const modalReturnFocus = new WeakMap();
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+// Offline launches never restore Auth storage or open a private Firestore session.
+const app = isEmbeddedContext() ? null : initializeApp(firebaseConfig);
+const auth = isEmbeddedContext() || offlinePublicMode ? { currentUser: null } : getAuth(app);
+const db = isEmbeddedContext() || offlinePublicMode ? null : getFirestore(app);
 const provider = new GoogleAuthProvider();
 const state = {
     words: [],
@@ -484,6 +555,7 @@ function normalizeFolders(folders, words, settings = state.settings) {
 }
 
 function getPersistence() {
+    if (offlinePublicMode || browserIsOffline()) throw offlineModeError();
     if (!persistence) persistence = globalThis.WordKingPersistence.createPersistence({
         db, doc, collection, getDoc, getDocs, onSnapshot, runTransaction, deleteField,
         fetch: (...args) => fetch(...args), getCatalog: () => publicCatalog
@@ -498,6 +570,7 @@ function acknowledgeCloudRevision(revision) {
 }
 
 async function saveDiffChangesToCloud(previous, next, user = currentUser, options = {}) {
+    if (offlinePublicMode || browserIsOffline()) throw offlineModeError();
     const generation = authSessionGeneration;
     assertCurrentUserSession(user, generation);
     activeCloudWrites += 1;
@@ -518,6 +591,7 @@ async function saveDiffChangesToCloud(previous, next, user = currentUser, option
 }
 
 async function loadUserDiffData(user, context = {}) {
+    if (offlinePublicMode || browserIsOffline()) throw offlineModeError();
     const assertCurrent = () => {
         if (context.sessionGeneration !== undefined) assertCurrentUserSession(user, context.sessionGeneration);
         if (context.loadGeneration !== undefined && context.loadGeneration !== cloudLoadGeneration) {
@@ -531,6 +605,10 @@ async function loadUserDiffData(user, context = {}) {
 }
 
 function requireLoginForChange() {
+    if (offlinePublicMode || browserIsOffline()) {
+        alert(SAFE_ERROR_MESSAGES['offline-public-mode']);
+        return false;
+    }
     if (currentUser && authReady && isUserDataReady && !isCloudLoading) return true;
     if (currentUser) {
         alert('個人資料尚未載入完成，請等待或使用畫面上的「重試載入」。');
@@ -562,6 +640,10 @@ function getCloudRecoveryMessage(error, reloaded) {
 }
 
 async function commitUserMutation(mutator, { requireAuth = true, afterRollback = null } = {}) {
+    if ((offlinePublicMode || browserIsOffline()) && (requireAuth || currentUser)) {
+        alert(SAFE_ERROR_MESSAGES['offline-public-mode']);
+        return false;
+    }
     if (!authReady || !isUserDataReady || isCloudLoading || activeCloudWrites > 0) {
         alert('資料尚未載入或儲存完成，請稍候再試；載入失敗時請使用「重試載入」。');
         return false;
@@ -598,18 +680,18 @@ async function commitUserMutation(mutator, { requireAuth = true, afterRollback =
             try {
                 reloaded = await loadFromCloud(mutationUser);
             } catch (reloadError) {
-                console.error('重新載入雲端狀態失敗', reloadError);
+                logAppError('reload-after-conflict', reloadError);
             }
         }
         if (!isCurrentUserSession(mutationUser, sessionGeneration)) return false;
         if (!reloaded && isUserDataReady) restoreUserState(previous);
         refreshFolders();
         refreshSearchSuggestionsForCurrentData();
-        console.error('使用者資料儲存失敗', err);
+        logAppError('save-user-data', err);
         if (isCloudConsistencyError(err)) {
             alert(getCloudRecoveryMessage(err, reloaded));
         } else {
-            alert('資料儲存失敗，已還原剛剛的變更：' + (err.message || err));
+            alert(publicErrorMessage(err, '資料儲存失敗，請重新載入後再試。'));
         }
         if (typeof afterRollback === 'function') afterRollback();
         rerenderVisibleView();
@@ -642,7 +724,7 @@ async function loadFromCloud(user, generation = ++cloudLoadGeneration) {
         cloudLoadGeneration += 1;
         isCloudLoading = false;
         clearPersonalSessionData();
-        failAppLoading('個人資料未能載入，尚未完成同步。' + (error.message || '請確認網路後重試。'));
+        failAppLoading('個人資料未能載入，尚未完成同步。' + publicErrorMessage(error, '請確認網路後重試。'));
         updateAuthUI(currentUser);
         throw error;
     } finally {
@@ -667,7 +749,7 @@ function startUserRevisionListener(user) {
             pendingRemoteRevision = Math.max(pendingRemoteRevision, observedRevision);
             updateAuthUI(currentUser);
         }
-    }, error => console.error('監聽雲端資料版本失敗', error));
+    }, error => logAppError('watch-cloud-revision', error));
 }
 
 function setupAudioSystem() {
@@ -682,12 +764,7 @@ function setupAudioSystem() {
     audio.preload = 'auto';
     const track = getCurrentBgmTrack();
     if (track) audio.src = track.url;
-    audio.onerror = () => {
-        console.error('背景音樂載入失敗', {
-            src: audio.currentSrc || audio.src,
-            error: audio.error
-        });
-    };
+    audio.onerror = () => logAppError('load-background-audio');
     state.audio.bgmElement = audio;
     applyBgmSettingsToElement();
 }
@@ -865,6 +942,8 @@ function beginAppLoading(message) {
     if (title) title.textContent = '單字王載入中';
     const retry = document.getElementById('app-loading-retry');
     if (retry) retry.hidden = true;
+    const offline = document.getElementById('app-loading-offline');
+    if (offline) offline.hidden = true;
     updateAppLoading(message);
 }
 
@@ -905,6 +984,8 @@ function failAppLoading(message) {
     updateAppLoading(message);
     const retry = document.getElementById('app-loading-retry');
     if (retry) retry.hidden = false;
+    const offline = document.getElementById('app-loading-offline');
+    if (offline) offline.hidden = !publicDataReady || offlinePublicMode;
 }
 
 function getFocusableElements(container) {
@@ -1017,8 +1098,8 @@ function writeNavigationHistory(viewId, folderKey = '', replace = false) {
         if (viewId === 'library' && folderKey) url.searchParams.set('folder', folderKey);
         else url.searchParams.delete('folder');
         history[replace ? 'replaceState' : 'pushState']({ viewId, folderKey }, '', url);
-    } catch (e) {
-        console.log('History API not available:', e);
+    } catch (error) {
+        logAppError('update-navigation', error);
     }
 }
 
@@ -2028,7 +2109,7 @@ async function saveNewWord() {
     const eng = document.getElementById('new-word').value.trim();
     if (!eng) { alert('請輸入英文；中文意思可以留空。'); return; }
     let meanings;
-    try { meanings = readMeaningEditor(); } catch (error) { alert(error.message); return; }
+    try { meanings = readMeaningEditor(); } catch (error) { alert(publicErrorMessage(error, '請檢查詞性與中文意思的格式。')); return; }
     if (document.getElementById('new-folder-name').value.trim() && !stageNewWordFolder()) return;
     const selectedFolderIds = Array.from(document.querySelectorAll('.folder-checkbox:checked')).map(input => input.value);
     const isWrong = !!document.getElementById('wrong-checkbox')?.checked;
@@ -3293,7 +3374,7 @@ async function exportMigrationRecovery() {
         link.href = url; link.download = 'wordking-personal-recovery.json'; link.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (error) {
-        if (isCurrentUserSession(user, generation)) alert('下載備份失敗：' + error.message);
+        if (isCurrentUserSession(user, generation)) alert(publicErrorMessage(error, '下載備份失敗，請稍後再試。'));
     }
 }
 
@@ -3379,7 +3460,9 @@ function updateAuthUI(user) {
     const userSpan = document.getElementById('user-email');
     const homeSyncStatus = document.getElementById('home-sync-status');
     if (homeSyncStatus) {
-        homeSyncStatus.textContent = user
+        homeSyncStatus.textContent = offlinePublicMode
+            ? '目前僅使用公用單字；登入與個人資料同步需恢復連線並重新載入。'
+            : user
             ? (pendingRemoteRevision > cloudRevision
                 ? '雲端有其他分頁或裝置的新資料，請重新載入。'
                 : '你的自訂單字、資料夾與待複習狀態會自動同步至雲端。')
@@ -3407,12 +3490,16 @@ function updateAuthUI(user) {
         setElementVisible(syncBtn, false);
         setElementVisible(userSpan, false);
         userSpan.textContent = '';
-        loginBtn.disabled = isLoggingIn || isLoggingOut;
-        loginBtn.textContent = isLoggingIn ? '登入中...' : '登入';
+        loginBtn.disabled = offlinePublicMode || browserIsOffline() || isLoggingIn || isLoggingOut;
+        loginBtn.textContent = offlinePublicMode ? '離線練習中' : (isLoggingIn ? '登入中...' : '登入');
     }
 }
 
 async function firebaseLogin() {
+    if (offlinePublicMode || browserIsOffline()) {
+        alert(SAFE_ERROR_MESSAGES['offline-public-mode']);
+        return;
+    }
     if (currentUser || auth.currentUser || isLoggingIn || isLoggingOut) return;
     isLoggingIn = true;
     updateAuthUI(null);
@@ -3421,8 +3508,10 @@ async function firebaseLogin() {
         await signInWithPopup(auth, provider);
         popupCompleted = true;
     } catch (err) {
-        console.error(err);
-        alert('登入失敗：' + (err.message || err));
+        if (!['auth/popup-closed-by-user', 'auth/cancelled-popup-request'].includes(err?.code)) {
+            logAppError('sign-in', err);
+            alert(publicErrorMessage(err, '登入未完成，請稍後重試。'));
+        }
     } finally {
         if (!popupCompleted) isLoggingIn = false;
         updateAuthUI(currentUser);
@@ -3438,8 +3527,8 @@ async function firebaseLogout() {
         await signOut(auth);
         logoutCompleted = true;
     } catch (err) {
-        console.error(err);
-        alert('登出失敗：' + (err.message || err));
+        logAppError('sign-out', err);
+        alert(publicErrorMessage(err, '登出未完成，請重試。'));
     } finally {
         if (!logoutCompleted) isLoggingOut = false;
         updateAuthUI(currentUser);
@@ -3476,7 +3565,7 @@ async function syncCloudNow() {
         }
     } catch (err) {
         if (!isCurrentUserSession(syncUser, sessionGeneration)) return;
-        console.error('重新載入雲端資料失敗', err);
+        logAppError('reload-user-data', err);
     } finally {
         if (isCurrentUserSession(syncUser, sessionGeneration)) {
             isSyncing = false;
@@ -3498,6 +3587,7 @@ function rerenderVisibleView() {
 
 function bindStaticEvents() {
     document.getElementById('app-loading-retry')?.addEventListener('click', retryAppLoading);
+    document.getElementById('app-loading-offline')?.addEventListener('click', () => void enterOfflinePublicMode());
     document.getElementById('btn-home-brand')?.addEventListener('click', () => navigateTo('home'));
     document.getElementById('btn-settings')?.addEventListener('click', openSettingsModal);
     const searchInput = document.getElementById('search-input');
@@ -3618,6 +3708,8 @@ function ensurePublicDataLoaded() {
 }
 
 async function handleAuthStateChanged(user) {
+    if (browserIsOffline()) setOfflinePublicMode();
+    if (offlinePublicMode) user = null;
     const sessionGeneration = ++authSessionGeneration;
     cloudLoadGeneration += 1;
     stopUserRevisionListener();
@@ -3669,13 +3761,17 @@ async function handleAuthStateChanged(user) {
         isCloudLoading = false;
         clearPersonalSessionData();
         updateAuthUI(currentUser);
-        console.error('載入帳號資料失敗', error);
+        logAppError('load-account', error);
         failAppLoading((publicDataReady && user ? '個人資料未能載入，尚未完成同步。' : '公用單字資料未能載入。') +
-            (error.message || '請確認網路後重試。'));
+            publicErrorMessage(error, '請確認網路後重試。'));
     }
 }
 
 function retryAppLoading() {
+    if (offlinePublicMode && !browserIsOffline()) {
+        window.location.reload();
+        return;
+    }
     if (!authReady) {
         window.location.reload();
         return;
@@ -3686,13 +3782,47 @@ function retryAppLoading() {
 
 async function bootstrap() {
     try {
+        if (isEmbeddedContext()) {
+            const notice = document.createElement('main');
+            notice.className = 'p-6 text-center text-indigo-900';
+            const message = document.createElement('p');
+            message.textContent = '為保護登入與個人資料，請直接開啟單字王。';
+            const link = document.createElement('a');
+            link.href = new URL('./', window.location).href;
+            link.target = '_top';
+            link.rel = 'noopener';
+            link.textContent = '開啟單字王';
+            notice.append(message, link);
+            document.body.replaceChildren(notice);
+            document.body.setAttribute('aria-busy', 'false');
+            return;
+        }
         initializeModalAccessibility();
         bindStaticEvents();
+        window.addEventListener('offline', () => void enterOfflinePublicMode());
         setupAudioSystem();
         setupBgmAutoplayUnlock();
         beginAppLoading('正在載入公用單字並確認登入狀態，請稍等。');
         void ensurePublicDataLoaded().catch(() => {});
-        onAuthStateChanged(auth, user => void handleAuthStateChanged(user), error => {
+        if (offlinePublicMode || browserIsOffline()) {
+            setOfflinePublicMode();
+            await handleAuthStateChanged(null);
+            return;
+        }
+        // Shared-device protection: tokens are kept for this window, not indefinitely.
+        try {
+            await setPersistence(auth, browserSessionPersistence);
+        } catch {
+            await setPersistence(auth, inMemoryPersistence);
+        }
+        if (offlinePublicMode || browserIsOffline()) {
+            await enterOfflinePublicMode();
+            return;
+        }
+        onAuthStateChanged(auth, user => {
+            if (!offlinePublicMode) void handleAuthStateChanged(user);
+        }, error => {
+            if (offlinePublicMode) return;
             authSessionGeneration += 1;
             cloudLoadGeneration += 1;
             stopUserRevisionListener();
@@ -3701,11 +3831,11 @@ async function bootstrap() {
             isCloudLoading = false;
             clearPersonalSessionData();
             updateAuthUI(null);
-            console.error('確認登入狀態失敗', error);
+            logAppError('confirm-auth', error);
             failAppLoading('無法確認登入狀態，請確認網路後重試。');
         });
     } catch (error) {
-        console.error(error);
+        logAppError('bootstrap', error);
         failAppLoading('網站初始化失敗，請重試載入。');
     }
 }

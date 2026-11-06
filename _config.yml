@@ -3,6 +3,8 @@
 exclude:
   - config
   - tests
+  - SECURITY.md
+  - .test-artifacts
   - DATA-ARCHITECTURE.md
   - assets/tailwind-input.css
   - migration/legacy-lessons

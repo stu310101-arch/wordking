@@ -71,7 +71,7 @@ test('v6 grouped words are owner-only and fence out v5 fields, writes and accoun
  for(const collection of ['wordOverrides','customWords','hiddenWords','folders','settings']) {
   const target=`${path}/${collection}/w_000001`;
   const value=collection==='customWords'?{fields:{...grouped.fields,english:{stringValue:'record'},lessonIds:{arrayValue:{}},folderIds:{arrayValue:{}},isWrong:{booleanValue:false}}}:
-   collection==='wordOverrides'?grouped:{fields:{schemaVersion:{integerValue:'6'}}};
+   collection==='wordOverrides'?grouped:{fields:{schemaVersion:{integerValue:'6'},...(collection==='folders'?{name:{stringValue:'Personal folder'}}:{})}};
   expectStatus(await request(target,{method:'PATCH',uid,data:value}),[200],'v6 create');
   expectStatus(await request(target,{uid}),[200],'v6 owner read');
   expectStatus(await request(target,{method:'PATCH',uid,data:value}),[200],'v6 owner update');
@@ -87,6 +87,98 @@ test('v6 grouped words are owner-only and fence out v5 fields, writes and accoun
  expectStatus(await request(path,{method:'PATCH',uid,data:{fields:{schemaVersion:{integerValue:'5'}}}}),[403],'v5 root downgrade denied');
  expectStatus(await request(`${path}/deletedDefaults/old`,{method:'PATCH',uid,data:grouped}),[403],'legacy hide write denied');
  expectStatus(await request(path,{method:'DELETE',uid}),[200],'v6 cleanup');
+});
+
+function jsonValue(value) {
+    if (value === null) return { nullValue: null };
+    if (typeof value === 'string') return { stringValue: value };
+    if (typeof value === 'boolean') return { booleanValue: value };
+    if (typeof value === 'number') return { integerValue: String(value) };
+    if (Array.isArray(value)) return { arrayValue: value.length ? { values: value.map(jsonValue) } : {} };
+    return { mapValue: documentBody(value) };
+}
+
+function documentBody(value) {
+    return { fields: Object.fromEntries(Object.entries(value).map(([key, item]) => [key, jsonValue(item)])) };
+}
+
+test('canonical word, folder and hidden-marker writes reject malformed types without replacing saved data', async () => {
+    for (const version of [5, 6]) {
+        const uid = `validation-v${version}-${nonce}`, root = `users/${uid}`;
+        expectStatus(await request(root, { method: 'PATCH', uid, data: documentBody({ schemaVersion: version }) }), [200], 'canonical root');
+        const content = version === 6 ? { meanings: [{ partOfSpeech: 'verb', definitions: ['記錄'] }] } : { meaning: '記錄', partOfSpeech: ['verb'] };
+        const saved = { schemaVersion: version, updatedAt: '2026-01-01T00:00:00.000Z', english: 'record', isWrong: false, lessonIds: [], folderIds: [], ...content };
+        const path = `${root}/customWords/c_record`;
+        expectStatus(await request(path, { method: 'PATCH', uid, data: documentBody(saved) }), [200], 'valid custom word');
+        const malformed = [
+            { ...saved, english: 42 }, { ...saved, english: '' }, { ...saved, isWrong: 'false' },
+            { ...saved, lessonIds: 'lesson' }, { ...saved, folderIds: { injected: true } },
+            { ...saved, updatedAt: false }, { ...saved, arbitrary: true },
+            Object.fromEntries(Object.entries(saved).filter(([key]) => key !== 'english')),
+            Object.fromEntries(Object.entries(saved).filter(([key]) => key !== 'folderIds')),
+            ...(version === 6 ? [
+                { ...saved, meanings: 'meaning' },
+                { ...saved, meanings: [null] },
+                { ...saved, meanings: [{ partOfSpeech: 'unknown', definitions: [] }] },
+                { ...saved, meanings: [{ partOfSpeech: 'noun', definitions: 'not a list' }] },
+                { ...saved, meanings: [{ partOfSpeech: 'noun' }] },
+                { ...saved, meanings: [{ partOfSpeech: 'noun', definitions: [], html: '<script>' }] }
+            ] : [
+                { ...saved, meaning: 42 }, { ...saved, partOfSpeech: 'noun' },
+                { ...saved, partOfSpeech: ['unknown'] }, { ...saved, partOfSpeech: [5] }
+            ])
+        ];
+        for (const value of malformed) {
+            expectStatus(await request(path, { method: 'PATCH', uid, data: documentBody(value) }), [403], 'malformed custom word denied');
+        }
+        const read = await request(path, { uid });
+        expectStatus(read, [200], 'valid data remains readable');
+        assert.deepEqual(JSON.parse(read.body).fields, documentBody(saved).fields);
+        for (const [collection, value, deniedStatus = 403] of [
+            ['wordOverrides', { isWrong: 1 }], ['wordOverrides', { addedLessonIds: 'bad' }],
+            ['wordOverrides', { removedLessonIds: false }],
+            ['folders', {}], ['folders', { name: '' }], ['folders', { name: [] }],
+            ['folders', { name: 'Folder', arbitrary: true }],
+            ['hiddenWords', { english: 'unexpected payload' }],
+            // Firestore itself reserves __...__ field names before rules run.
+            ['settings', JSON.parse('{"__proto__":{"polluted":true}}'), 400],
+            ['settings', { constructor: 'unsafe' }], ['settings', { prototype: {} }]
+        ]) {
+            expectStatus(await request(`${root}/${collection}/invalid`, { method: 'PATCH', uid, data: documentBody({ ...value, schemaVersion: version }) }), [deniedStatus], `${collection}: malformed create denied`);
+        }
+        expectStatus(await request(path, { method: 'DELETE', uid }), [200], 'custom cleanup');
+        expectStatus(await request(root, { method: 'DELETE', uid }), [200], 'root cleanup');
+    }
+});
+
+test('all fourteen meaning groups are checked and valid legacy text, settings and recovery backups remain usable', async () => {
+    const uid = `compatibility-${nonce}`, root = `users/${uid}`;
+    const parts = ['noun', 'verb', 'adjective', 'adverb', 'pronoun', 'preposition', 'conjunction', 'interjection', 'other', 'determiner', 'article', 'numeral', 'auxiliary', 'phrase'];
+    const meanings = parts.map(partOfSpeech => ({ partOfSpeech, definitions: ['既有較長定義'.repeat(1000)] }));
+    const data = { schemaVersion: 6, meanings, english: 'existing '.repeat(80).trim(), isWrong: false, lessonIds: [], folderIds: [] };
+    expectStatus(await request(root, { method: 'PATCH', uid, data: documentBody({ schemaVersion: 6 }) }), [200], 'v6 compatibility root');
+    const wordPath = `${root}/customWords/c_long`;
+    expectStatus(await request(wordPath, { method: 'PATCH', uid, data: documentBody(data) }), [200], 'all fourteen valid groups and long text retained');
+    for (let index = 0; index < parts.length; index++) {
+        const invalid = meanings.map((group, current) => current === index ? { ...group, definitions: false } : group);
+        expectStatus(await request(wordPath, { method: 'PATCH', uid, data: documentBody({ ...data, meanings: invalid }) }), [403], `invalid group ${index} denied`);
+    }
+    expectStatus(await request(wordPath, { method: 'PATCH', uid, data: documentBody({ ...data, meanings: [...meanings, meanings[0]] }) }), [403], 'more than fourteen groups denied');
+    const preserved = [
+        [`${root}/settings/main`, { schemaVersion: 6, practiceCount: 'legacy-value', customLegacySetting: { values: [null, true, 'keep'] } }],
+        [`${root}/folders/f_old`, { schemaVersion: 6, name: '既有資料夾名稱'.repeat(40) }],
+        [`${root}/wordOverrides/w_000001`, { schemaVersion: 6 }],
+        [`${root}/migrationBackups/archive/chunks/000001`, { source: { unknownLegacyField: ['original', 123] } }]
+    ];
+    for (const [path, value] of preserved) {
+        expectStatus(await request(path, { method: 'PATCH', uid, data: documentBody(value) }), [200], 'legacy-compatible save');
+        const read = await request(path, { uid });
+        expectStatus(read, [200], 'legacy-compatible read');
+        assert.deepEqual(JSON.parse(read.body).fields, documentBody(value).fields);
+        expectStatus(await request(path, { method: 'DELETE', uid }), [200], 'legacy-compatible cleanup');
+    }
+    expectStatus(await request(wordPath, { method: 'DELETE', uid }), [200], 'long word cleanup');
+    expectStatus(await request(root, { method: 'DELETE', uid }), [200], 'compatibility root cleanup');
 });
 
 test('owner can create, read, update and delete root, personal differences, backups and nested data', async () => {
@@ -203,6 +295,15 @@ test('v5 migration fences old clients while canonical changes and atomic batches
  const response=await fetch(`${BASE}:commit`,{method:'POST',headers:{Authorization:`Bearer ${token(uid)}`,'Content-Type':'application/json'},body:JSON.stringify({writes})});
  assert.equal(response.status,200,await response.text());
  expectStatus(await request(`${path}/wordOverrides/w_000001`,{uid}),[200],'canonical transaction persisted');
+ const upgraded=documentBody({schemaVersion:6,meanings:[{partOfSpeech:'verb',definitions:['保留詞義']}]}).fields;
+ const upgradeWrites=[{update:{name:name(`${path}/wordOverrides/w_000001`),fields:upgraded}},
+  {update:{name:name(`${path}/hiddenWords/w_000002`),fields:{schemaVersion:{integerValue:'6'}}}},
+  {update:{name:name(path),fields:{...marker,schemaVersion:{integerValue:'6'},revision:{integerValue:'2'}}}}];
+ const upgrade=await fetch(`${BASE}:commit`,{method:'POST',headers:{Authorization:`Bearer ${token(uid)}`,'Content-Type':'application/json'},body:JSON.stringify({writes:upgradeWrites})});
+ assert.equal(upgrade.status,200,await upgrade.text());
+ const upgradedRead=await request(`${path}/wordOverrides/w_000001`,{uid});
+ expectStatus(upgradedRead,[200],'atomic v5-to-v6 upgrade remains readable');
+ assert.deepEqual(JSON.parse(upgradedRead.body).fields,upgraded);
  expectStatus(await request(`${path}/wordOverrides/w_000001`,{method:'DELETE',uid}),[200],'empty override deletion permitted');
  for(const item of [`${path}/hiddenWords/w_000002`,path]) expectStatus(await request(item,{method:'DELETE',uid}),[200],'cleanup');
 });

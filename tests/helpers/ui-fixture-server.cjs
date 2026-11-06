@@ -82,6 +82,9 @@ function writer(operations) { return {
 }; }
 export function initializeApp(config) { log('initialize-local-fixture'); return { fixture:true }; }
 export function getAuth() { return auth; }
+export const browserSessionPersistence = { type: 'SESSION' };
+export const inMemoryPersistence = { type: 'NONE' };
+export async function setPersistence(instance, persistence) { log('auth:persistence', { type: persistence.type }); }
 export function onAuthStateChanged(instance, next) { authListeners.add(next); setTimeout(() => { if(authListeners.has(next)) next(auth.currentUser); }, 35); return () => authListeners.delete(next); }
 export class GoogleAuthProvider {}
 export async function signInWithPopup() { await fixture.setAccount('a'); return { user:auth.currentUser }; }
@@ -101,26 +104,26 @@ export function deleteField() { return { __fixtureDeleteField:true }; }
 `;
 }
 
-const mime = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.json':'application/json; charset=utf-8', '.css':'text/css; charset=utf-8', '.svg':'image/svg+xml', '.png':'image/png', '.jpg':'image/jpeg', '.ico':'image/x-icon', '.mp3':'audio/mpeg', '.woff2':'font/woff2' };
+const mime = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.json':'application/json; charset=utf-8', '.webmanifest':'application/manifest+json; charset=utf-8', '.css':'text/css; charset=utf-8', '.svg':'image/svg+xml', '.png':'image/png', '.jpg':'image/jpeg', '.ico':'image/x-icon', '.mp3':'audio/mpeg', '.woff2':'font/woff2' };
 const server = http.createServer((request, response) => {
     const url = new URL(request.url, 'http://127.0.0.1:4174');
     response.setHeader('Cache-Control', 'no-store');
+    response.setHeader('X-Content-Type-Options', 'nosniff');
     response.setHeader('X-Wordking-Fixture', 'Local mock Firebase; no real account access');
-    if (url.pathname === '/mock-firebase.js') { response.setHeader('Content-Type', mime['.js']); response.end(mockFirebase()); return; }
-    if (url.pathname === '/__fixture-info') { response.setHeader('Content-Type', mime['.json']); response.end(JSON.stringify({ fixture: true, seededWords: ['penetrate', 'penetrating', 'penetration', 'exclaim', 'absurd', 'fixtureword'] })); return; }
     let decoded;
     try { decoded = decodeURIComponent(url.pathname); } catch { response.writeHead(400); response.end('Bad path'); return; }
-    if (decoded !== '/' && decoded !== '/index.html' && !/^\/(assets|data|migration|background music)\//.test(decoded)) { response.writeHead(404); response.end(); return; }
+    // Exercise a domain root and GitHub Pages project scope with identical source.
+    if (decoded.startsWith('/wordking/')) decoded = decoded.slice('/wordking'.length);
+    if (!['GET', 'HEAD'].includes(request.method)) { response.writeHead(405); response.end(); return; }
+    if (decoded === '/__fixture-info') { response.setHeader('Content-Type', mime['.json']); response.end(JSON.stringify({ fixture: true, seededWords: ['penetrate', 'penetrating', 'penetration', 'exclaim', 'absurd', 'fixtureword'] })); return; }
+    if (decoded === '/assets/vendor/firebase-12.19.0/firebase-app.js') { response.setHeader('Content-Type', mime['.js']); response.end(mockFirebase()); return; }
+    if (/^\/assets\/vendor\/firebase-12\.19\.0\/firebase-(auth|firestore)\.js$/.test(decoded)) { response.setHeader('Content-Type', mime['.js']); response.end('export * from "./firebase-app.js";\n'); return; }
+    if (!['/', '/index.html', '/sw.js', '/manifest.webmanifest'].includes(decoded) && !/^\/(assets|data|migration|background music)\//.test(decoded)) { response.writeHead(404); response.end(); return; }
     if (decoded.includes('\\') || decoded.split('/').some(part => part.startsWith('.'))) { response.writeHead(404); response.end(); return; }
     const target = path.resolve(repoRoot, '.' + (decoded === '/' ? '/index.html' : decoded));
     if (!target.toLowerCase().startsWith(path.resolve(repoRoot).toLowerCase() + path.sep)) { response.writeHead(403); response.end('Forbidden'); return; }
     if (!fs.existsSync(target) || !fs.statSync(target).isFile()) { response.writeHead(404); response.end('Not found'); return; }
     response.setHeader('Content-Type', mime[path.extname(target)] || 'application/octet-stream');
-    if (decoded === '/assets/app.js') {
-        const actual = fs.readFileSync(target, 'utf8');
-        const transformed = actual.replace(/https:\/\/www\.gstatic\.com\/firebasejs\/[^"']+/g, '/mock-firebase.js');
-        response.end(transformed); return;
-    }
-    fs.createReadStream(target).pipe(response);
+    if (request.method === 'HEAD') response.end(); else fs.createReadStream(target).pipe(response);
 });
-server.listen(Number(process.env.PORT || 4175), '127.0.0.1', () => console.log('WordKing disposable UI fixture: http://127.0.0.1:4175 — real repo assets, local simulated Firebase only.'));
+server.listen(Number(process.env.PORT || 4175), '127.0.0.1', () => console.log('WordKing disposable UI fixture: http://127.0.0.1:' + server.address().port + ' — real repo assets, local simulated Firebase only.'));
