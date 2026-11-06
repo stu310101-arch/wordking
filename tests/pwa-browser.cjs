@@ -441,7 +441,11 @@ async function practiceTree(page) {
     assert.ok(inherited.total > 0);
     assert.equal(inherited.selected, inherited.total, 'Parent selection must include descendant words');
     await page.locator('#practice-breadcrumb button').first().click();
+    // A partly selected root is indeterminate, with checked === false. Native
+    // uncheck() is then a no-op; select it fully before clearing through the UI.
+    await page.locator('#practice-select-all').check();
     await page.locator('#practice-select-all').uncheck();
+    assert.match(await page.locator('#selection-count').innerText(), /已選 0 個/);
     for (const key of tree.route) await open(key);
     const firstWord = page.locator('.practice-checkbox').first();
     await firstWord.check();
