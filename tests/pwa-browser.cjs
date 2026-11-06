@@ -604,7 +604,14 @@ async function runScenario(browser, profile, appURL) {
                 privateDOM: /fixtureword|A 的私人解釋|A 自己新增的單字/.test(
                     document.querySelector('main').textContent)
             }));
-            assert.equal(offline.online, false);
+            // navigator.onLine is an OS/browser hint and may stay true during
+            // transport emulation. Verify a real, uncacheable request fails.
+            const networkProbe = new URL('__fixture-info?offline-probe=1', appURL).href;
+            const canReachNetwork = await page.evaluate(async url => {
+                try { await fetch(url, { cache: 'no-store' }); return true; }
+                catch { return false; }
+            }, networkProbe);
+            assert.equal(canReachNetwork, false, 'An uncached network request must fail while offline');
             assert.equal(offline.marker, 'true');
             assert.equal(offline.publicMode, true);
             assert.deepEqual(offline.privateFolders, []);
@@ -616,7 +623,8 @@ async function runScenario(browser, profile, appURL) {
             await page.locator('#pwa-offline-banner').waitFor({ state: 'visible' });
             await noHorizontalOverflow(page);
             await screenshot(page, scenario, 'offline-home');
-            return { fromServiceWorker: true, publicWordCount: baseline.length,
+            return { fromServiceWorker: true, navigatorOnlineHint: offline.online,
+                networkRequestFailed: true, publicWordCount: baseline.length,
                 cachedFixtureAccount: offline.cachedFixtureAccount };
         });
         await check(scenario, 'offline tree and all practice modes, with save guards',
@@ -641,7 +649,11 @@ async function runScenario(browser, profile, appURL) {
         });
         await check(scenario, 'reconnect remains public until explicit reload', async () => {
             await context.setOffline(false);
-            await page.waitForFunction(() => navigator.onLine);
+            const reachable = await page.evaluate(async url => {
+                const response = await fetch(url, { cache: 'no-store' });
+                return response.ok;
+            }, new URL('__fixture-info?reconnect-probe=1', appURL).href);
+            assert.equal(reachable, true, 'The uncached network probe must succeed after reconnecting');
             assert.equal(await page.evaluate(() => window.WordKingOffline), true);
             assert.deepEqual(await publicWords(page), baseline);
             await page.locator('#pwa-reconnect').waitFor({ state: 'visible' });
