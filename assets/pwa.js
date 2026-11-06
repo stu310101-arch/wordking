@@ -47,9 +47,14 @@
         element('pwa-reconnect').hidden = disconnected || !publicMode;
     }
 
-    function showWaitingUpdate() {
-        if (!registration?.waiting || updateDismissed) return;
-        element('pwa-update-banner').hidden = false;
+    function renderWaitingUpdate() {
+        const banner = element('pwa-update-banner');
+        if (!banner) return;
+        // The first install briefly waits before becoming active; it is not an
+        // update. Reconcile both directions because another tab can activate it.
+        const hasUpdate = registration?.active && registration.waiting
+            && registration.waiting !== registration.active;
+        banner.hidden = !hasUpdate || updateDismissed;
     }
 
     async function refreshReadiness() {
@@ -90,12 +95,12 @@
                 scope: appBase.href, updateViaCache: 'none'
             });
             lastUpdateCheck = Date.now();
-            showWaitingUpdate();
+            renderWaitingUpdate();
             const observeInstalling = () => {
-                const worker = registration.installing;
+                const worker = registration.installing || registration.waiting;
                 if (!worker) return;
                 worker.addEventListener('statechange', () => {
-                    if (worker.state === 'installed') showWaitingUpdate();
+                    renderWaitingUpdate();
                     if (worker.state === 'activated') void refreshReadiness();
                     if (worker.state === 'redundant' && !registration.active) {
                         registrationFailed = true;
@@ -128,10 +133,15 @@
             }
         });
         element('pwa-update-button').addEventListener('click', () => {
-            if (!registration?.waiting || !confirmReload()) return;
+            const worker = registration?.waiting;
+            if (!worker || !registration.active) {
+                renderWaitingUpdate();
+                return;
+            }
+            if (!confirmReload()) return;
             reloadRequested = true;
             element('pwa-update-button').disabled = true;
-            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+            worker.postMessage({ type: 'SKIP_WAITING' });
         });
         element('pwa-update-later').addEventListener('click', () => {
             updateDismissed = true;
@@ -141,6 +151,7 @@
             if (navigator.onLine !== false && confirmReload()) window.location.reload();
         });
         if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('controllerchange', () => {
+            renderWaitingUpdate();
             if (reloadRequested && !reloadStarted) {
                 reloadStarted = true;
                 window.location.reload();
@@ -158,6 +169,7 @@
         window.addEventListener('wordking-offline-mode', renderConnection);
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState !== 'visible') return;
+            renderWaitingUpdate();
             void refreshReadiness();
             if (registration && navigator.onLine !== false && Date.now() - lastUpdateCheck > 60000) {
                 lastUpdateCheck = Date.now();

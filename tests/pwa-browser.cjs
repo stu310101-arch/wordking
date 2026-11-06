@@ -157,6 +157,8 @@ async function workerReady(page, appURL) {
     assert.equal(status.readiness.ready, true, 'The entire offline shell must be ready');
     await page.waitForFunction(() => /已備妥/.test(
         document.getElementById('pwa-status')?.textContent || ''), null, { timeout: 15000 });
+    assert.equal(await page.locator('#pwa-update-banner').isVisible(), false,
+        'A first installation must not advertise an unavailable update');
     return status;
 }
 

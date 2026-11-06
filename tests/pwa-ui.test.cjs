@@ -41,7 +41,13 @@ async function uiHarness(options = {}) {
                 ports[0].postMessage({ type: 'OFFLINE_STATUS', ready: readiness });
             }
         },
-        waiting: options.waiting ? { postMessage(message) { calls.waiting.push(message); } } : null,
+        waiting: options.waiting ? eventTarget({
+            state: 'installed',
+            postMessage(message, ports) {
+                if (message.type === 'GET_OFFLINE_STATUS') ports[0].postMessage({ type: 'OFFLINE_STATUS', ready: readiness });
+                else calls.waiting.push(message);
+            }
+        }) : null,
         installing: null,
         async update() { calls.update += 1; }
     });
@@ -115,7 +121,51 @@ test('standalone and unsupported browsers get accurate install and offline state
     assert.equal(unsupported.calls.register.length, 0);
 });
 
-test('first worker control never reloads; an update reloads once after explicit acceptance', async () => {
+test('a first install briefly waiting does not show an update or reset active practice', async () => {
+    const h = await uiHarness({ active: false, waiting: true, activeGame: true });
+    const worker = h.registration.waiting;
+    assert.equal(h.nodes['pwa-update-banner'].hidden, true);
+    await worker.dispatch('statechange');
+    assert.equal(h.nodes['pwa-update-banner'].hidden, true);
+    h.registration.waiting = null;
+    h.registration.active = worker;
+    worker.state = 'activated';
+    await worker.dispatch('statechange');
+    await h.serviceWorker.dispatch('controllerchange');
+    assert.equal(h.nodes['pwa-update-banner'].hidden, true);
+    assert.match(h.nodes['pwa-status'].textContent, /已備妥/);
+    assert.equal(h.calls.reload, 0);
+    assert.equal(h.calls.confirm, 0);
+    assert.equal(h.window.state.game.isFinished, false);
+});
+
+test('another tab activating an update clears the banner without interrupting this quiz', async () => {
+    const h = await uiHarness({ waiting: true, activeGame: true });
+    const worker = h.registration.waiting;
+    assert.equal(h.nodes['pwa-update-banner'].hidden, false);
+    h.registration.waiting = null;
+    h.registration.active = worker;
+    worker.state = 'activated';
+    await worker.dispatch('statechange');
+    assert.equal(h.nodes['pwa-update-banner'].hidden, true);
+    await h.serviceWorker.dispatch('controllerchange');
+    assert.equal(h.calls.reload, 0);
+    assert.equal(h.calls.confirm, 0);
+    assert.equal(h.window.state.game.isFinished, false);
+});
+
+test('clicking a stale update banner reconciles a worker that is no longer waiting', async () => {
+    const h = await uiHarness({ waiting: true, activeGame: true });
+    h.registration.waiting = null;
+    await h.nodes['pwa-update-button'].dispatch('click');
+    assert.equal(h.nodes['pwa-update-banner'].hidden, true);
+    assert.equal(h.nodes['pwa-update-button'].disabled, false);
+    assert.equal(h.calls.waiting.length, 0);
+    assert.equal(h.calls.reload, 0);
+    assert.equal(h.calls.confirm, 0);
+});
+
+test('a real waiting update reloads once only after explicit acceptance', async () => {
     const h = await uiHarness({ waiting: true });
     await h.serviceWorker.dispatch('controllerchange');
     assert.equal(h.calls.reload, 0);
@@ -125,8 +175,10 @@ test('first worker control never reloads; an update reloads once after explicit 
     assert.equal(h.calls.waiting.length, 1);
     assert.equal(h.calls.waiting[0].type, 'SKIP_WAITING');
     assert.equal(h.calls.reload, 0);
+    h.registration.waiting = null;
     await h.serviceWorker.dispatch('controllerchange');
     await h.serviceWorker.dispatch('controllerchange');
+    assert.equal(h.nodes['pwa-update-banner'].hidden, true);
     assert.equal(h.calls.reload, 1);
 });
 

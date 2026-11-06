@@ -1,7 +1,7 @@
 'use strict';
 
 // Every shell change must bump RELEASE and the HTML asset query versions together.
-const RELEASE = '20261106-pwa-security-1';
+const RELEASE = '20261106-pwa-security-2';
 const APP_BASE = new URL('./', self.registration.scope);
 const CACHE_PREFIX = `wordking-pwa:${encodeURIComponent(APP_BASE.pathname)}:`;
 const CACHE_NAME = `${CACHE_PREFIX}${RELEASE}`;
