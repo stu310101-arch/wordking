@@ -73,7 +73,7 @@
         }
     </style>
 
-    <link rel="stylesheet" href="./assets/tailwind.css?v=20260908-u2">
+    <link rel="stylesheet" href="./assets/tailwind.css?v=20261106-practice-tree-skip">
     <link rel="stylesheet" href="./assets/styles.css?v=20260908-u2">
 </head>
 <body class="bg-gray-50 min-h-screen font-sans pb-24" aria-busy="true">
@@ -264,30 +264,32 @@
             <h2 class="text-2xl font-bold text-center text-indigo-900 mt-4">特訓設定</h2>
 
             <div class="bg-white p-6 rounded-2xl shadow-lg border">
-                <!-- Step 1: 選擇資料夾 -->
-                <fieldset class="mb-6">
-                    <legend class="block font-bold text-gray-700 mb-2 text-lg">📂 1. 選擇資料夾（可複選）</legend>
-                    <p class="text-sm text-gray-600 mb-2">勾選資料夾即可指定範圍。上層資料夾包含所有子資料夾，共用單字只出一題。</p>
-                    <div id="practice-scope" class="max-h-48 overflow-y-auto custom-scrollbar border-2 border-indigo-100 rounded-xl p-2"></div>
+                <fieldset class="mb-6 min-w-0">
+                    <legend class="block font-bold text-gray-700 mb-2 text-lg">📂 選擇練習範圍</legend>
+                    <p class="text-sm text-gray-600 mb-3">點擊資料夾逐層查看，勾選方框可選取整個資料夾。可跨資料夾挑字，共用單字只出一題。</p>
+                    <nav id="practice-breadcrumb" aria-label="練習資料夾路徑" class="flex flex-wrap items-center gap-2 text-sm text-gray-500 mb-3 break-all"></nav>
+                    <div class="flex flex-wrap items-center gap-2 mb-3">
+                        <button id="btn-practice-back" type="button" class="text-sm text-gray-600 bg-gray-100 rounded-lg px-3 py-2">← 上一層</button>
+                        <h3 id="practice-folder-heading" tabindex="-1" class="font-bold text-lg text-indigo-900 break-all">全部資料夾</h3>
+                    </div>
+                    <div class="bg-indigo-50 rounded-xl p-3 mb-3">
+                        <label class="flex items-center gap-3 cursor-pointer font-bold text-sm text-indigo-900 py-1">
+                            <input id="practice-select-all" type="checkbox" class="w-5 h-5 text-indigo-600 rounded flex-none" aria-describedby="practice-folder-summary">
+                            <span id="practice-select-all-label">全選所有資料夾與單字</span>
+                        </label>
+                        <p id="practice-folder-summary" class="text-xs text-indigo-600 mt-2" aria-live="polite"></p>
+                        <button id="btn-practice-exclude-review" type="button" class="text-xs bg-white text-red-600 px-3 py-2 mt-2 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed">取消此範圍的待複習單字</button>
+                    </div>
+                    <h4 id="practice-subfolders-heading" class="text-sm font-bold text-gray-600 mb-2">資料夾</h4>
+                    <div id="practice-scope" class="space-y-2 max-h-72 overflow-y-auto custom-scrollbar"></div>
+                    <section id="practice-word-section" class="mt-4" aria-labelledby="practice-words-heading">
+                        <h4 id="practice-words-heading" class="text-sm font-bold text-gray-600 mb-2">此資料夾的單字</h4>
+                        <div id="practice-word-selection" class="max-h-64 overflow-y-auto custom-scrollbar border-2 border-gray-100 rounded-xl p-2 bg-gray-50"></div>
+                    </section>
+                    <p id="selection-count" class="text-right text-sm font-bold text-indigo-700 mt-3" aria-live="polite">合計已選 0 個單字</p>
                 </fieldset>
 
-                <!-- Step 2: 勾選單字 -->
-                <div class="mb-6">
-                    <h3 class="block font-bold text-gray-700 text-lg mb-2">📝 2. 勾選要練習的單字</h3>
-                    <label for="practice-focus" class="block text-sm font-bold text-gray-700">顯示單字清單</label>
-                    <select id="practice-focus" class="w-full p-2 border-2 border-indigo-100 rounded-xl bg-white"></select>
-                    <p class="text-sm text-gray-600 mt-1 mb-2">可切換資料夾分別挑字。下方按鈕套用到目前清單，同一單字在各資料夾的勾選狀態相通。</p>
-                    <div class="flex flex-wrap gap-2 mb-2">
-                        <button id="btn-practice-select-all" type="button" class="text-sm bg-indigo-50 text-indigo-600 px-3 py-2 rounded">全選清單</button>
-                        <button id="btn-practice-select-none" type="button" class="text-sm bg-gray-100 text-gray-500 px-3 py-2 rounded">取消全選</button>
-                        <button id="btn-practice-exclude-review" type="button" class="text-sm bg-red-50 text-red-600 px-3 py-2 rounded disabled:opacity-40 disabled:cursor-not-allowed">取消待複習單字</button>
-                    </div>
-                    <div id="practice-word-selection" class="max-h-48 overflow-y-auto custom-scrollbar border-2 border-gray-100 rounded-xl p-2 bg-gray-50">
-                    </div>
-                    <p id="selection-count" class="text-right text-xs text-gray-400 mt-1" aria-live="polite">已選 0 個單字</p>
-                </div>
-
-                <!-- Step 3: 開始遊戲 -->
+                <!-- 開始練習 -->
                 <div class="flex flex-col gap-4 border-t pt-4">
                     <button data-start-mode="spelling" class="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold text-xl shadow-lg active:scale-95 transition flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100">
                         🔤 拼字練習
@@ -324,11 +326,12 @@
                 <div class="space-y-4 w-full">
                     <input type="text" id="spelling-input" autocomplete="off" class="w-full border-b-4 border-indigo-100 p-3 text-3xl text-center focus:border-indigo-500 outline-none transition-all placeholder-gray-200 rounded-none bg-transparent" placeholder="輸入答案">
                     <div class="flex flex-col gap-3 mt-4">
-                        <button class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-xl shadow-md active:bg-indigo-800">檢查</button>
-                        <button class="w-full bg-gray-100 text-gray-500 py-4 rounded-xl font-bold text-lg active:bg-gray-200">跳過 (視為答錯)</button>
+                        <button id="btn-spelling-submit" type="button" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-xl shadow-md active:bg-indigo-800 disabled:opacity-40 disabled:cursor-not-allowed">檢查</button>
+                        <button id="btn-spelling-skip" type="button" class="w-full bg-gray-100 text-gray-600 py-4 rounded-xl font-bold text-lg active:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed">跳過此題</button>
                     </div>
                 </div>
                 <div id="spelling-feedback" class="mt-4 font-bold text-xl min-h-[2rem]" role="status" aria-live="polite"></div>
+                <p class="text-xs text-gray-500 mt-2">跳過會顯示答案，並列入結算的「錯誤／跳過單字」。</p>
                 <div id="spelling-review-answer" class="hidden mt-3 p-3 rounded-xl bg-amber-50 border border-amber-100 text-amber-700 font-bold"></div>
             </div>
         </div>
@@ -354,7 +357,9 @@
                     <h3 id="choice-question" class="text-3xl font-extrabold text-indigo-900 break-words leading-snug">Question</h3>
                 </div>
                 <div id="choice-options" class="flex flex-col gap-3 w-full flex-1 justify-center"></div>
+                <button id="btn-choice-skip" type="button" class="w-full bg-gray-100 text-gray-600 py-4 mt-4 rounded-xl font-bold text-lg active:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed">跳過此題</button>
                 <div id="choice-feedback" class="mt-4 font-bold text-xl min-h-[2rem]" role="status" aria-live="polite"></div>
+                <p class="text-xs text-gray-500 mt-2">跳過會顯示答案，並列入結算的「錯誤／跳過單字」。</p>
             </div>
         </div>
     </div>
@@ -582,6 +587,6 @@
 <script src="./assets/word-data.js?v=20261031-folders"></script>
 <script src="./assets/migration.js?v=20260908-u2"></script>
 <script src="./assets/persistence.js?v=20260908-u2"></script>
-<script type="module" src="./assets/app.js?v=20261031-folders"></script>
+<script type="module" src="./assets/app.js?v=20261106-practice-tree-skip"></script>
 </body>
 </html>

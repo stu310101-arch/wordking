@@ -215,9 +215,11 @@ test('switching accounts clears old data immediately and ignores its late read',
     const first = h.run("handleAuthStateChanged({uid: 'alice'})");
     await h.flush();
     h.run("state.words = [{english:'stale'}]; state.settings.lessonFolderNames = {'unit-1':'Alice'}; state.game.currentWords = state.words;");
-    const privateElements = ['library-word-cards', 'library-breadcrumb', 'library-heading', 'move-folder-parent', 'new-folder-location', 'practice-scope', 'practice-focus'];
+    const privateElements = ['library-word-cards', 'library-breadcrumb', 'library-heading', 'move-folder-parent', 'new-folder-location', 'practice-scope', 'practice-breadcrumb', 'practice-folder-heading', 'practice-folder-summary', 'practice-select-all-label', 'practice-words-heading'];
     h.context.privateElements = privateElements;
     h.run(`state.currentLibraryFolder = 'folder:alice'; state.folderParents = {'folder:alice': ''};
+        document.getElementById('practice-select-all').checked = true;
+        document.getElementById('practice-select-all').indeterminate = true;
         privateElements.forEach(id => document.getElementById(id).textContent = 'Alice 的資料夾');`);
     const second = h.run("handleAuthStateChanged({uid: 'bob'})");
     assert.equal(h.run('state.words.length'), 0);
@@ -226,6 +228,9 @@ test('switching accounts clears old data immediately and ignores its late read',
     assert.equal(h.run('state.currentLibraryFolder'), '');
     assert.equal(h.run('Object.keys(state.folderParents).length'), 0);
     assert.ok(privateElements.every(id => h.elements.get(id).textContent === ''));
+    assert.equal(h.elements.get('practice-select-all').checked, false);
+    assert.equal(h.elements.get('practice-select-all').indeterminate, false);
+    assert.equal(h.elements.get('practice-select-all').disabled, true);
     await h.flush();
     bob.resolve(userData({ ...personalWord, english: 'bob-only' }, 9));
     await second;

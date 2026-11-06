@@ -127,6 +127,7 @@ const state = {
     },
     game: {
         mode: '',
+        isFinished: true,
         currentWords: [],
         index: 0,
         wrongWords: new Set(),
@@ -390,6 +391,7 @@ async function loadDefaultWordDatabase() {
 function clearPracticeSession() {
     gameGeneration += 1;
     state.game.mode = '';
+    state.game.isFinished = true;
     state.game.currentWords = [];
     state.game.index = 0;
     state.game.wrongWords = new Set();
@@ -819,8 +821,15 @@ function clearPersonalSessionData() {
         const input = document.getElementById(id);
         if (input) input.value = '';
     });
+    const practiceSelectAll = document.getElementById('practice-select-all');
+    if (practiceSelectAll) {
+        practiceSelectAll.checked = false;
+        practiceSelectAll.indeterminate = false;
+        practiceSelectAll.disabled = true;
+        practiceSelectAll.setAttribute('aria-checked', 'false');
+    }
     ['category-grid', 'words-container', 'library-breadcrumb', 'library-heading', 'library-word-cards', 'library-letter-grid',
-        'move-folder-parent', 'new-folder-location', 'folder-list', 'practice-scope', 'practice-focus', 'practice-word-selection', 'selection-count', 'spelling-definition-area',
+        'move-folder-parent', 'new-folder-location', 'folder-list', 'practice-scope', 'practice-breadcrumb', 'practice-folder-heading', 'practice-folder-summary', 'practice-select-all-label', 'practice-words-heading', 'practice-word-selection', 'selection-count', 'spelling-definition-area',
         'spelling-hint', 'spelling-feedback', 'spelling-review-answer', 'choice-feedback',
         'choice-options', 'choice-question', 'result-skipped-items', 'result-folder-select',
         'action-folder-name', 'confirm-title', 'confirm-desc', 'folder-selection-container',
@@ -2298,18 +2307,16 @@ function parseMeaning(meanings) {
 }
 function getMeaningWithPartOfSpeech(word) { return formatMeaning(word.meanings); }
 
-const practiceScopes = new Set(['all']);
-const excludedPracticeWordIds = new Set();
-let practiceFocus = '';
+// Browsing and selection are independent: a word shared by folders is selected once.
+const selectedPracticeWordIds = new Set();
+let currentPracticeFolder = '';
 
 function resetPracticeSelection() {
-    practiceScopes.clear();
-    practiceScopes.add('all');
-    excludedPracticeWordIds.clear();
-    practiceFocus = '';
+    selectedPracticeWordIds.clear();
+    currentPracticeFolder = '';
 }
 
-function getPracticePool(scopes = practiceScopes) {
+function getPracticePool(scopes = new Set([currentPracticeFolder || 'all'])) {
     if (scopes.has('all')) return state.words;
     if (!scopes.size) return [];
     return state.words.filter(word => {
@@ -2321,90 +2328,134 @@ function getPracticePool(scopes = practiceScopes) {
 }
 
 function getSelectedPracticeWords() {
-    return getPracticePool().filter(word => !excludedPracticeWordIds.has(getWordKey(word)));
+    return state.words.filter(word => selectedPracticeWordIds.has(word.id));
 }
 
 function setPracticeWordChecked(id, checked) {
-    if (checked) excludedPracticeWordIds.delete(id);
-    else excludedPracticeWordIds.add(id);
+    if (checked) selectedPracticeWordIds.add(id);
+    else selectedPracticeWordIds.delete(id);
 }
 
 function changePracticeScope(scope, checked) {
-    if (checked) {
-        if (scope === 'all') practiceScopes.clear();
-        else practiceScopes.delete('all');
-        practiceScopes.add(scope);
-        practiceFocus = scope === 'all' ? '' : scope;
-    } else {
-        practiceScopes.delete(scope);
-        if (practiceFocus === scope) practiceFocus = '';
+    for (const word of getPracticePool(new Set([scope || 'all']))) {
+        setPracticeWordChecked(word.id, checked);
     }
-    document.getElementById('practice-scope').querySelectorAll('.practice-scope-checkbox').forEach(input => {
-        input.checked = practiceScopes.has(input.value);
-    });
-    renderPracticeFocusOptions();
     renderPracticeWordSelection();
+}
+
+function openPracticeFolder(key = '') {
+    refreshFolders();
+    const exists = !key || state.folderIds.includes(key);
+    currentPracticeFolder = exists ? key : '';
+    renderPracticeOptions();
+    document.getElementById('practice-folder-heading').focus();
+    return exists;
 }
 
 function renderPracticeOptions() {
     refreshFolders();
+    const availableIds = new Set(state.words.map(word => word.id));
+    for (const id of selectedPracticeWordIds) {
+        if (!availableIds.has(id)) selectedPracticeWordIds.delete(id);
+    }
+    if (currentPracticeFolder && !state.folderIds.includes(currentPracticeFolder)) currentPracticeFolder = '';
+
+    const breadcrumb = document.getElementById('practice-breadcrumb');
+    breadcrumb.replaceChildren();
+    ['', ...getFolderPath(currentPracticeFolder)].forEach((key, index) => {
+        if (index) {
+            const separator = document.createElement('span');
+            separator.textContent = '›';
+            separator.setAttribute('aria-hidden', 'true');
+            breadcrumb.appendChild(separator);
+        }
+        const crumb = document.createElement(key === currentPracticeFolder ? 'span' : 'button');
+        crumb.textContent = key ? getFolderDisplayName(key) : '全部資料夾';
+        if (key === currentPracticeFolder) crumb.setAttribute('aria-current', 'location');
+        else {
+            crumb.type = 'button';
+            crumb.className = 'text-indigo-600 underline break-all';
+            crumb.addEventListener('click', () => openPracticeFolder(key));
+        }
+        breadcrumb.appendChild(crumb);
+    });
+    setElementVisible(document.getElementById('btn-practice-back'), !!currentPracticeFolder);
+    document.getElementById('practice-folder-heading').textContent = currentPracticeFolder
+        ? getFolderDisplayName(currentPracticeFolder) : '全部資料夾';
+    document.getElementById('practice-select-all-label').textContent = currentPracticeFolder
+        ? '全選此資料夾（含所有子資料夾與單字）' : '全選所有資料夾與單字';
+
+    const children = state.folderIds.filter(key => (state.folderParents[key] || '') === currentPracticeFolder);
     const container = document.getElementById('practice-scope');
     container.replaceChildren();
-    for (const scope of practiceScopes) {
-        if (scope !== 'all' && !state.folderIds.includes(scope)) practiceScopes.delete(scope);
-    }
-    for (const scope of ['all', ...state.folderIds]) {
+    setElementVisible(document.getElementById('practice-subfolders-heading'), children.length > 0);
+    for (const scope of children) {
+        const name = getFolderDisplayName(scope);
+        const row = document.createElement('div');
+        row.className = 'flex items-center gap-2 rounded-xl border border-indigo-100 bg-white p-2';
         const label = document.createElement('label');
-        label.className = 'flex items-center gap-2 p-2 cursor-pointer text-sm';
+        label.className = 'flex items-center justify-center flex-none w-10 h-10 cursor-pointer';
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
-        checkbox.className = 'practice-scope-checkbox w-5 h-5';
+        checkbox.className = 'practice-scope-checkbox w-5 h-5 text-indigo-600 rounded';
         checkbox.value = scope;
-        checkbox.checked = practiceScopes.has(scope);
+        checkbox.setAttribute('aria-label', `全選${name}內的資料夾與單字`);
         checkbox.addEventListener('change', () => changePracticeScope(scope, checkbox.checked));
-        const name = document.createElement('span');
-        name.textContent = scope === 'all' ? '全部單字' : getFolderPathLabel(scope);
-        label.append(checkbox, name);
-        container.append(label);
+        label.appendChild(checkbox);
+
+        const open = document.createElement('button');
+        open.type = 'button';
+        open.className = 'practice-folder-open flex items-center gap-2 flex-1 min-w-0 p-2 rounded-lg text-left hover:bg-indigo-50';
+        open.dataset.folderKey = scope;
+        open.setAttribute('aria-label', `開啟資料夾 ${name}`);
+        open.addEventListener('click', () => openPracticeFolder(scope));
+        const info = document.createElement('span');
+        info.className = 'flex-1 min-w-0';
+        const title = document.createElement('span');
+        title.className = 'block font-bold text-indigo-900 break-all';
+        title.textContent = `📁 ${name}`;
+        const detail = document.createElement('span');
+        detail.className = 'practice-folder-count block text-xs text-gray-500 mt-1';
+        detail.dataset.folderKey = scope;
+        info.append(title, detail);
+        const arrow = document.createElement('span');
+        arrow.className = 'text-xl text-indigo-400';
+        arrow.textContent = '›';
+        arrow.setAttribute('aria-hidden', 'true');
+        open.append(info, arrow);
+        row.append(label, open);
+        container.appendChild(row);
     }
-    renderPracticeFocusOptions();
     renderPracticeWordSelection();
 }
 
-function renderPracticeFocusOptions() {
-    const select = document.getElementById('practice-focus');
-    if (!practiceScopes.has(practiceFocus)) practiceFocus = '';
-    select.replaceChildren(new Option('所有已勾資料夾的合併清單', ''));
-    for (const scope of practiceScopes) {
-        if (scope !== 'all') select.appendChild(new Option(getFolderPathLabel(scope), scope));
-    }
-    select.value = practiceFocus;
-}
-
 function getVisiblePracticeWords() {
-    return getPracticePool(practiceFocus ? new Set([practiceFocus]) : practiceScopes);
+    if (!currentPracticeFolder) return [];
+    return state.words.filter(word => wordIsInFolder(word, currentPracticeFolder));
 }
 
 function renderPracticeWordSelection() {
     const container = document.getElementById('practice-word-selection');
     container.replaceChildren();
     const pool = [...getVisiblePracticeWords()].sort((a, b) => a.english.localeCompare(b.english));
-    document.getElementById('btn-practice-exclude-review').disabled = !pool.some(word => word.isWrong);
+    setElementVisible(document.getElementById('practice-word-section'), !!currentPracticeFolder);
+    document.getElementById('practice-words-heading').textContent = `此資料夾的單字（${pool.length}）`;
 
-    if (!pool.length) {
-        const empty = document.createElement('div');
-        empty.className = 'text-gray-400 text-center py-4';
-        empty.textContent = practiceScopes.size ? '目前清單沒有單字' : '請先勾選要練習的資料夾';
+    if (!pool.length && currentPracticeFolder) {
+        const empty = document.createElement('p');
+        empty.className = 'text-gray-500 text-sm text-center py-4';
+        const hasChildren = state.folderIds.some(key => state.folderParents[key] === currentPracticeFolder);
+        empty.textContent = hasChildren ? '此層沒有直接收錄的單字，請點上方子資料夾查看。' : '這個資料夾還沒有單字。';
         container.appendChild(empty);
     }
 
     for (const word of pool) {
         const row = document.createElement('label');
-        row.className = 'flex items-center p-2 border-b border-gray-100 last:border-0 hover:bg-white transition';
+        row.className = 'flex items-center p-2 border-b border-gray-100 last:border-0 hover:bg-white transition cursor-pointer';
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
-        checkbox.className = 'practice-checkbox w-5 h-5 text-indigo-600 rounded mr-3';
-        checkbox.checked = !excludedPracticeWordIds.has(word.id);
+        checkbox.className = 'practice-checkbox w-5 h-5 text-indigo-600 rounded mr-3 flex-none';
+        checkbox.checked = selectedPracticeWordIds.has(word.id);
         checkbox.dataset.wordId = word.id;
         checkbox.setAttribute('aria-label', `選取 ${word.english}`);
         checkbox.addEventListener('change', () => {
@@ -2415,10 +2466,10 @@ function renderPracticeWordSelection() {
         const info = document.createElement('span');
         info.className = 'flex-1 min-w-0';
         const en = document.createElement('span');
-        en.className = 'block font-bold text-gray-800 truncate';
+        en.className = 'block font-bold text-gray-800 break-all';
         en.textContent = word.english;
         const mean = document.createElement('span');
-        mean.className = 'block text-xs text-gray-500 truncate';
+        mean.className = 'block text-xs text-gray-500 break-all';
         mean.textContent = getMeaningWithPartOfSpeech(word);
         info.append(en, mean);
         row.append(checkbox, info);
@@ -2427,9 +2478,31 @@ function renderPracticeWordSelection() {
     updateSelectionCount();
 }
 
+function setPracticeCheckboxState(input, pool) {
+    const count = pool.filter(word => selectedPracticeWordIds.has(word.id)).length;
+    input.checked = pool.length > 0 && count === pool.length;
+    input.indeterminate = count > 0 && count < pool.length;
+    input.disabled = pool.length === 0;
+    input.setAttribute('aria-checked', input.indeterminate ? 'mixed' : String(input.checked));
+    return count;
+}
+
 function updateSelectionCount() {
     const count = getSelectedPracticeWords().length;
     document.getElementById('selection-count').innerText = `合計已選 ${count} 個單字`;
+    const pool = getPracticePool();
+    const localCount = setPracticeCheckboxState(document.getElementById('practice-select-all'), pool);
+    document.getElementById('practice-folder-summary').textContent = `目前範圍已選 ${localCount} / ${pool.length} 個單字`;
+    const container = document.getElementById('practice-scope');
+    const details = container.querySelectorAll('.practice-folder-count');
+    container.querySelectorAll('.practice-scope-checkbox').forEach(input => {
+        const words = getPracticePool(new Set([input.value]));
+        const selected = setPracticeCheckboxState(input, words);
+        const childCount = state.folderIds.filter(key => state.folderParents[key] === input.value).length;
+        const detail = Array.from(details).find(node => node.dataset.folderKey === input.value);
+        if (detail) detail.textContent = `${childCount ? `${childCount} 個子資料夾 · ` : ''}已選 ${selected} / ${words.length} 個單字`;
+    });
+    document.getElementById('btn-practice-exclude-review').disabled = !pool.some(word => word.isWrong && selectedPracticeWordIds.has(word.id));
     updatePracticeStartButtons(count);
 }
 
@@ -2442,12 +2515,11 @@ function updatePracticeStartButtons(selectedCount) {
 }
 
 function toggleAllPracticeWords(checked) {
-    for (const word of getVisiblePracticeWords()) setPracticeWordChecked(word.id, checked);
-    renderPracticeWordSelection();
+    changePracticeScope(currentPracticeFolder, checked);
 }
 
 function excludeReviewPracticeWords() {
-    for (const word of getVisiblePracticeWords()) {
+    for (const word of getPracticePool()) {
         if (word.isWrong) setPracticeWordChecked(word.id, false);
     }
     renderPracticeWordSelection();
@@ -2478,6 +2550,7 @@ function startGame(mode) {
 
     gameGeneration += 1;
     state.game.mode = mode;
+    state.game.isFinished = false;
     state.game.currentWords = shuffleArray(pool);
     state.game.index = 0;
     state.game.wrongWords = new Set();
@@ -2509,6 +2582,11 @@ function getCurrentWord() {
     return state.game.currentWords[state.game.index];
 }
 
+function canAnswerCurrentQuestion() {
+    return !state.game.isFinished && !isReviewingHistory() && !!getCurrentWord()
+        && !state.game.answeredHistory[state.game.index];
+}
+
 function captureCurrentSpellingDraft() {
     if (state.game.mode !== 'spelling' || isReviewingHistory()) return;
     const input = document.getElementById('spelling-input');
@@ -2518,8 +2596,9 @@ function captureCurrentSpellingDraft() {
 function setGameplayInputsEnabled(enabled) {
     const spellingInput = document.getElementById('spelling-input');
     if (spellingInput) spellingInput.disabled = !enabled;
-    document.querySelectorAll('#view-game-spelling .space-y-4 button').forEach(btn => {
-        btn.disabled = !enabled;
+    ['btn-spelling-submit', 'btn-spelling-skip', 'btn-choice-skip'].forEach(id => {
+        const button = document.getElementById(id);
+        if (button) button.disabled = !enabled;
     });
     document.querySelectorAll('#choice-options button').forEach(btn => {
         btn.disabled = !enabled;
@@ -2583,7 +2662,6 @@ function loadSpellingWord() {
         return;
     }
     state.game.viewingHistoryIndex = null;
-    state.game.currentHadMistake = false;
     setProgressForIndex('spelling', state.game.index, total);
 
     const defArea = document.getElementById('spelling-definition-area');
@@ -2611,7 +2689,7 @@ function loadSpellingWord() {
 }
 
 function checkSpellingAnswer() {
-    if (isReviewingHistory()) return;
+    if (state.game.mode !== 'spelling' || !canAnswerCurrentQuestion()) return;
     const input = document.getElementById('spelling-input');
     const word = getCurrentWord();
     const correct = word.english.toLowerCase();
@@ -2625,27 +2703,52 @@ function checkSpellingAnswer() {
             result: state.game.currentHadMistake ? 'correct-after-wrong' : 'correct',
             userAnswer: input.value.trim()
         }));
-        scheduleGameAdvance( 600);
+        scheduleGameAdvance(600);
     } else {
         handleWrongAnswer(input.parentElement);
     }
 }
 
 function skipSpellingWord() {
-    if (isReviewingHistory()) return;
+    if (state.game.mode !== 'spelling' || !canAnswerCurrentQuestion()) return;
     const word = getCurrentWord();
     state.game.wrongWords.add(word);
     document.getElementById('spelling-input').value = word.english;
     const feedback = document.getElementById('spelling-feedback');
     feedback.className = 'mt-4 text-orange-500 font-bold';
-    feedback.innerText = `跳過：${word.english}`;
+    feedback.innerText = `已跳過，答案：${word.english}`;
     setGameplayInputsEnabled(false);
     recordAnsweredQuestion(createAnswerRecord({
         word,
         result: 'skipped',
         userAnswer: ''
     }));
-    scheduleGameAdvance( 1500);
+    scheduleGameAdvance(1500);
+}
+
+function skipChoiceQuestion() {
+    if (!state.game.mode.startsWith('choice') || !canAnswerCurrentQuestion()) return;
+    const word = getCurrentWord();
+    const isEnToCh = state.game.mode === 'choice-en-ch';
+    const options = state.game.currentChoiceOptions;
+    setGameplayInputsEnabled(false);
+    state.game.wrongWords.add(word);
+    document.querySelectorAll('#choice-options button').forEach((button, index) => {
+        if (options[index] === word) button.classList.add('choice-correct');
+    });
+    const feedback = document.getElementById('choice-feedback');
+    feedback.className = 'mt-4 text-orange-500 font-bold';
+    feedback.innerText = `已跳過，答案：${isEnToCh ? formatMeaning(word.meanings) : word.english}`;
+    recordAnsweredQuestion(createAnswerRecord({
+        word,
+        result: 'skipped',
+        choices: options.map(choice => ({
+            text: isEnToCh ? formatMeaning(choice.meanings) : choice.english,
+            isCorrect: choice === word,
+            isSelected: false
+        }))
+    }));
+    scheduleGameAdvance(1500);
 }
 
 function loadChoiceQuestion() {
@@ -2682,6 +2785,8 @@ function renderChoiceOptions(word, options, isEnToCh) {
         btn.className = 'choice-btn w-full bg-white border-2 border-indigo-100 text-gray-700 font-bold py-4 rounded-xl text-lg shadow-sm hover:border-indigo-300';
         btn.innerText = isEnToCh ? formatMeaning(opt.meanings) : opt.english;
         btn.addEventListener('click', () => {
+            if (!canAnswerCurrentQuestion() || getCurrentWord() !== word) return;
+            setGameplayInputsEnabled(false);
             const allBtns = document.querySelectorAll('.choice-btn');
             allBtns.forEach(b => {
                 b.disabled = true;
@@ -2702,7 +2807,7 @@ function renderChoiceOptions(word, options, isEnToCh) {
                         isSelected: choice === opt
                     }))
                 }));
-                scheduleGameAdvance( 800);
+                scheduleGameAdvance(800);
             } else {
                 btn.classList.add('choice-wrong');
                 allBtns.forEach(b => {
@@ -2725,7 +2830,7 @@ function renderChoiceOptions(word, options, isEnToCh) {
                         isSelected: choice === opt
                     }))
                 }));
-                scheduleGameAdvance( 1500);
+                scheduleGameAdvance(1500);
             }
         });
         optionsContainer.appendChild(btn);
@@ -2782,6 +2887,7 @@ function showHistoryEntry(entryIndex) {
         document.getElementById('choice-feedback').className = 'mt-4 text-gray-500 font-bold';
         document.getElementById('choice-feedback').innerText = `${describeAnswerResult(entry.result)}，答案：${entry.correctAnswer}`;
     }
+    setGameplayInputsEnabled(false);
     updateHistoryControls();
 }
 
@@ -2793,9 +2899,14 @@ function describeAnswerResult(result) {
 }
 
 function showCurrentQuestion() {
+    if (state.game.isFinished) return;
     state.game.viewingHistoryIndex = null;
     if (state.game.index >= state.game.currentWords.length) {
         endGame(false);
+        return;
+    }
+    if (state.game.answeredHistory[state.game.index]) {
+        showHistoryEntry(state.game.index);
         return;
     }
     if (state.game.mode === 'spelling') {
@@ -2820,6 +2931,7 @@ function showCurrentQuestion() {
 }
 
 function navigateHistory(direction) {
+    if (state.game.isFinished) return;
     if (direction === 'current') {
         showCurrentQuestion();
         return;
@@ -2848,20 +2960,28 @@ function handleWrongAnswer(element) {
     state.game.wrongWords.add(state.game.currentWords[state.game.index]);
 }
 
-// Delayed answers from an old game/account cannot advance the current game.
+// A delayed answer can advance its question only once, within the same live session.
 function scheduleGameAdvance(delay) {
     const generation = gameGeneration;
     const session = authSessionGeneration;
+    const index = state.game.index;
     setTimeout(() => {
-        if (generation === gameGeneration && session === authSessionGeneration) nextQuestion();
+        if (generation === gameGeneration && session === authSessionGeneration
+            && index === state.game.index && !state.game.isFinished) nextQuestion();
     }, delay);
 }
 
 function nextQuestion() {
-    state.game.viewingHistoryIndex = null;
+    if (state.game.isFinished) return;
+    const viewingHistory = isReviewingHistory();
     state.game.currentChoiceOptions = [];
+    state.game.currentHadMistake = false;
     state.game.index++;
     if (state.game.index < state.game.currentWords.length) {
+        if (viewingHistory) {
+            updateHistoryControls();
+            return;
+        }
         if (state.game.mode === 'spelling') loadSpellingWord();
         else loadChoiceQuestion();
     } else {
@@ -2870,6 +2990,9 @@ function nextQuestion() {
 }
 
 function endGame(isAborted = false) {
+    gameGeneration += 1;
+    state.game.isFinished = true;
+    setGameplayInputsEnabled(false);
     if (!state.game.currentWords.length) {
         showView('practice');
         return;
@@ -3417,12 +3540,10 @@ function bindStaticEvents() {
     document.getElementById('btn-create-folder')?.addEventListener('click', openNewFolderModal);
     document.getElementById('btn-finish-folder-edit')?.addEventListener('click', toggleEditMode);
 
-    document.getElementById('practice-focus')?.addEventListener('change', event => {
-        practiceFocus = event.target.value;
-        renderPracticeWordSelection();
+    document.getElementById('btn-practice-back')?.addEventListener('click', () => {
+        openPracticeFolder(state.folderParents[currentPracticeFolder] || '');
     });
-    document.getElementById('btn-practice-select-all')?.addEventListener('click', () => toggleAllPracticeWords(true));
-    document.getElementById('btn-practice-select-none')?.addEventListener('click', () => toggleAllPracticeWords(false));
+    document.getElementById('practice-select-all')?.addEventListener('change', event => toggleAllPracticeWords(event.target.checked));
     document.getElementById('btn-practice-exclude-review')?.addEventListener('click', excludeReviewPracticeWords);
 
     document.querySelectorAll('#view-practice [data-start-mode]').forEach(button => {
@@ -3438,9 +3559,9 @@ function bindStaticEvents() {
     document.getElementById('spelling-input')?.addEventListener('keydown', event => {
         if (event.key === 'Enter') checkSpellingAnswer();
     });
-    const spellingButtons = document.querySelectorAll('#view-game-spelling .space-y-4 button');
-    spellingButtons[0]?.addEventListener('click', checkSpellingAnswer);
-    spellingButtons[1]?.addEventListener('click', skipSpellingWord);
+    document.getElementById('btn-spelling-submit')?.addEventListener('click', checkSpellingAnswer);
+    document.getElementById('btn-spelling-skip')?.addEventListener('click', skipSpellingWord);
+    document.getElementById('btn-choice-skip')?.addEventListener('click', skipChoiceQuestion);
 
     document.getElementById('btn-save-review')?.addEventListener('click', saveReviewWords);
     document.getElementById('result-folder-select')?.addEventListener('change', handleResultFolderSelectChange);
