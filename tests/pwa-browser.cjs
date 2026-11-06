@@ -42,13 +42,14 @@ const report = {
 };
 
 function message(error) {
-    return { message: error?.message || String(error), stack: error?.stack };
+    return { message: error?.message || String(error), stack: error?.stack, code: error?.code };
 }
 
 async function check(scenario, name, run) {
     const entry = { name, status: 'running' };
     const started = Date.now();
     scenario.checks.push(entry);
+    process.stdout.write('START ' + scenario.name + ' | ' + name + '\n');
     try {
         entry.details = await run();
         entry.status = 'passed';
@@ -59,6 +60,8 @@ async function check(scenario, name, run) {
         throw error;
     } finally {
         entry.durationMs = Date.now() - started;
+        process.stdout.write(entry.status.toUpperCase() + ' ' + scenario.name + ' | ' + name +
+            ' (' + entry.durationMs + 'ms)' + (entry.error ? ' | ' + entry.error.message : '') + '\n');
     }
 }
 
@@ -109,7 +112,24 @@ async function goHome(page) {
 }
 
 async function workerReady(page, appURL) {
-    await page.waitForFunction(() => !!navigator.serviceWorker?.controller, null, { timeout: 45000 });
+    try {
+        await page.waitForFunction(() => !!navigator.serviceWorker?.controller ||
+            window.__wordkingTestWorkerDiagnostics?.some(event =>
+                event.type === 'register-rejected' || event.type === 'register-threw' ||
+                (event.type === 'worker-state' && event.state === 'redundant')), null, { timeout: 30000 });
+        const startup = await page.evaluate(async () => ({
+            controlled: !!navigator.serviceWorker?.controller,
+            diagnostics: window.__wordkingTestWorkerDiagnostics || [],
+            registrations: await navigator.serviceWorker.getRegistrations().then(items => items.map(item => ({
+                scope: item.scope, active: item.active?.state, waiting: item.waiting?.state,
+                installing: item.installing?.state
+            })))
+        }));
+        if (!startup.controlled) throw new Error('Service Worker did not activate: ' + JSON.stringify(startup));
+    } catch (error) {
+        error.code = 'PWA_WORKER_STARTUP';
+        throw error;
+    }
     const status = await page.evaluate(async () => {
         const registration = await navigator.serviceWorker.ready;
         const readiness = await new Promise((resolve, reject) => {
@@ -138,6 +158,128 @@ async function workerReady(page, appURL) {
     await page.waitForFunction(() => /已備妥/.test(
         document.getElementById('pwa-status')?.textContent || ''), null, { timeout: 15000 });
     return status;
+}
+
+async function installWorkerDiagnostics(context, page, scenario) {
+    const record = (group, event, immediate = false) => {
+        scenario[group].push({ ...event, at: Date.now() });
+        if (immediate) process.stdout.write('SW ' + scenario.name + ' | ' + JSON.stringify(event) + '\n');
+    };
+    context.on('console', event => {
+        const worker = event.worker?.();
+        const item = {
+            type: event.type(), text: event.text(), location: event.location(),
+            worker: worker?.url() || null
+        };
+        record('contextConsole', item, !!worker || event.type() === 'error');
+        if (event.type() === 'error') scenario.consoleErrors.push(event.text());
+    });
+    context.on('serviceworker', worker => {
+        record('serviceWorkerEvents', { type: 'worker-created', url: worker.url() }, true);
+        worker.on('console', event => record('serviceWorkerEvents', {
+            type: 'worker-console', level: event.type(), url: worker.url(),
+            text: event.text(), location: event.location()
+        }, true));
+        worker.on('close', () => record('serviceWorkerEvents', { type: 'worker-closed', url: worker.url() }, true));
+    });
+    context.on('requestfailed', request => {
+        const item = {
+            url: request.url(), error: request.failure()?.errorText,
+            worker: request.serviceWorker()?.url() || null
+        };
+        scenario.failedRequests.push(item);
+        if (item.worker || /\/sw\.js(?:\?|$)/.test(item.url)) {
+            record('workerNetwork', { type: 'request-failed', ...item }, true);
+        }
+    });
+    context.on('response', response => {
+        const request = response.request();
+        const worker = request.serviceWorker();
+        if (!worker && !/\/sw\.js(?:\?|$)/.test(response.url())) return;
+        record('workerNetwork', {
+            type: 'response', url: response.url(), status: response.status(),
+            contentType: response.headers()['content-type'], worker: worker?.url() || null,
+            fromServiceWorker: response.fromServiceWorker()
+        }, true);
+    });
+    await page.exposeBinding('__wordkingTestReportSW', (_source, event) =>
+        record('workerDiagnostics', event, true));
+    await page.addInitScript(() => {
+        const diagnostics = window.__wordkingTestWorkerDiagnostics = [];
+        const report = event => {
+            diagnostics.push(event);
+            void window.__wordkingTestReportSW(event).catch(() => {});
+        };
+        if (!('serviceWorker' in navigator)) {
+            report({ type: 'service-worker-unavailable', secureContext: window.isSecureContext });
+            return;
+        }
+        const container = navigator.serviceWorker;
+        const seenWorkers = new WeakSet();
+        const seenRegistrations = new WeakSet();
+        const observeWorker = worker => {
+            if (!worker || seenWorkers.has(worker)) return;
+            seenWorkers.add(worker);
+            const state = () => report({ type: 'worker-state', url: worker.scriptURL, state: worker.state });
+            state();
+            worker.addEventListener('statechange', state);
+            worker.addEventListener('error', event => report({
+                type: 'worker-error', url: worker.scriptURL, message: event.message || String(event)
+            }));
+        };
+        const observeRegistration = registration => {
+            const snapshot = () => {
+                report({
+                    type: 'registration-state', scope: registration.scope,
+                    active: registration.active?.state, waiting: registration.waiting?.state,
+                    installing: registration.installing?.state
+                });
+                [registration.installing, registration.waiting, registration.active].forEach(observeWorker);
+            };
+            snapshot();
+            if (!seenRegistrations.has(registration)) {
+                seenRegistrations.add(registration);
+                registration.addEventListener('updatefound', snapshot);
+            }
+        };
+        container.addEventListener('controllerchange', () => report({
+            type: 'controller-change', url: container.controller?.scriptURL,
+            state: container.controller?.state
+        }));
+        const original = container.register;
+        container.register = function (...args) {
+            report({ type: 'register-called', script: String(args[0]), options: args[1],
+                secureContext: window.isSecureContext, origin: location.origin });
+            try {
+                return Reflect.apply(original, this, args).then(registration => {
+                    report({ type: 'register-resolved', scope: registration.scope });
+                    observeRegistration(registration);
+                    return registration;
+                }, error => {
+                    report({ type: 'register-rejected', name: error.name, message: error.message, stack: error.stack });
+                    throw error;
+                });
+            } catch (error) {
+                report({ type: 'register-threw', name: error.name, message: error.message, stack: error.stack });
+                throw error;
+            }
+        };
+    });
+    // Chromium reports install-event promise rejections here even when they do
+    // not produce a page error or console call. Observation only: no worker
+    // source, request, response, lifecycle, or browser security settings change.
+    try {
+        const cdp = await context.newCDPSession(page);
+        cdp.on('ServiceWorker.workerErrorReported', event =>
+            record('cdpWorkerEvents', { type: 'worker-error', ...event }, true));
+        cdp.on('ServiceWorker.workerVersionUpdated', event =>
+            record('cdpWorkerEvents', { type: 'worker-versions', ...event }, true));
+        cdp.on('ServiceWorker.workerRegistrationUpdated', event =>
+            record('cdpWorkerEvents', { type: 'worker-registrations', ...event }, true));
+        await cdp.send('ServiceWorker.enable');
+    } catch (error) {
+        record('cdpWorkerEvents', { type: 'diagnostic-unavailable', message: error.message }, true);
+    }
 }
 
 async function cacheInventory(page, appURL, release) {
@@ -378,7 +520,9 @@ async function runScenario(browser, profile, appURL) {
     const scenario = {
         name: profile.name + '-' + mountName, appURL, viewport: profile.viewport,
         status: 'running', checks: [], screenshots: [], pageErrors: [],
-        consoleErrors: [], failedRequests: [], blockedExternalRequests: []
+        consoleErrors: [], failedRequests: [], blockedExternalRequests: [],
+        contextConsole: [], serviceWorkerEvents: [], workerDiagnostics: [],
+        workerNetwork: [], cdpWorkerEvents: []
     };
     report.scenarios.push(scenario);
     const context = await browser.newContext({
@@ -397,12 +541,7 @@ async function runScenario(browser, profile, appURL) {
     page.setDefaultTimeout(15000);
     page.setDefaultNavigationTimeout(45000);
     page.on('pageerror', error => scenario.pageErrors.push(message(error)));
-    page.on('console', event => {
-        if (event.type() === 'error') scenario.consoleErrors.push(event.text());
-    });
-    page.on('requestfailed', request => scenario.failedRequests.push({
-        url: request.url(), error: request.failure()?.errorText
-    }));
+    await installWorkerDiagnostics(context, page, scenario);
     await page.addInitScript(() => {
         window.__wordkingTestCspViolations = [];
         window.addEventListener('securitypolicyviolation', event => {
@@ -524,13 +663,18 @@ async function runScenario(browser, profile, appURL) {
                 loading: document.getElementById('app-loading-message')?.textContent,
                 pwaStatus: document.getElementById('pwa-status')?.textContent,
                 offline: window.WordKingOffline, account: window.__wordkingFixture?.account,
-                fixtureEvents: window.__wordkingFixture?.events.slice(-30)
+                fixtureEvents: window.__wordkingFixture?.events.slice(-30),
+                workerDiagnostics: window.__wordkingTestWorkerDiagnostics
             }));
         } catch { /* Preserve the original failure. */ }
+        process.stdout.write('FAILURE ' + scenario.name + ' | ' +
+            JSON.stringify({ error: scenario.error, state: scenario.failureState,
+                workerNetwork: scenario.workerNetwork, cdpWorkerEvents: scenario.cdpWorkerEvents }) + '\n');
     } finally {
         await context.close();
     }
     process.stdout.write(scenario.status.toUpperCase() + ' ' + scenario.name + '\n');
+    return scenario;
 }
 
 async function main() {
@@ -543,8 +687,23 @@ async function main() {
             args: ['--mute-audio']
         });
         report.browserVersion = browser.version();
-        for (const appURL of mounts) {
-            for (const profile of profiles) await runScenario(browser, profile, appURL);
+        const cases = mounts.flatMap(appURL => profiles.map(profile => ({ appURL, profile })));
+        report.plannedScenarios = cases.length;
+        let startupFailures = 0;
+        for (let index = 0; index < cases.length; index += 1) {
+            const { appURL, profile } = cases[index];
+            const scenario = await runScenario(browser, profile, appURL);
+            if (scenario.error?.code === 'PWA_WORKER_STARTUP') startupFailures += 1;
+            if (startupFailures >= 2 && index + 1 < cases.length) {
+                report.stoppedEarly = {
+                    reason: 'Two independent contexts failed to activate a real Service Worker.',
+                    unrun: cases.slice(index + 1).map(item => ({
+                        appURL: item.appURL, viewport: item.profile.name, status: 'not-run'
+                    }))
+                };
+                process.stdout.write('STOPPED EARLY | ' + JSON.stringify(report.stoppedEarly) + '\n');
+                break;
+            }
         }
         report.status = report.scenarios.every(scenario => scenario.status === 'passed') ? 'passed' : 'failed';
     } catch (error) {

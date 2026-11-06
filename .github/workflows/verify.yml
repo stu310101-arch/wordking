@@ -61,6 +61,7 @@ jobs:
       - name: Test mobile and desktop installation, offline privacy, and practice
         env:
           WORDKING_TEST_ARTIFACTS: ${{ github.workspace }}/.test-artifacts/pwa
+          WORDKING_FIXTURE_DIAGNOSTICS: '1'
         run: |
           mkdir -p .test-artifacts
           node tests/helpers/ui-fixture-server.cjs > .test-artifacts/fixture.log 2>&1 &

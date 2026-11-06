@@ -84,7 +84,7 @@ export function initializeApp(config) { log('initialize-local-fixture'); return 
 export function getAuth() { return auth; }
 export const browserSessionPersistence = { type: 'SESSION' };
 export const inMemoryPersistence = { type: 'NONE' };
-export async function setPersistence(instance, persistence) { log('auth:persistence', { type: persistence.type }); }
+export async function setPersistence(instance, persistence) { log('auth:persistence', { persistence: persistence.type }); }
 export function onAuthStateChanged(instance, next) { authListeners.add(next); setTimeout(() => { if(authListeners.has(next)) next(auth.currentUser); }, 35); return () => authListeners.delete(next); }
 export class GoogleAuthProvider {}
 export async function signInWithPopup() { await fixture.setAccount('a'); return { user:auth.currentUser }; }
@@ -107,6 +107,10 @@ export function deleteField() { return { __fixtureDeleteField:true }; }
 const mime = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.json':'application/json; charset=utf-8', '.webmanifest':'application/manifest+json; charset=utf-8', '.css':'text/css; charset=utf-8', '.svg':'image/svg+xml', '.png':'image/png', '.jpg':'image/jpeg', '.ico':'image/x-icon', '.mp3':'audio/mpeg', '.woff2':'font/woff2' };
 const server = http.createServer((request, response) => {
     const url = new URL(request.url, 'http://127.0.0.1:4174');
+    if (process.env.WORDKING_FIXTURE_DIAGNOSTICS === '1') response.on('finish', () => {
+        console.log(JSON.stringify({ method: request.method, path: url.pathname + url.search,
+            status: response.statusCode, type: response.getHeader('Content-Type') }));
+    });
     response.setHeader('Cache-Control', 'no-store');
     response.setHeader('X-Content-Type-Options', 'nosniff');
     response.setHeader('X-Wordking-Fixture', 'Local mock Firebase; no real account access');
