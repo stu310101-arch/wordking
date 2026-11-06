@@ -125,6 +125,75 @@ test('installation validates the complete public allowlist without credentials o
     assert.equal(status.release, h.RELEASE);
 });
 
+test('installation drains streamed bodies before exhausting a bounded connection pool', async () => {
+    const waiting = [];
+    const active = new Set();
+    let peakConnections = 0;
+    let queuedRequests = 0;
+    let completedBodies = 0;
+    const acquire = () => new Promise((resolve, reject) => {
+        const begin = () => {
+            const connection = { fail: null };
+            active.add(connection);
+            peakConnections = Math.max(peakConnections, active.size);
+            resolve(connection);
+        };
+        if (active.size < 2) begin();
+        else { queuedRequests += 1; waiting.push({ begin, reject }); }
+    });
+    const release = connection => {
+        if (!active.delete(connection)) return;
+        waiting.shift()?.begin();
+    };
+    const h = workerHarness({ fetch: async request => {
+        const connection = await acquire();
+        const template = publicResponse(request.url);
+        const bytes = new Uint8Array(await template.arrayBuffer());
+        let offset = 0;
+        // Headers arrive immediately, but an unread body retains its connection.
+        // A zero high-water mark prevents this transport from draining itself.
+        const stream = new ReadableStream({
+            start(controller) { connection.fail = error => controller.error(error); },
+            pull(controller) {
+                if (offset < bytes.length) {
+                    controller.enqueue(bytes.subarray(offset, offset += 8));
+                } else {
+                    controller.close();
+                    completedBodies += 1;
+                    release(connection);
+                }
+            },
+            cancel() { release(connection); }
+        }, { highWaterMark: 0 });
+        const response = new Response(stream, { headers: template.headers });
+        Object.defineProperty(response, 'url', { value: request.url });
+        return response;
+    } });
+    let deadline;
+    const installation = h.lifecycle('install');
+    try {
+        await Promise.race([
+            installation,
+            new Promise((resolve, reject) => {
+                deadline = setTimeout(() => reject(new Error('Unread response bodies blocked the connection pool')), 1000);
+            })
+        ]);
+        assert.equal(peakConnections, 2);
+        assert.ok(queuedRequests > 0, 'The install must encounter the connection limit');
+        assert.equal(completedBodies, h.PRECACHE_URLS.length);
+        assert.equal(active.size, 0);
+        assert.equal(h.stores.get(h.CACHE_NAME).size, h.PRECACHE_URLS.length);
+        assert.deepEqual(await h.stores.get(h.CACHE_NAME).get(h.WORDS_URL).clone().json(), publicWords);
+    } finally {
+        clearTimeout(deadline);
+        const error = new Error('Connection-pool test finished');
+        for (const entry of waiting.splice(0)) entry.reject(error);
+        for (const connection of active) connection.fail?.(error);
+        active.clear();
+        await installation.catch(() => {});
+    }
+});
+
 test('a failed public resource validation cannot publish a partially prepared shell', async () => {
     for (const invalid of [
         () => new Response('login', { headers: { 'content-type': 'text/html' } }),

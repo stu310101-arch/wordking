@@ -59,7 +59,13 @@ async function fetchPublic(request, timeout = 5000) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeout);
     try {
-        return await fetch(request, { signal: controller.signal });
+        const response = await fetch(request, { signal: controller.signal });
+        // Drain each body while its request owns a network connection. Waiting
+        // for every response header before consuming bodies can exhaust the
+        // browser's connection/stream buffers during parallel installation.
+        // Read a clone to preserve the original response URL and cache metadata.
+        await response.clone().arrayBuffer();
+        return response;
     } finally {
         clearTimeout(timer);
     }
