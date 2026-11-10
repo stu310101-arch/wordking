@@ -157,6 +157,8 @@ let authSessionGeneration = 0;
 let isUserDataReady = false;
 let publicDataPromise = null;
 let publicDataReady = false;
+let pendingPublicCatalog = null;
+let publicCatalogUpdateTimer = null;
 let hasDisplayedSession = false;
 let isCloudLoading = false;
 let cloudLoadGeneration = 0;
@@ -457,6 +459,72 @@ async function loadDefaultWordDatabase() {
     if (generation !== catalogLoadGeneration) throw new Error('公用單字載入已由新的請求取代。');
     publicCatalog = catalog;
     state.lessonFolderIds = wordData.getPublicLessonIds(catalog).map(id => groupKey('lesson', id));
+}
+
+function reportPublicCatalogStatus(status) {
+    window.WordKingPublicCatalogStatus = status;
+    if (typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+        window.dispatchEvent(new CustomEvent('wordking-public-catalog-status', { detail: { status } }));
+    }
+}
+
+function schedulePublicCatalogUpdate() {
+    if (!pendingPublicCatalog || publicCatalogUpdateTimer !== null) return;
+    publicCatalogUpdateTimer = setTimeout(() => {
+        publicCatalogUpdateTimer = null;
+        applyPendingPublicCatalog();
+    }, 1000);
+}
+
+function applyPendingPublicCatalog() {
+    if (!pendingPublicCatalog) return false;
+    // The download is already durable. Keep this session's questions, drafts,
+    // account load and pending writes on their original catalog until safe.
+    if (!publicDataReady || !isUserDataReady || !userWordState || isCloudLoading
+        || activeCloudWrites > 0 || isSyncing || state.recovery || state.isEditing
+        || !state.game.isFinished || getOpenModal() || isSearchComposing) {
+        reportPublicCatalogStatus('pending');
+        schedulePublicCatalogUpdate();
+        return false;
+    }
+    const catalog = pendingPublicCatalog;
+    pendingPublicCatalog = null;
+    if (publicCatalogUpdateTimer !== null) clearTimeout(publicCatalogUpdateTimer);
+    publicCatalogUpdateTimer = null;
+    if (JSON.stringify(catalog) === JSON.stringify(publicCatalog)) {
+        reportPublicCatalogStatus('applied');
+        return true;
+    }
+    try {
+        // This API checks personal English conflicts before replacing its map.
+        // It preserves every sparse override, private folder and custom word.
+        userWordState.setPublicCatalog(catalog);
+    } catch {
+        reportPublicCatalogStatus('conflict');
+        return false;
+    }
+    publicCatalog = catalog;
+    refreshDerivedView();
+    refreshFolders();
+    refreshSearchSuggestionsForCurrentData();
+    rerenderVisibleView();
+    reportPublicCatalogStatus('applied');
+    return true;
+}
+
+function receivePublicCatalogUpdate() {
+    const raw = window.WordKingPendingPublicCatalog;
+    if (!raw) return;
+    window.WordKingPendingPublicCatalog = null;
+    try {
+        const catalog = wordData.normalizeCatalog(raw);
+        if (!catalog.length) return;
+        pendingPublicCatalog = catalog;
+        applyPendingPublicCatalog();
+    } catch {
+        // Invalid public data never replaces a usable session.
+        reportPublicCatalogStatus('invalid');
+    }
 }
 
 function clearPracticeSession() {
@@ -953,6 +1021,10 @@ function updateAppLoading(message) {
 }
 
 function finishAppLoading() {
+    // A PWA sync can finish before the initial catalog/auth bootstrap. Consume
+    // its snapshot only after those older loads have settled.
+    receivePublicCatalogUpdate();
+    applyPendingPublicCatalog();
     const loading = document.getElementById('app-loading');
     document.body.setAttribute('aria-busy', 'false');
     setAppContentBlocked(false);
@@ -3840,4 +3912,5 @@ async function bootstrap() {
     }
 }
 
+window.addEventListener('wordking-public-catalog', receivePublicCatalogUpdate);
 document.addEventListener('DOMContentLoaded', bootstrap);

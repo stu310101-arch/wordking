@@ -16,7 +16,7 @@
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="icon" type="image/svg+xml" href="./assets/icons/icon.svg">
     <link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/apple-touch-icon.png">
-    <link rel="stylesheet" href="./assets/pwa.css?v=20261106-pwa-security-2">
+    <link rel="stylesheet" href="./assets/pwa.css?v=20261110-public-sync-1">
 
     <style>
         #app-loading {
@@ -83,8 +83,8 @@
         }
     </style>
 
-    <link rel="stylesheet" href="./assets/tailwind.css?v=20261106-pwa-security-2">
-    <link rel="stylesheet" href="./assets/styles.css?v=20261106-pwa-security-2">
+    <link rel="stylesheet" href="./assets/tailwind.css?v=20261110-public-sync-1">
+    <link rel="stylesheet" href="./assets/styles.css?v=20261110-public-sync-1">
 </head>
 <body class="bg-gray-50 min-h-screen font-sans pb-24" aria-busy="true">
 
@@ -251,12 +251,13 @@
                 <button id="pwa-install" type="button" class="pwa-button pwa-button--primary" hidden>安裝單字王</button>
             </div>
             <details id="pwa-install-help">
-                <summary>查看手機安裝方式</summary>
+                <summary>查看手機／平板安裝方式</summary>
                 <p><strong>iPhone／iPad：</strong>用 Safari 開啟本站，點「分享」→「加入主畫面」→「加入」。</p>
-                <p><strong>Android：</strong>點「安裝單字王」，或從瀏覽器選單選擇「安裝應用程式」或「新增至主畫面」。</p>
+                <p><strong>Android 手機／平板：</strong>點「安裝單字王」，或從瀏覽器選單選擇「安裝應用程式」或「新增至主畫面」。</p>
                 <p>若是在通訊軟體內開啟，請先用手機的瀏覽器開啟本站。</p>
             </details>
             <p id="pwa-status" class="pwa-note" role="status" aria-live="polite">正在準備公用單字的離線版本…</p>
+            <p id="pwa-sync-status" class="pwa-note" role="status" aria-live="polite">開啟或回到單字王並連網時，會自動下載最新公用字庫。</p>
             <p class="pwa-note">離線練習僅使用公用單字；個人單字、資料夾與同步需要連線。音樂不會下載到離線版本。</p>
         </section>
     </div>
@@ -633,10 +634,10 @@
 </div>
 
 <!-- 共用資料合併規則與主程式 -->
-<script defer src="./assets/pwa.js?v=20261106-pwa-security-2"></script>
-<script src="./assets/word-data.js?v=20261106-pwa-security-2"></script>
-<script src="./assets/migration.js?v=20261106-pwa-security-2"></script>
-<script src="./assets/persistence.js?v=20261106-pwa-security-2"></script>
-<script type="module" src="./assets/app.js?v=20261106-pwa-security-2"></script>
+<script defer src="./assets/pwa.js?v=20261110-public-sync-1"></script>
+<script src="./assets/word-data.js?v=20261110-public-sync-1"></script>
+<script src="./assets/migration.js?v=20261110-public-sync-1"></script>
+<script src="./assets/persistence.js?v=20261110-public-sync-1"></script>
+<script type="module" src="./assets/app.js?v=20261110-public-sync-1"></script>
 </body>
 </html>

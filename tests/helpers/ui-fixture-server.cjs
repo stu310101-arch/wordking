@@ -5,6 +5,19 @@ const fs = require('node:fs');
 const path = require('node:path');
 const repoRoot = path.resolve(__dirname, '../..');
 const words = JSON.parse(fs.readFileSync(path.join(repoRoot, 'data/words.json'), 'utf8'));
+// Test-only public releases exercise a data-only deployment without changing
+// repository files or serving a different application shell.
+const catalogModes = new Map();
+const catalogRequests = new Map();
+const refreshedWords = JSON.parse(JSON.stringify(words));
+const refreshedDefinition = '公用字庫更新測試';
+refreshedWords[0].meanings[0].definitions.push(refreshedDefinition);
+const refreshedWord = {
+    id: 'w_999999', english: 'offlinecatalogfixture',
+    meanings: [{ partOfSpeech: 'noun', definitions: ['連網自動更新測試字'] }],
+    lessonIds: ['死神單字L5U99'], isWrong: false
+};
+refreshedWords.push(refreshedWord);
 const legacyWords = JSON.parse(fs.readFileSync(path.join(repoRoot, 'migration/legacy-catalog.json'), 'utf8'));
 const find = english => legacyWords.find(word => word.english === english);
 const records = {};
@@ -117,9 +130,32 @@ const server = http.createServer((request, response) => {
     let decoded;
     try { decoded = decodeURIComponent(url.pathname); } catch { response.writeHead(400); response.end('Bad path'); return; }
     // Exercise a domain root and GitHub Pages project scope with identical source.
-    if (decoded.startsWith('/wordking/')) decoded = decoded.slice('/wordking'.length);
+    const mount = decoded.startsWith('/wordking/') ? '/wordking/' : '/';
+    if (mount === '/wordking/') decoded = decoded.slice('/wordking'.length);
+    if (decoded === '/__fixture-public-catalog') {
+        if (request.method !== 'POST' || request.headers['x-wordking-test'] !== 'public-catalog') {
+            response.writeHead(405); response.end(); return;
+        }
+        const mode = url.searchParams.get('mode');
+        if (!['baseline', 'updated', 'invalid'].includes(mode)) {
+            response.writeHead(400); response.end('Unknown fixture catalog'); return;
+        }
+        catalogModes.set(mount, mode);
+        response.setHeader('Content-Type', mime['.json']);
+        response.end(JSON.stringify({ mode, requests: catalogRequests.get(mount) || 0,
+            added: refreshedWord, updatedWordId: words[0].id, addedDefinition: refreshedDefinition }));
+        return;
+    }
     if (!['GET', 'HEAD'].includes(request.method)) { response.writeHead(405); response.end(); return; }
     if (decoded === '/__fixture-info') { response.setHeader('Content-Type', mime['.json']); response.end(JSON.stringify({ fixture: true, seededWords: ['penetrate', 'penetrating', 'penetration', 'exclaim', 'absurd', 'fixtureword'] })); return; }
+    if (decoded === '/data/words.json') {
+        catalogRequests.set(mount, (catalogRequests.get(mount) || 0) + 1);
+        response.setHeader('Content-Type', mime['.json']);
+        const mode = catalogModes.get(mount) || 'baseline';
+        const catalog = mode === 'updated' ? refreshedWords : mode === 'invalid' ? [{}] : words;
+        if (request.method === 'HEAD') response.end(); else response.end(JSON.stringify(catalog));
+        return;
+    }
     if (decoded === '/assets/vendor/firebase-12.19.0/firebase-app.js') { response.setHeader('Content-Type', mime['.js']); response.end(mockFirebase()); return; }
     if (/^\/assets\/vendor\/firebase-12\.19\.0\/firebase-(auth|firestore)\.js$/.test(decoded)) { response.setHeader('Content-Type', mime['.js']); response.end('export * from "./firebase-app.js";\n'); return; }
     if (!['/', '/index.html', '/sw.js', '/manifest.webmanifest'].includes(decoded) && !/^\/(assets|data|migration|background music)\//.test(decoded)) { response.writeHead(404); response.end(); return; }

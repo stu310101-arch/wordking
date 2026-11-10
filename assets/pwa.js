@@ -13,6 +13,14 @@
     let reloadRequested = false;
     let reloadStarted = false;
     let lastUpdateCheck = 0;
+    let supportsPublicSync = false;
+    let readinessGeneration = 0;
+    let syncPromise = null;
+    let lastSuccessfulSync = 0;
+    let retryTimer = null;
+    let retryCount = 0;
+    let syncState = 'idle';
+    let syncedWordCount = 0;
     const displayMode = window.matchMedia('(display-mode: standalone)');
     const element = id => document.getElementById(id);
     const standalone = () => installed || displayMode.matches || navigator.standalone === true;
@@ -43,8 +51,93 @@
         element('pwa-network-title').textContent = disconnected ? '目前離線' : '公用單字模式';
         element('pwa-offline-message').textContent = disconnected
             ? '可練習已載入的公用單字。登入、個人資料與同步需要連線。'
-            : '目前僅使用公用單字。確認網路恢復後，可重新載入以使用登入與同步。';
+            : '公用字庫會自動下載更新；登入與個人同步可按「重新連線」恢復。';
         element('pwa-reconnect').hidden = disconnected || !publicMode;
+        renderPublicSync();
+    }
+
+    function renderPublicSync() {
+        const status = element('pwa-sync-status');
+        if (!status) return;
+        const applicationStatus = window.WordKingPublicCatalogStatus;
+        status.textContent = unsupported
+            ? '公用字庫自動下載需要支援 PWA 的瀏覽器。'
+            : navigator.onLine === false
+            ? '恢復連線後會自動檢查並下載新版公用字庫。'
+            : syncState === 'syncing'
+                ? '正在檢查並下載公用字庫更新…'
+                : syncState === 'failed'
+                    ? '暫時無法更新公用字庫，已保留上次下載；連線穩定後會自動重試。'
+                    : syncState === 'saved'
+                        ? applicationStatus === 'pending'
+                            ? `已保存 ${syncedWordCount} 個公用單字；目前的練習、編輯或載入結束後會自動套用。`
+                            : applicationStatus === 'conflict'
+                                ? '新版公用字庫已下載；與個人單字有衝突，目前保留你的原有內容。'
+                                : applicationStatus === 'invalid'
+                                    ? '公用字庫格式暫時不相容，目前保留已載入的內容。'
+                                    : offlineReady
+                                        ? `已同步 ${syncedWordCount} 個公用單字，下次離線也能使用。`
+                                        : `已保存 ${syncedWordCount} 個公用單字，網站的離線準備尚未完成。`
+                        : readinessChecked && !supportsPublicSync && registration?.active
+                            ? '請套用新版單字王，啟用公用字庫自動下載。'
+                            : '開啟或回到單字王並連網時，會自動下載最新公用字庫。';
+    }
+
+    function cancelSyncRetry() {
+        if (retryTimer !== null) clearTimeout(retryTimer);
+        retryTimer = null;
+    }
+
+    function scheduleSyncRetry() {
+        cancelSyncRetry();
+        if (navigator.onLine === false || document.visibilityState === 'hidden') return;
+        const delay = Math.min(15000 * 2 ** retryCount, 300000);
+        retryCount = Math.min(retryCount + 1, 5);
+        retryTimer = setTimeout(() => {
+            retryTimer = null;
+            void syncPublicWords({ force: true });
+        }, delay);
+    }
+
+    async function syncPublicWords({ force = false } = {}) {
+        if (syncPromise) return syncPromise;
+        if (!registration?.active || !supportsPublicSync || navigator.onLine === false
+            || !('MessageChannel' in window)) return;
+        if (!force && lastSuccessfulSync && Date.now() - lastSuccessfulSync < 60000
+            && syncState !== 'failed') return;
+        cancelSyncRetry();
+        syncState = 'syncing';
+        renderPublicSync();
+        const worker = registration.active;
+        syncPromise = (async () => {
+            const result = await new Promise(resolve => {
+                const channel = new MessageChannel();
+                const timer = setTimeout(() => { channel.port1.close(); resolve(null); }, 15000);
+                channel.port1.onmessage = event => {
+                    if (event.data?.type !== 'PUBLIC_WORDS_SYNC') return;
+                    clearTimeout(timer);
+                    channel.port1.close();
+                    resolve(event.data);
+                };
+                try { worker.postMessage({ type: 'SYNC_PUBLIC_WORDS' }, [channel.port2]); }
+                catch { clearTimeout(timer); channel.port1.close(); resolve(null); }
+            });
+            if (result?.ok && Array.isArray(result.words) && result.words.length) {
+                syncState = 'saved';
+                lastSuccessfulSync = Date.now();
+                syncedWordCount = result.words.length;
+                retryCount = 0;
+                // Keep the snapshot if app.js is still loading its module graph.
+                window.WordKingPendingPublicCatalog = result.words;
+                window.dispatchEvent(new CustomEvent('wordking-public-catalog'));
+            } else {
+                syncState = 'failed';
+                scheduleSyncRetry();
+            }
+            renderPublicSync();
+            void refreshReadiness();
+        })().finally(() => { syncPromise = null; });
+        return syncPromise;
     }
 
     function renderWaitingUpdate() {
@@ -60,6 +153,7 @@
     async function refreshReadiness() {
         if (!registration?.active || !('MessageChannel' in window)) return;
         const worker = registration.active;
+        const generation = ++readinessGeneration;
         const result = await new Promise(resolve => {
             const channel = new MessageChannel();
             const timer = setTimeout(() => { channel.port1.close(); resolve(false); }, 3000);
@@ -67,11 +161,15 @@
                 if (event.data?.type !== 'OFFLINE_STATUS') return;
                 clearTimeout(timer);
                 channel.port1.close();
+                if (registration.active === worker && generation === readinessGeneration) {
+                    supportsPublicSync = event.data.publicSync === true;
+                }
                 resolve(event.data.ready === true);
             };
             try { worker.postMessage({ type: 'GET_OFFLINE_STATUS' }, [channel.port2]); }
             catch { clearTimeout(timer); channel.port1.close(); resolve(false); }
         });
+        if (registration.active !== worker || generation !== readinessGeneration) return;
         offlineReady = result;
         readinessChecked = true;
         renderConnection();
@@ -101,7 +199,9 @@
                 if (!worker) return;
                 worker.addEventListener('statechange', () => {
                     renderWaitingUpdate();
-                    if (worker.state === 'activated') void refreshReadiness();
+                    if (worker.state === 'activated') {
+                        void refreshReadiness().then(() => syncPublicWords({ force: true }));
+                    }
                     if (worker.state === 'redundant' && !registration.active) {
                         registrationFailed = true;
                         renderConnection();
@@ -111,6 +211,7 @@
             registration.addEventListener('updatefound', observeInstalling);
             observeInstalling();
             await refreshReadiness();
+            void syncPublicWords();
         } catch {
             registrationFailed = true;
             renderConnection();
@@ -158,24 +259,34 @@
                 return;
             }
             // The first installation claims the page without resetting its state.
-            void refreshReadiness();
+            void refreshReadiness().then(() => syncPublicWords({ force: true }));
         });
-        const connectionChanged = () => {
+        window.addEventListener('online', () => {
+            retryCount = 0;
+            renderConnection();
+            void refreshReadiness().then(() => syncPublicWords({ force: true }));
+        });
+        window.addEventListener('offline', () => {
+            cancelSyncRetry();
             renderConnection();
             void refreshReadiness();
-        };
-        window.addEventListener('online', connectionChanged);
-        window.addEventListener('offline', connectionChanged);
+        });
         window.addEventListener('wordking-offline-mode', renderConnection);
-        document.addEventListener('visibilitychange', () => {
+        window.addEventListener('wordking-public-catalog-status', renderPublicSync);
+        const resume = () => {
             if (document.visibilityState !== 'visible') return;
             renderWaitingUpdate();
-            void refreshReadiness();
+            void refreshReadiness().then(() => syncPublicWords());
             if (registration && navigator.onLine !== false && Date.now() - lastUpdateCheck > 60000) {
                 lastUpdateCheck = Date.now();
                 void registration.update().catch(() => {});
             }
+        };
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') cancelSyncRetry();
+            else resume();
         });
+        window.addEventListener('pageshow', resume);
         if (displayMode.addEventListener) displayMode.addEventListener('change', renderInstall);
         else if (displayMode.addListener) displayMode.addListener(renderInstall);
         void registerWorker();

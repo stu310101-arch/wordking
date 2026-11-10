@@ -91,6 +91,44 @@ async function publicWords(page) {
     })).sort((a, b) => a.id.localeCompare(b.id)));
 }
 
+async function setFixtureCatalog(appURL, mode) {
+    const target = new URL('__fixture-public-catalog', appURL);
+    target.searchParams.set('mode', mode);
+    const response = await fetch(target, {
+        method: 'POST', headers: { 'X-WordKing-Test': 'public-catalog' },
+        redirect: 'error', signal: AbortSignal.timeout(10000)
+    });
+    assert.equal(response.status, 200, 'The disposable catalog release must be available');
+    assert.ok(response.headers.get('x-wordking-fixture'));
+    return response.json();
+}
+
+function publicCacheName(appURL) {
+    return 'wordking-pwa:' + encodeURIComponent(new URL(appURL).pathname) + ':public-words-v1';
+}
+
+async function cachedPublicWords(page, appURL) {
+    return page.evaluate(async ({ name, url }) => {
+        const cache = await caches.open(name);
+        const response = await cache.match(url);
+        return response ? response.json() : null;
+    }, { name: publicCacheName(appURL), url: new URL('data/words.json', appURL).href });
+}
+
+async function reconnectPublicApp(context, page) {
+    const before = await page.evaluate(() => window.__wordkingTestOnlineEvents || 0);
+    await context.setOffline(false);
+    // Chromium transport emulation can leave the OS online hint unchanged.
+    // Exercise the public browser event (never an internal sync function) when
+    // emulation did not itself emit it; the fetch still uses the real network.
+    const nativeEvent = await page.evaluate(previous => {
+        if ((window.__wordkingTestOnlineEvents || 0) > previous) return true;
+        window.dispatchEvent(new Event('online'));
+        return false;
+    }, before);
+    return { onlineEvent: nativeEvent ? 'browser' : 'dispatched for transport emulation' };
+}
+
 async function noHorizontalOverflow(page) {
     const sizes = await page.evaluate(() => ({
         viewport: document.documentElement.clientWidth,
@@ -300,10 +338,13 @@ async function cacheInventory(page, appURL, release) {
     });
     const mount = new URL(appURL);
     const prefix = 'wordking-pwa:' + encodeURIComponent(mount.pathname) + ':';
-    assert.equal(inventory.length, 1, 'A fresh browser context should contain one app cache');
-    assert.equal(inventory[0].name, prefix + release);
+    assert.equal(inventory.length, 2, 'The public catalog must survive separately from shell releases');
+    const shellCache = inventory.find(cache => cache.name === prefix + release);
+    const dataCache = inventory.find(cache => cache.name === publicCacheName(appURL));
+    assert.ok(shellCache, 'Missing the exact installed shell cache');
+    assert.ok(dataCache, 'Missing the release-independent public catalog cache');
     const unversioned = [
-        'index.html', 'manifest.webmanifest', 'data/words.json',
+        'index.html', 'manifest.webmanifest',
         'assets/icons/icon.svg', 'assets/icons/icon-192.png', 'assets/icons/icon-512.png',
         'assets/icons/icon-maskable-512.png', 'assets/icons/apple-touch-icon.png',
         'assets/vendor/firebase-12.19.0/firebase-app.js',
@@ -319,7 +360,7 @@ async function cacheInventory(page, appURL, release) {
         ...unversioned.map(relative => new URL(relative, appURL).href),
         ...versioned.map(relative => new URL(relative + '?v=' + release, appURL).href)
     ]);
-    const entries = inventory[0].entries;
+    const entries = shellCache.entries;
     for (const entry of entries) {
         assert.equal(entry.method, 'GET');
         assert.equal(entry.authorization, false);
@@ -328,6 +369,9 @@ async function cacheInventory(page, appURL, release) {
     }
     assert.deepEqual(entries.map(entry => entry.url).sort(), [...allowed].sort(),
         'Cache must contain the complete public allowlist, without API, private, media, or unrelated URLs');
+    assert.deepEqual(dataCache.entries, [{ url: new URL('data/words.json', appURL).href,
+        method: 'GET', authorization: false, cookie: false }],
+    'The public data store must contain only the fixed public catalog URL');
     return inventory;
 }
 
@@ -550,6 +594,9 @@ async function runScenario(browser, profile, appURL) {
     await installWorkerDiagnostics(context, page, scenario);
     await page.addInitScript(() => {
         window.__wordkingTestCspViolations = [];
+        window.__wordkingTestOnlineEvents = 0;
+        window.__wordkingTestNavigationToken = Math.random().toString(36);
+        window.addEventListener('online', () => { window.__wordkingTestOnlineEvents += 1; });
         window.addEventListener('securitypolicyviolation', event => {
             window.__wordkingTestCspViolations.push({
                 directive: event.effectiveDirective, blockedURI: event.blockedURI
@@ -557,6 +604,7 @@ async function runScenario(browser, profile, appURL) {
         });
     });
     try {
+        await setFixtureCatalog(appURL, 'baseline');
         await check(scenario, 'fresh public startup and mobile/desktop layout', async () => {
             const response = await page.goto(appURL + '?page=home', { waitUntil: 'domcontentloaded' });
             assert.ok(response.headers()['x-wordking-fixture']);
@@ -649,18 +697,106 @@ async function runScenario(browser, profile, appURL) {
             await screenshot(page, scenario, 'offline-library-guards');
             return guarded;
         });
-        await check(scenario, 'reconnect remains public until explicit reload', async () => {
-            await context.setOffline(false);
+        let refreshedPublicWords;
+        let catalogRelease;
+        await check(scenario, 'reconnect automatically stores new public words without interrupting practice', async () => {
+            await practiceTree(page);
+            await page.locator('[data-start-mode="spelling"]').click();
+            await page.locator('#view-game-spelling').waitFor({ state: 'visible' });
+            const draft = 'keep-my-current-answer';
+            await page.locator('#spelling-input').fill(draft);
+            const practiceBefore = await page.evaluate(() => ({
+                words: window.state.game.currentWords, index: window.state.game.index,
+                history: window.state.game.answeredHistory,
+                navigationToken: window.__wordkingTestNavigationToken
+            }));
+            catalogRelease = await setFixtureCatalog(appURL, 'updated');
+            const event = await reconnectPublicApp(context, page);
             const reachable = await page.evaluate(async url => {
                 const response = await fetch(url, { cache: 'no-store' });
                 return response.ok;
             }, new URL('__fixture-info?reconnect-probe=1', appURL).href);
             assert.equal(reachable, true, 'The uncached network probe must succeed after reconnecting');
+            await page.waitForFunction(async ({ name, url, addedId }) => {
+                const cache = await caches.open(name);
+                const response = await cache.match(url);
+                const catalog = response ? await response.json() : [];
+                return catalog.some(word => word.id === addedId);
+            }, { name: publicCacheName(appURL), url: new URL('data/words.json', appURL).href,
+                addedId: catalogRelease.added.id }, { timeout: 20000 });
+            assert.deepEqual(await page.evaluate(() => ({
+                words: window.state.game.currentWords, index: window.state.game.index,
+                history: window.state.game.answeredHistory,
+                navigationToken: window.__wordkingTestNavigationToken
+            })), practiceBefore, 'Background catalog download must not replace an active quiz or reload the page');
+            assert.equal(await page.locator('#spelling-input').inputValue(), draft);
+            assert.equal(await page.evaluate(() => window.state.game.isFinished), false);
+            assert.deepEqual(await publicWords(page), baseline, 'Applying new definitions waits until practice is safe');
+            const cached = await cachedPublicWords(page, appURL);
+            assert.ok(cached.find(word => word.id === catalogRelease.updatedWordId)
+                .meanings.some(group => group.definitions.includes(catalogRelease.addedDefinition)));
+            await screenshot(page, scenario, 'public-update-during-practice');
+            await page.locator('#spelling-input').fill(practiceBefore.words[0].english);
+            await page.locator('#btn-spelling-submit').click();
+            await page.locator('#view-game-result').waitFor({ state: 'visible' });
+            await page.waitForFunction(id => window.state.words.some(word => word.id === id),
+                catalogRelease.added.id, { timeout: 10000 });
+            refreshedPublicWords = await publicWords(page);
+            assert.equal(refreshedPublicWords.length, baseline.length + 1);
+            assert.ok(refreshedPublicWords.find(word => word.id === catalogRelease.updatedWordId)
+                .meanings.some(group => group.definitions.includes(catalogRelease.addedDefinition)));
+            const lessonId = catalogRelease.added.lessonIds[0];
+            const course = await page.evaluate(id => ({
+                present: window.state.lessonFolderIds.includes('lesson:' + id),
+                parent: window.state.folderParents['lesson:' + id],
+                name: window.WordKingData.getPublicLessonName(id)
+            }), lessonId);
+            assert.deepEqual(course, { present: true, parent: 'series:shishen-lv5', name: '死神單字Lv5U99' },
+                'A data-only release must create a new course without replacing JavaScript');
             assert.equal(await page.evaluate(() => window.WordKingOffline), true);
-            assert.deepEqual(await publicWords(page), baseline);
+            assert.deepEqual(await page.evaluate(() => window.__wordkingFixture.documents), privateDocuments);
+            assert.deepEqual(await page.evaluate(() => window.__wordkingFixture.events.filter(event =>
+                /^(read:|write:|transaction|batch)/.test(event.type))), [],
+            'Public catalog refresh must not resume account reads or writes');
             await page.locator('#pwa-reconnect').waitFor({ state: 'visible' });
             await cacheInventory(page, appURL, worker.readiness.release);
+            await goHome(page);
             await screenshot(page, scenario, 'reconnected-public-mode');
+            return { ...event, added: 1, updatedDefinition: true,
+                deferredDuringPractice: true, dataOnlyCourse: course.name, automaticReloads: 0 };
+        });
+        await check(scenario, 'the downloaded catalog survives another offline launch', async () => {
+            await context.setOffline(true);
+            const response = await page.reload({ waitUntil: 'domcontentloaded' });
+            assert.ok(response.fromServiceWorker());
+            assert.equal(response.headers()['x-wordking-offline'], '1');
+            await appReady(page);
+            assert.deepEqual(await publicWords(page), refreshedPublicWords,
+                'New public words and changed meanings must remain available after an offline reload');
+            await cacheInventory(page, appURL, worker.readiness.release);
+            await screenshot(page, scenario, 'offline-updated-catalog');
+            return { storedPublicWords: refreshedPublicWords.length };
+        });
+        await check(scenario, 'an invalid update keeps the last downloaded catalog and remains usable offline', async () => {
+            await setFixtureCatalog(appURL, 'invalid');
+            const before = await cachedPublicWords(page, appURL);
+            const navigationToken = await page.evaluate(() => window.__wordkingTestNavigationToken);
+            const event = await reconnectPublicApp(context, page);
+            await page.waitForFunction(() => /未能|失敗|未完成|重試/.test(
+                document.getElementById('pwa-sync-status')?.textContent || ''), null, { timeout: 20000 });
+            assert.deepEqual(await cachedPublicWords(page, appURL), before,
+                'Invalid schema must never overwrite the last valid stored response');
+            assert.deepEqual(await publicWords(page), refreshedPublicWords);
+            assert.equal(await page.evaluate(() => window.__wordkingTestNavigationToken), navigationToken);
+            await context.setOffline(true);
+            const response = await page.reload({ waitUntil: 'domcontentloaded' });
+            assert.equal(response.headers()['x-wordking-offline'], '1');
+            await appReady(page);
+            assert.deepEqual(await publicWords(page), refreshedPublicWords);
+            assert.deepEqual(await page.evaluate(() => window.__wordkingFixture.events.filter(item =>
+                /^(read:|write:|transaction|batch)/.test(item.type))), []);
+            await screenshot(page, scenario, 'offline-after-rejected-update');
+            return { ...event, lastGoodCatalogPreserved: true, offlineReload: true };
         });
         await check(scenario, 'no uncaught JavaScript, CSP violations, or real Firebase requests', async () => {
             assert.deepEqual(scenario.pageErrors, []);
@@ -690,6 +826,7 @@ async function runScenario(browser, profile, appURL) {
                 workerNetwork: scenario.workerNetwork, cdpWorkerEvents: scenario.cdpWorkerEvents }) + '\n');
     } finally {
         await context.close();
+        await setFixtureCatalog(appURL, 'baseline');
     }
     process.stdout.write(scenario.status.toUpperCase() + ' ' + scenario.name + '\n');
     return scenario;
