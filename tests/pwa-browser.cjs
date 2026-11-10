@@ -115,6 +115,29 @@ async function cachedPublicWords(page, appURL) {
     }, { name: publicCacheName(appURL), url: new URL('data/words.json', appURL).href });
 }
 
+async function waitForPublicCatalog(page, appURL, release, timeout = 20000) {
+    const deadline = Date.now() + timeout;
+    let snapshot;
+    while (true) {
+        // Playwright's page.waitForFunction treats an async predicate's Promise
+        // as truthy before its boolean result. Await each CacheStorage read here.
+        snapshot = await cachedPublicWords(page, appURL);
+        const added = snapshot?.find(word => word.id === release.added.id);
+        const updated = snapshot?.find(word => word.id === release.updatedWordId);
+        if (added && updated?.meanings.some(group => group.definitions.includes(release.addedDefinition))) {
+            return snapshot;
+        }
+        if (Date.now() >= deadline) break;
+        await new Promise(resolve => setTimeout(resolve, 50));
+    }
+    assert.fail('Timed out waiting for the complete cached public release: ' + JSON.stringify({
+        expectedAddedId: release.added.id, expectedUpdatedId: release.updatedWordId,
+        expectedDefinition: release.addedDefinition,
+        actualAdded: snapshot?.find(word => word.id === release.added.id),
+        actualUpdated: snapshot?.find(word => word.id === release.updatedWordId)
+    }));
+}
+
 async function reconnectPublicApp(context, page) {
     const before = await page.evaluate(() => window.__wordkingTestOnlineEvents || 0);
     await context.setOffline(false);
@@ -721,13 +744,7 @@ async function runScenario(browser, profile, appURL) {
                 return response.ok;
             }, new URL('__fixture-info?reconnect-probe=1', appURL).href);
             assert.equal(reachable, true, 'The uncached network probe must succeed after reconnecting');
-            await page.waitForFunction(async ({ name, url, addedId }) => {
-                const cache = await caches.open(name);
-                const response = await cache.match(url);
-                const catalog = response ? await response.json() : [];
-                return catalog.some(word => word.id === addedId);
-            }, { name: publicCacheName(appURL), url: new URL('data/words.json', appURL).href,
-                addedId: catalogRelease.added.id }, { timeout: 20000 });
+            await waitForPublicCatalog(page, appURL, catalogRelease);
             assert.deepEqual(await page.evaluate(() => ({
                 words: window.state.game.currentWords, index: window.state.game.index,
                 history: window.state.game.answeredHistory,
@@ -737,8 +754,12 @@ async function runScenario(browser, profile, appURL) {
             assert.equal(await page.evaluate(() => window.state.game.isFinished), false);
             assert.deepEqual(await publicWords(page), baseline, 'Applying new definitions waits until practice is safe');
             const cached = await cachedPublicWords(page, appURL);
-            assert.ok(cached.find(word => word.id === catalogRelease.updatedWordId)
-                .meanings.some(group => group.definitions.includes(catalogRelease.addedDefinition)));
+            const cachedUpdatedWord = cached.find(word => word.id === catalogRelease.updatedWordId);
+            assert.ok(cachedUpdatedWord?.meanings.some(group => group.definitions.includes(catalogRelease.addedDefinition)),
+                'Cached public definition update is missing: ' + JSON.stringify({
+                    id: catalogRelease.updatedWordId, expected: catalogRelease.addedDefinition,
+                    actual: cachedUpdatedWord
+                }));
             await screenshot(page, scenario, 'public-update-during-practice');
             await page.locator('#spelling-input').fill(practiceBefore.words[0].english);
             await page.locator('#btn-spelling-submit').click();
@@ -747,8 +768,12 @@ async function runScenario(browser, profile, appURL) {
                 catalogRelease.added.id, { timeout: 10000 });
             refreshedPublicWords = await publicWords(page);
             assert.equal(refreshedPublicWords.length, baseline.length + 1);
-            assert.ok(refreshedPublicWords.find(word => word.id === catalogRelease.updatedWordId)
-                .meanings.some(group => group.definitions.includes(catalogRelease.addedDefinition)));
+            const appliedUpdatedWord = refreshedPublicWords.find(word => word.id === catalogRelease.updatedWordId);
+            assert.ok(appliedUpdatedWord?.meanings.some(group => group.definitions.includes(catalogRelease.addedDefinition)),
+                'Applied public definition update is missing: ' + JSON.stringify({
+                    id: catalogRelease.updatedWordId, expected: catalogRelease.addedDefinition,
+                    actual: appliedUpdatedWord
+                }));
             const lessonId = catalogRelease.added.lessonIds[0];
             const course = await page.evaluate(id => ({
                 present: window.state.lessonFolderIds.includes('lesson:' + id),
