@@ -447,6 +447,10 @@ async function practiceTree(page) {
     await goHome(page);
     await page.locator('#btn-home-practice').click();
     await page.locator('#view-practice').waitFor({ state: 'visible' });
+    // Returning to practice intentionally remembers the previous folder. Each
+    // tree assertion starts at the root through the same breadcrumb as a user.
+    const rootCrumb = page.locator('#practice-breadcrumb button').first();
+    if (await rootCrumb.count()) await rootCrumb.click();
     const tree = await page.evaluate(() => {
         const ids = window.state.folderIds;
         const parents = window.state.folderParents;
