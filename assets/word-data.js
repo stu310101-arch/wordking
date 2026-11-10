@@ -19,7 +19,8 @@
         '死神單字L5U12': '死神單字Lv5U12',
         '死神單字L5U13': '死神單字Lv5U13',
         '死神單字L5U14': '死神單字Lv5U14',
-        '死神單字L5U15': '死神單字Lv5U15'
+        '死神單字L5U15': '死神單字Lv5U15',
+        '死神單字L5U16': '死神單字Lv5U16'
     });
     const PUBLIC_SERIES = Object.freeze({
         'series:shengjing-lv5': '晟景Lv5',

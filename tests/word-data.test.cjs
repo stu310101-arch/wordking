@@ -44,12 +44,17 @@ const addedLessonImports={
  mustard:267 mutter:709 mutton:710 narrative:711 nasty:210 navigator:712 neutral:713 nibble:714 nightingale:715
  nobility:716 nominate:127 nomination:128 nominee:129 nonetheless:717 nonverbal:718 nonviolent:719 norm:720 notably:721
  noteworthy:722 noticeable:105 notify:132 notion:723 novelty:724 nutrient:725 nutrition:726 oar:727 oblong:728
- obscure:729 observer:730 odds:59`
+ obscure:729 observer:730 odds:59`,
+ '死神單字L5U16': `offering:731 opponent:732 opposition:733 optical:734 optimism:22 optimist:24 orchard:350 organism:735
+ originality:736 ostrich:737 outdo:738 outfit:739 outlet:740 output:741 outsider:136 outwards:742 overall:743
+ overhead:744 oversleep:745 overtake:746 overturn:747 overwhelm:268 overwhelming:269 pacific:748 pane:749
+ paradoxically:750 parallel:290 parlor:751 particle:752 partly:753 passerby:754 pastry:271 patch:755 patent:756
+ pathetic:757 patrol:758 patron:55 pawn:759 pawnshop:760 peasant:32 peck:761 pedal:762 peddler:763 pedestrian:764`
 };
 const addedLessonWords=Object.fromEntries(Object.entries(addedLessonImports).map(([lesson,source])=>[
  lesson,source.trim().split(/\s+/).map(pair=>{const [english,number]=pair.split(':');return {english,id:`w_${number.padStart(6,'0')}`};})
 ]));
-test('expanded catalog retains all 892 historical identity mappings and frozen backups',()=>{assert.deepEqual(validateCatalogFiles(),{words:730,memberships:850,aliases:17,legacyIds:446,mappedIds:892,lessonFiles:9,frozenFiles:14});});
+test('expanded catalog retains all 892 historical identity mappings and frozen backups',()=>{assert.deepEqual(validateCatalogFiles(),{words:764,memberships:894,aliases:17,legacyIds:446,mappedIds:892,lessonFiles:9,frozenFiles:14});});
 test('U2 imports 32 spellings with shared identities and retains all existing course memberships',()=>{
  const words=require('../data/words.json'), before=require('../migration/schema-v5-catalog.json');
  const shared={antique:'w_000157',applause:'w_000081',apt:'w_000060',asset:'w_000108',attendance:'w_000148',ballot:'w_000142',barren:'w_000322',batch:'w_000323',behalf:'w_000017'};
@@ -75,7 +80,7 @@ test('U2 imports 32 spellings with shared identities and retains all existing co
 });
 test('reviewed lessons import every spelling exactly once with stable shared and new identities',()=>{
  const words=require('../data/words.json');
- const counts={'死神單字Lv5U3':44,'死神單字Lv5U4':50,'死神單字Lv5U5':50,'死神單字L5U12':34,'死神單字L5U13':36,'死神單字L5U14':37,'死神單字L5U15':39};
+ const counts={'死神單字Lv5U3':44,'死神單字Lv5U4':50,'死神單字Lv5U5':50,'死神單字L5U12':34,'死神單字L5U13':36,'死神單字L5U14':37,'死神單字L5U15':39,'死神單字L5U16':44};
  assert.deepEqual(Object.keys(addedLessonWords),Object.keys(counts));
  for(const [lesson,expected] of Object.entries(addedLessonWords)){
   const imported=words.filter(w=>w.lessonIds.includes(lesson));
@@ -123,6 +128,48 @@ test('L5U14 and L5U15 preserve reviewer-confirmed loom and mutton and existing m
  assert.equal(words.filter(w=>w.lessonIds.includes('死神單字L5U14')).length,37);
  assert.equal(words.filter(w=>w.lessonIds.includes('死神單字L5U15')).length,39);
 });
+test('L5U16 reuses ten identities and appends confirmed meanings without replacing prior definitions or memberships',()=>{
+ const words=require('../data/words.json'),lesson='死神單字L5U16';
+ const shared={
+  optimism:['w_000022','晟景Lv5U6',M('樂觀；樂觀主義',['noun'])],
+  optimist:['w_000024','晟景Lv5U6',M('樂觀主義者',['noun'])],
+  orchard:['w_000350','晟景Lv5U12',M('果園',['noun'])],
+  outsider:['w_000136','晟景Lv5U8',M('局外人',['noun'])],
+  overwhelm:['w_000268','晟景Lv5U11',M('壓倒；使...震撼；淹沒；制服；征服；擊敗；充溢')],
+  overwhelming:['w_000269','晟景Lv5U11',M('壓倒性的；難以抵擋的；難以抗拒的',['adjective'])],
+  parallel:['w_000290','晟景Lv5U11',[
+   ...M('相似；比較',['noun']),...M('與...平行；與...類似；與...匹敵；與...相當'),...M('平行的；同樣的；類似的',['adjective'])
+  ]],
+  pastry:['w_000271','晟景Lv5U11',M('糕點',['noun'])],
+  patron:['w_000055','晟景Lv5U6',M('贊助人；老主顧；顧客；贊助者',['noun'])],
+  peasant:['w_000032','晟景Lv5U6',M('小型自耕農；農民',['noun'])]
+ };
+ const imported=words.filter(w=>w.lessonIds.includes(lesson));
+ assert.equal(Object.keys(shared).length,10);
+ for(const [english,[id,previousLesson,meanings]] of Object.entries(shared)){
+  const word=imported.find(w=>w.english===english);
+  assert.deepEqual(word,{id,english,meanings,lessonIds:[previousLesson,lesson],isWrong:false},english);
+ }
+ const newWords=imported.filter(w=>!Object.hasOwn(shared,w.english));
+ assert.equal(newWords.length,34);
+ assert.deepEqual(newWords.map(w=>w.id).sort(),Array.from({length:34},(_,i)=>`w_${String(731+i).padStart(6,'0')}`));
+ for(const word of newWords)assert.deepEqual(word.lessonIds,[lesson],`${word.english} belongs only to its imported lesson`);
+});
+test('L5U16 applies the three approved corrections and preserves pacific exactly as requested',()=>{
+ const words=require('../data/words.json'),find=english=>words.find(w=>w.english===english);
+ assert.equal(words.some(w=>w.english.toLowerCase()==='peasent'),false,'The corrected spelling must reuse peasant, not create a typo entity');
+ assert.equal(find('peasant').id,'w_000032');
+ assert.deepEqual(find('peasant').meanings,M('小型自耕農；農民',['noun']));
+ assert.deepEqual(find('ostrich').meanings,M('鴕鳥；逃避現實者',['noun']));
+ assert.deepEqual(find('pedal').meanings,[...M('踏板',['noun']),...M('騎自行車')]);
+ const pacific=words.filter(w=>w.english.toLowerCase()==='pacific');
+ assert.equal(pacific.length,1,'Capitalization must not create a second public identity');
+ assert.deepEqual(pacific[0],{
+  id:'w_000748',english:'pacific',
+  meanings:[...M('太平洋',['noun']),...M('和平的；溫和的',['adjective'])],
+  lessonIds:['死神單字L5U16'],isWrong:false
+ });
+});
 test('each imported unit keeps noun and verb definitions in separate groups',()=>{
  const words=require('../data/words.json');
  const examples=[
@@ -142,16 +189,17 @@ test('communal and commune remain distinct words with their own meanings and par
  assert.ok(commune.lessonIds.includes('死神單字Lv5U5'));
 });
 test('registered public lessons exist before import and a renamed title retains its identity',()=>{
- assert.deepEqual(data.getPublicLessonIds([]),['死神單字Lv5 a','死神單字Lv5U2','死神單字Lv5U3','死神單字Lv5U4','死神單字Lv5U5','死神單字L5U10','死神單字L5U11','死神單字L5U12','死神單字L5U13','死神單字L5U14','死神單字L5U15']);
+ assert.deepEqual(data.getPublicLessonIds([]),['死神單字Lv5 a','死神單字Lv5U2','死神單字Lv5U3','死神單字Lv5U4','死神單字Lv5U5','死神單字L5U10','死神單字L5U11','死神單字L5U12','死神單字L5U13','死神單字L5U14','死神單字L5U15','死神單字L5U16']);
  assert.equal(data.getPublicLessonName('死神單字Lv5 a'),'死神單字Lv5U1');
  assert.equal(data.getPublicLessonName('死神單字L5U13'),'死神單字Lv5U13');
  assert.equal(data.getPublicLessonName('死神單字L5U14'),'死神單字Lv5U14');
  assert.equal(data.getPublicLessonName('死神單字L5U15'),'死神單字Lv5U15');
+ assert.equal(data.getPublicLessonName('死神單字L5U16'),'死神單字Lv5U16');
  assert.equal(data.getPublicLessonName('死神單字L5U6'),'死神單字Lv5U6');
  assert.equal(data.getPublicLessonName('晟景Lv5U6'),'晟景Lv5U6');
  assert.equal(data.getPublicLessonName('constructor'),'constructor');
  const ids=data.getPublicLessonIds([{lessonIds:['死神單字Lv5 a','晟景Lv5U6']}]);ids.push('rogue');
- assert.deepEqual(data.getPublicLessonIds([]),['死神單字Lv5 a','死神單字Lv5U2','死神單字Lv5U3','死神單字Lv5U4','死神單字Lv5U5','死神單字L5U10','死神單字L5U11','死神單字L5U12','死神單字L5U13','死神單字L5U14','死神單字L5U15']);
+ assert.deepEqual(data.getPublicLessonIds([]),['死神單字Lv5 a','死神單字Lv5U2','死神單字Lv5U3','死神單字Lv5U4','死神單字Lv5U5','死神單字L5U10','死神單字L5U11','死神單字L5U12','死神單字L5U13','死神單字L5U14','死神單字L5U15','死神單字L5U16']);
 });
 test('series group existing lesson identities and legacy named private folders, separately from word membership', () => {
  const death = 'series:shishen-lv5', sheng = 'series:shengjing-lv5';
@@ -225,8 +273,8 @@ test('photo imports L5U10 and L5U11 retain complete spellings, grouped POS, and 
   }
  }
  assert.equal(assigned.size,82);
- assert.equal(words.length,730);
- assert.equal(words.reduce((sum,w)=>sum+w.lessonIds.length,0),850);
+ assert.equal(words.length,764);
+ assert.equal(words.reduce((sum,w)=>sum+w.lessonIds.length,0),894);
  assert.deepEqual(words.find(w=>w.english==='extension').meanings,[{partOfSpeech:'noun',definitions:['延期','延長','擴大']}]);
  assert.ok(words.find(w=>w.english==='glisten').meanings.some(g=>g.partOfSpeech==='verb'&&g.definitions.includes('發光')));
  for(const english of ['extinct','fascinate','fatigue','flip','fluency','format','foul','gasp','glare','gorgeous','grant','gravity','grim','grip','gut','haul','herb','herbal']){

@@ -371,12 +371,14 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "樂觀"
+          "樂觀",
+          "樂觀主義"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U6"
+      "晟景Lv5U6",
+      "死神單字L5U16"
     ],
     "isWrong": false
   },
@@ -408,7 +410,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U6"
+      "晟景Lv5U6",
+      "死神單字L5U16"
     ],
     "isWrong": false
   },
@@ -564,12 +567,14 @@
       {
         "partOfSpeech": "noun",
         "definitions": [
-          "小型自耕農"
+          "小型自耕農",
+          "農民"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U6"
+      "晟景Lv5U6",
+      "死神單字L5U16"
     ],
     "isWrong": false
   },
@@ -972,12 +977,15 @@
         "partOfSpeech": "noun",
         "definitions": [
           "贊助人",
-          "老主顧"
+          "老主顧",
+          "顧客",
+          "贊助者"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U6"
+      "晟景Lv5U6",
+      "死神單字L5U16"
     ],
     "isWrong": false
   },
@@ -2524,7 +2532,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U8"
+      "晟景Lv5U8",
+      "死神單字L5U16"
     ],
     "isWrong": false
   },
@@ -5002,12 +5011,17 @@
         "definitions": [
           "壓倒",
           "使...震撼",
-          "淹沒"
+          "淹沒",
+          "制服",
+          "征服",
+          "擊敗",
+          "充溢"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U11"
+      "晟景Lv5U11",
+      "死神單字L5U16"
     ],
     "isWrong": false
   },
@@ -5018,12 +5032,15 @@
       {
         "partOfSpeech": "adjective",
         "definitions": [
-          "壓倒性的"
+          "壓倒性的",
+          "難以抵擋的",
+          "難以抗拒的"
         ]
       }
     ],
     "lessonIds": [
-      "晟景Lv5U11"
+      "晟景Lv5U11",
+      "死神單字L5U16"
     ],
     "isWrong": false
   },
@@ -5055,7 +5072,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U11"
+      "晟景Lv5U11",
+      "死神單字L5U16"
     ],
     "isWrong": false
   },
@@ -5433,7 +5451,8 @@
         "definitions": [
           "與...平行",
           "與...類似",
-          "與...匹敵"
+          "與...匹敵",
+          "與...相當"
         ]
       },
       {
@@ -5446,7 +5465,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U11"
+      "晟景Lv5U11",
+      "死神單字L5U16"
     ],
     "isWrong": false
   },
@@ -6711,7 +6731,8 @@
       }
     ],
     "lessonIds": [
-      "晟景Lv5U12"
+      "晟景Lv5U12",
+      "死神單字L5U16"
     ],
     "isWrong": false
   },
@@ -13524,6 +13545,621 @@
     ],
     "lessonIds": [
       "死神單字L5U15"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000731",
+    "english": "offering",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "金錢奉獻"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000732",
+    "english": "opponent",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "對手"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000733",
+    "english": "opposition",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "反對"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000734",
+    "english": "optical",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "光學的",
+          "視覺的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000735",
+    "english": "organism",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "有機體",
+          "生命體"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000736",
+    "english": "originality",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "創意"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000737",
+    "english": "ostrich",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "鴕鳥",
+          "逃避現實者"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000738",
+    "english": "outdo",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "勝過"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000739",
+    "english": "outfit",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "全套服裝",
+          "穿著"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "裝備"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000740",
+    "english": "outlet",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "出口",
+          "出路",
+          "插座"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000741",
+    "english": "output",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "產量",
+          "輸出"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "輸出"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000742",
+    "english": "outwards",
+    "meanings": [
+      {
+        "partOfSpeech": "adverb",
+        "definitions": [
+          "向外地"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000743",
+    "english": "overall",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "全盤的"
+        ]
+      },
+      {
+        "partOfSpeech": "adverb",
+        "definitions": [
+          "一般來說"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000744",
+    "english": "overhead",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "頭頂上的"
+        ]
+      },
+      {
+        "partOfSpeech": "adverb",
+        "definitions": [
+          "高空中"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000745",
+    "english": "oversleep",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "睡過頭"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000746",
+    "english": "overtake",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "超越",
+          "趕上"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000747",
+    "english": "overturn",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "打翻",
+          "推翻"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000748",
+    "english": "pacific",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "太平洋"
+        ]
+      },
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "和平的",
+          "溫和的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000749",
+    "english": "pane",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "一塊玻璃",
+          "窗格"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000750",
+    "english": "paradoxically",
+    "meanings": [
+      {
+        "partOfSpeech": "adverb",
+        "definitions": [
+          "矛盾地"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000751",
+    "english": "parlor",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "店鋪",
+          "起居室",
+          "會客室"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000752",
+    "english": "particle",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "粒子",
+          "微粒"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000753",
+    "english": "partly",
+    "meanings": [
+      {
+        "partOfSpeech": "adverb",
+        "definitions": [
+          "部分地"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000754",
+    "english": "passerby",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "路人"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000755",
+    "english": "patch",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "一塊土地",
+          "一塊污漬",
+          "補釘"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "修補"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000756",
+    "english": "patent",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "專利"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "為...申請專利"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000757",
+    "english": "pathetic",
+    "meanings": [
+      {
+        "partOfSpeech": "adjective",
+        "definitions": [
+          "可憐的",
+          "悲哀的"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000758",
+    "english": "patrol",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "巡邏"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "巡邏"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000759",
+    "english": "pawn",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "典當"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000760",
+    "english": "pawnshop",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "當鋪"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000761",
+    "english": "peck",
+    "meanings": [
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "啄"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000762",
+    "english": "pedal",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "踏板"
+        ]
+      },
+      {
+        "partOfSpeech": "verb",
+        "definitions": [
+          "騎自行車"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000763",
+    "english": "peddler",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "小販"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
+    ],
+    "isWrong": false
+  },
+  {
+    "id": "w_000764",
+    "english": "pedestrian",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          "行人"
+        ]
+      }
+    ],
+    "lessonIds": [
+      "死神單字L5U16"
     ],
     "isWrong": false
   }

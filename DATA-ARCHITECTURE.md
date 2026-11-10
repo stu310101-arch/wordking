@@ -53,7 +53,7 @@ flowchart TD
 
 ## Canonical word
 
-公用庫現在有 **730 筆唯一英文、850 個課程歸屬**。同一英文的大小寫變體視為同一 entity；`english.trim().toLowerCase()` 重複會被驗證拒絕。修改英文、中文或課程都不改 ID。
+公用庫現在有 **764 筆唯一英文、894 個課程歸屬**。同一英文的大小寫變體視為同一 entity；`english.trim().toLowerCase()` 重複會被驗證拒絕。修改英文、中文或課程都不改 ID。
 
 ```json
 {
@@ -136,6 +136,18 @@ flowchart TD
 | 死神單字L5U15（mold～odds） | 39 | 10 | 29 | `w_000702`–`w_000730` |
 
 使用者確認 `loom` 的「逼近」改列動詞，保留名詞「織布機」及動詞「若隱若現」；`mutton` 改為名詞「羊肉」。沿用 18 筆舊字時保留原 ID、既有課程、原詞性和原有解釋，只增加本次課程及新義項；不修改 `migration/` 的凍結檔，也不改寫個人 Firestore 資料。下一個未配發 ID 為 `w_000731`。
+
+### 2026-11-10 死神單字 L5U16 匯入
+
+依一頁手寫掃描表（左欄 25 詞、右欄 19 詞）與使用者逐項確認匯入完整 44 詞。課程 ID 為 `死神單字L5U16`，顯示名稱為 `死神單字Lv5U16`，沿用 U14、U15 的命名規則並歸入「死神單字Lv5」系列。
+
+| 課程 | 單字數 | 沿用既有 ID | 新增單字 | 新 ID 範圍 |
+| --- | ---: | ---: | ---: | --- |
+| 死神單字L5U16（offering～pedestrian） | 44 | 10 | 34 | `w_000731`–`w_000764` |
+
+使用者確認前三項修正：`peasent` 改為既有的 `peasant`，保留「小型自耕農」並補「農民」；`ostrich` 為名詞「鴕鳥、逃避現實者」；`pedal` 的「踏板」列名詞、「騎自行車」列動詞。第四項 `pacific` 依使用者決定保留小寫英文、名詞「太平洋」及形容詞「和平的、溫和的」，不新增大小寫備註。第五項的 `optimism`、`overwhelm`、`overwhelming`、`parallel`、`patron` 全部保留舊義，按詞性加入已確認的筆記義項。原稿 `patch` 的「補釘」保留原字。
+
+10 筆沿用單字保留原 ID、所有既有解釋、課程與 `isWrong`；其餘舊字內容及 `migration/` 凍結來源保持原樣。公用字庫可由 PWA 自動下載，已開啟舊介面的使用者也能從新字庫取得本課名稱與系列。下一個未配發 ID 為 `w_000765`。
 
 ### 課程系列與私人階層
 
@@ -287,7 +299,7 @@ git diff --check
 
 rules runner 使用 Java 21+ 與官方 Firestore Emulator；可透過 `WORDKING_JAVA_BIN` 指定 Java executable。測試不連正式資料庫。
 
-目前資料／UI 接線／migration／persistence／Auth 測試 112 項，Firestore Emulator 測試 8 項。涵蓋 opaque ID 穩定、同英文唯一、各詞性獨立中文、編輯時直接建立資料夾／取消／同批儲存、A/B/visitor 隔離、不可 mutate public、public update / field reset、課程 diff / 同名資料夾、custom CRUD、hide/restore/reset、所有舊欄位與 alias/root、v5 升級及 journal 接續、重複 migration、staging / 中途批次 / 最後 ack 故障、lease takeover、revision 衝突及 stale session。
+目前資料／UI 接線／migration／persistence／Auth／PWA 測試 195 項，Firestore Emulator 測試 10 項。涵蓋 opaque ID 穩定、同英文唯一、各詞性獨立中文、編輯時直接建立資料夾／取消／同批儲存、A/B/visitor 隔離、不可 mutate public、public update / field reset、課程 diff / 同名資料夾、custom CRUD、hide/restore/reset、所有舊欄位與 alias/root、v5 升級及 journal 接續、重複 migration、staging / 中途批次 / 最後 ack 故障、lease takeover、revision 衝突及 stale session。
 
 `npm run preview` 在 loopback 4173 提供原始網站；`npm run preview:demo` 在 4175 使用原始網站資產，僅將 Firebase import 替換成瀏覽器內隔離 fixture。測試工具列提供 A / B / 訪客、故障與恢復網路。fixture 使用 sessionStorage，不會連真實 Google 帳號或 Firestore，頁面對外預覽也沒有私人帳號資料。伺服器白名單不公開 `.git`、設定、tests 或工作區其他檔案。
 
